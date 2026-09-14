@@ -28,12 +28,12 @@
     "@monaco-editor/react": "^4.7.0",
     "monaco-editor": "0.55.1",
     "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
+    "@tauri-apps/plugin-dialog": "^2.7.3",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^6.0.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.18.0",
-    "screenshot-desktop": "^1.15.4",
+    "screenshot-desktop": "^1.15.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.1.2",
@@ -43,7 +43,7 @@
     "remark-gfm": "^4.0.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.11.4",
