@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.1-demo1](https://github.com/ghitatruongle/GHITA-CODING-AGENT/compare/ghita-coding-agent-v1.2.0-demo1...ghita-coding-agent-v1.2.1-demo1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ci:** green all workflows + dogfood 17/17 ([e615457](https://github.com/ghitatruongle/GHITA-CODING-AGENT/commit/e615457a3e9324e890ef0fec246c55fd9967585e))
+* **ci:** resolve all failing workflows ([fb82367](https://github.com/ghitatruongle/GHITA-CODING-AGENT/commit/fb823678a41c698c57cfd74dac599b7da2b845a5))
+
 ## [1.2.0-demo1] - 2026-10-04 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
 
 > **Bản demo, chưa phải bản phát hành.** 10 điểm cải tiến đã có bằng chứng đo
