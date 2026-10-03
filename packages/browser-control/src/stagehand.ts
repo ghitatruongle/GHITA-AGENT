@@ -12,8 +12,12 @@ import {
   resolveSelectorByIntent,
   aiExtract,
   type AIBrowserContext,
+  type ActMetric,
   type PageElementCandidate,
 } from './ai-browser.js';
+
+export type { AIBrowserContext, ActMetric } from './ai-browser.js';
+export { AIPageCache } from './stagehand-cache.js';
 
 /** A zod-compatible schema (structural — avoids a hard zod dependency). */
 export interface SchemaLike<T> {
@@ -46,6 +50,9 @@ export interface ExtractResult<T> {
 }
 
 const FILL_INTENT = /\b(type|fill|enter|input|write|search for|paste)\b/i;
+
+/** Trần lượt thử mặc định — giữ nguyên hành vi trước demo2. */
+const DEFAULT_MAX_ATTEMPTS = 2;
 
 /**
  * AIPageController — high-level AI actions bound to one BrowserController + page.
@@ -80,16 +87,30 @@ export class AIPageController {
 
   /**
    * Perform a natural-language action. Chooses click vs fill from the wording,
-   * and self-heals a failed selector by re-observing and retrying once.
+   * and self-heals a failed selector by re-observing and retrying.
+   *
+   * demo2 P3.1 (Điểm 4): trần lượt thử lấy từ `ctx.maxAttempts` (mặc định 2,
+   * đúng như trước) thay vì cứng; mỗi lượt báo số liệu qua `ctx.onMetric`.
    */
   async act(instruction: string, value?: string): Promise<ActResult> {
     const wantsFill = FILL_INTENT.test(instruction);
+    const maxAttempts = Math.max(1, this.ctx.maxAttempts ?? DEFAULT_MAX_ATTEMPTS);
     let attempts = 0;
     let lastError: string | undefined;
+    // Hành động của lượt thử CUỐI — số liệu failure phải nói đúng lượt đó,
+    // không phải ý định ban đầu (isFill có thể chọn fill theo tag dù muốn click).
+    let lastAction: 'fill' | 'click' = wantsFill ? 'fill' : 'click';
 
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       attempts++;
-      const candidates = await collectCandidates(this.page, this.ctx.maxCandidates ?? 30);
+      let candidates;
+      try {
+        candidates = await collectCandidates(this.page, this.ctx.maxCandidates ?? 30);
+      } catch (err) {
+        // Trang vừa điều hướng/đóng giữa chừng: tự phục hồi bằng lượt kế.
+        lastError = err instanceof Error ? err.message : String(err);
+        continue;
+      }
       if (candidates.length === 0) {
         lastError = 'No interactive elements found on page.';
         continue;
@@ -105,12 +126,19 @@ export class AIPageController {
       }
 
       const isFill = wantsFill || target.tag === 'input' || target.tag === 'textarea';
+      lastAction = isFill ? 'fill' : 'click';
       try {
         const result = isFill
           ? await this.controller.fill(target.selector, value ?? extractQuotedValue(instruction))
           : await this.controller.click(target.selector);
 
         if (result.success) {
+          this.report({
+            attempts,
+            success: true,
+            action: isFill ? 'fill' : 'click',
+            recovered: attempts > 1,
+          });
           return {
             success: true,
             action: isFill ? 'fill' : 'click',
@@ -118,7 +146,7 @@ export class AIPageController {
             attempts,
           };
         }
-        // Self-heal: selector failed — loop re-observes and retries once more.
+        // Self-heal: selector failed — loop re-observes and retries.
         lastError = result.error ?? 'action failed';
       } catch (err) {
         // Adapter threw (e.g. detached/stale node) — self-heal on next attempt.
@@ -126,7 +154,23 @@ export class AIPageController {
       }
     }
 
-    return { success: false, action: wantsFill ? 'fill' : 'click', attempts, error: lastError };
+    this.report({
+      attempts,
+      success: false,
+      action: lastAction,
+      recovered: false,
+      error: lastError,
+    });
+    return { success: false, action: lastAction, attempts, error: lastError };
+  }
+
+  /** Đẩy số liệu ra ngoài; lỗi trong callback không được làm hỏng hành động. */
+  private report(metric: ActMetric): void {
+    try {
+      this.ctx.onMetric?.(metric);
+    } catch {
+      // Telemetry hỏng không được chặn người dùng.
+    }
   }
 
   /**

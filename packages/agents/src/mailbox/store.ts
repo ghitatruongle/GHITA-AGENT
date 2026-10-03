@@ -42,7 +42,7 @@ export class MailboxStore {
   }
 
   // Schema
-  
+
   private initSchema(): void {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS mailbox_messages (
@@ -110,7 +110,7 @@ export class MailboxStore {
   }
 
   // Send / Check / Ack / Reply
-  
+
   /** Send a message to a recipient's inbox. Returns the message id. */
   send(from: string, to: string, payload: unknown, options?: { replyTo?: string }): string {
     const id = generateId();
@@ -261,7 +261,7 @@ export class MailboxStore {
   }
 
   // Worker Done
-  
+
   /** Record that a worker has completed its task. */
   workerDone(agentId: string, outcome: WorkerOutcome, result?: unknown, error?: string): string {
     const id = generateId();
@@ -308,7 +308,7 @@ export class MailboxStore {
   }
 
   // Ask (blocking question with timeout)
-  
+
   /** Pose a blocking question. Returns the ask id. */
   ask(
     from: string,
@@ -440,7 +440,7 @@ export class MailboxStore {
   }
 
   // Decision Gates
-  
+
   /** Create a decision gate that blocks task progression. */
   createGate(createdBy: string, description: string): string {
     const id = generateId();
@@ -534,7 +534,7 @@ export class MailboxStore {
   }
 
   // Cleanup & Utilities
-  
+
   /** Remove acked messages older than maxAgeMs from a recipient's inbox. */
   purgeAcked(recipient: string, maxAgeMs: number): number {
     const cutoff = Date.now() - maxAgeMs;
@@ -562,7 +562,7 @@ export class MailboxStore {
   }
 
   // Private Helpers
-  
+
   private nextSeq(sender: string): number {
     const current = this.seqCounters.get(sender) ?? 0;
     const next = current + 1;
@@ -599,13 +599,30 @@ export class MailboxStore {
     ).excess;
     if (excess <= 0) return;
 
+    // Phải xoá `mailbox_deliveries` TRƯỚC. Schema bật `foreign_keys = ON`, nên
+    // xoá message còn delivery trỏ tới sẽ ném FOREIGN KEY constraint failed —
+    // làm hỏng cả `send()` chứ không chỉ ghi log. `purgeAcked` ở trên cùng file
+    // đã làm đúng thứ tự này, `enforceInboxCap` thì bỏ sót.
+    this.db
+      .prepare(
+        `DELETE FROM mailbox_deliveries
+         WHERE message_id IN (
+           SELECT m.id FROM mailbox_messages m
+           JOIN mailbox_deliveries d ON d.message_id = m.id
+           WHERE d.recipient = ? AND d.status = 'acked'
+           ORDER BY m.timestamp ASC
+           LIMIT ?
+         )`,
+      )
+      .run(recipient, excess);
+
     this.db
       .prepare(
         `DELETE FROM mailbox_messages
          WHERE id IN (
            SELECT m.id FROM mailbox_messages m
-           JOIN mailbox_deliveries d ON d.message_id = m.id
-           WHERE d.recipient = ? AND d.status = 'acked'
+           WHERE m.recipient = ?
+             AND NOT EXISTS (SELECT 1 FROM mailbox_deliveries d WHERE d.message_id = m.id)
            ORDER BY m.timestamp ASC
            LIMIT ?
          )`,

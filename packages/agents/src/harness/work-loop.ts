@@ -49,14 +49,17 @@ const EVIDENCE_STRENGTH: Record<EvidenceState, number> = {
 /** Learning Capture floor once a bounded review completes. */
 const LEARNING_CAPTURE_FLOOR = 35;
 
-export function checkToDimension(checkId: WorkLoopCheckId): WorkLoopDimension {
+export function checkToDimension(checkId: WorkLoopCheckId): WorkLoopDimension | undefined {
   for (const [dim, checks] of Object.entries(DIMENSION_CHECKS) as [
     WorkLoopDimension,
     WorkLoopCheckId[],
   ][]) {
     if (checks.includes(checkId)) return dim;
   }
-  throw new Error(`Unknown check id: ${checkId}`);
+  // Trả undefined thay vì throw: hàm này được gọi bên trong `.filter()` cho
+  // MỌI finding × MỌI dimension, nên một finding dữ liệu bẩn sẽ làm hỏng
+  // toàn bộ quá trình đánh giá — mất sạch báo cáo review của phiên đó.
+  return undefined;
 }
 
 /**
@@ -67,7 +70,6 @@ export function checkToDimension(checkId: WorkLoopCheckId): WorkLoopDimension {
  *   console.log(review.loopEffectiveness, review.dimensions);
  */
 export class WorkLoopEvaluator {
-  
   evaluate(episode: TaskEpisode, findings: WorkLoopFinding[] = []): WorkLoopReview {
     const byCheck = new Map<WorkLoopCheckId, CheckResult>();
     for (const check of episode.checks) byCheck.set(check.checkId, check);

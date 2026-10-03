@@ -1,7 +1,7 @@
 # 🗺️ GHITA CODING AGENT — Public Roadmap
 
-> **Current version:** v1.2.0-demo1
-> **Last updated:** 2026-08-23
+> **Current version:** v1.2.0-demo1 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
+> **Last updated:** 2026-10-04
 
 ---
 
@@ -56,29 +56,29 @@
 
 ## ✅ Done — v0.0.5 Official (2026-07-XX)
 
-| Khu vực            | Tính năng                                                   | Trạng thái |
-| ------------------ | ----------------------------------------------------------- | ---------- |
-| 🧠 AI Engine       | Multi-provider (OpenAI, Anthropic, Google, Ollama, LiteLLM) | ✅         |
-| 🧠 AI Engine       | Adaptive Router — complexity-based model selection          | ✅         |
-| 🧠 AI Engine       | Cost Tracking & Budget Alerts                               | ✅         |
+| Khu vực            | Tính năng                                                                                                  | Trạng thái |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- | ---------- |
+| 🧠 AI Engine       | Multi-provider (OpenAI, Anthropic, Google, Ollama, LiteLLM)                                                | ✅         |
+| 🧠 AI Engine       | Adaptive Router — complexity-based model selection                                                         | ✅         |
+| 🧠 AI Engine       | Cost Tracking & Budget Alerts                                                                              | ✅         |
 | 🧠 AI Engine       | Tool Registry + Composio catalog (metadata-only; executable handlers require a live adapter + credentials) | ✅         |
-| 🤖 Agents          | ReAct Runtime + DAG Flow Orchestrator                       | ✅         |
-| 🤖 Agents          | Sub-Agent Spawner (isolated context)                        | ✅         |
-| 🤖 Agents          | Agent Groups — specialized teams                            | ✅         |
-| 🎯 Skills          | Skill create/edit/run system                                | ✅         |
-| 🖥️ Computer Use    | mouse/keyboard/app automation (Tauri-native Rust)           | ✅         |
-| 🌐 Browser Control | Playwright + CloakBrowser stealth automation                | ✅         |
-| 📱 Mobile          | React Native Android app, remote pairing                    | ✅         |
-| 🔐 Security        | Pairing auth, CSP, input sanitization, CORS                 | ✅         |
-| 📦 Build           | Turborepo + pnpm, CI/CD (Windows/Linux/macOS/Android)       | ✅         |
-| 🐳 Docker          | Multi-stage sidecar container                               | ✅         |
-| 🔔 Notification    | System with priority, channels, DND, history                | ✅ v0.0.5  |
-| 💰 Quota           | Rate Limiter + Usage Tracker + BudgetManager                | ✅ v0.0.5  |
-| 📊 Monitoring      | ErrorGrouper + AlertEngine + UsageTelemetry                 | ✅ v0.0.5  |
-| 🧬 Code Graph      | AST parsing, knowledge graph, symbol search                 | ✅ v0.0.5  |
-| 🎤 Voice           | Web Speech API STT, VAD, TTS support                        | ✅ v0.0.5  |
-| 🍎 iOS             | Ad-hoc build verified, App Store deferred to 0.0.6          | ✅ v0.0.5  |
-| 🛡️ Audit           | 44 findings (P1+P2+P3) all closed                           | ✅ v0.0.5  |
+| 🤖 Agents          | ReAct Runtime + DAG Flow Orchestrator                                                                      | ✅         |
+| 🤖 Agents          | Sub-Agent Spawner (isolated context)                                                                       | ✅         |
+| 🤖 Agents          | Agent Groups — specialized teams                                                                           | ✅         |
+| 🎯 Skills          | Skill create/edit/run system                                                                               | ✅         |
+| 🖥️ Computer Use    | mouse/keyboard/app automation (Tauri-native Rust)                                                          | ✅         |
+| 🌐 Browser Control | Playwright + CloakBrowser stealth automation                                                               | ✅         |
+| 📱 Mobile          | React Native Android app, remote pairing                                                                   | ✅         |
+| 🔐 Security        | Pairing auth, CSP, input sanitization, CORS                                                                | ✅         |
+| 📦 Build           | Turborepo + pnpm, CI/CD (Windows/Linux/macOS/Android)                                                      | ✅         |
+| 🐳 Docker          | Multi-stage sidecar container                                                                              | ✅         |
+| 🔔 Notification    | System with priority, channels, DND, history                                                               | ✅ v0.0.5  |
+| 💰 Quota           | Rate Limiter + Usage Tracker + BudgetManager                                                               | ✅ v0.0.5  |
+| 📊 Monitoring      | ErrorGrouper + AlertEngine + UsageTelemetry                                                                | ✅ v0.0.5  |
+| 🧬 Code Graph      | AST parsing, knowledge graph, symbol search                                                                | ✅ v0.0.5  |
+| 🎤 Voice           | Web Speech API STT, VAD, TTS support                                                                       | ✅ v0.0.5  |
+| 🍎 iOS             | Ad-hoc build verified, App Store deferred to 0.0.6                                                         | ✅ v0.0.5  |
+| 🛡️ Audit           | 44 findings (P1+P2+P3) all closed                                                                          | ✅ v0.0.5  |
 
 ---
 

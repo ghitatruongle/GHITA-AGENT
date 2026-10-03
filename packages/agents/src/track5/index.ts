@@ -54,3 +54,6 @@ export type { ErrorCategory, ClassifiedError } from './error-compact.js';
 
 export { RemoteJobStatusProvider } from './remote.js';
 export type { RemoteJob, RemoteAction } from './remote.js';
+
+// demo2 P3.5 (Điểm 9 + 10)
+export * from './completion-contract.js';

@@ -275,19 +275,36 @@ export function useChatSocket({
           }) => {
             if (!active) return;
             stopStreamFlush();
-            
+
             // may not emit `agent_run_done` — clean stale proposals here too.
             if (data.runId) {
               useEditProposalStore.getState().removeForRun(data.runId);
             }
             const finalId = generateUUID();
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === 'streaming-message'
-                  ? { id: finalId, role: 'assistant', content: data.text, timestamp: Date.now() }
-                  : msg,
-              ),
-            );
+            setMessages((prev) => {
+              const placeholder = prev.find((m) => m.id === 'streaming-message');
+              if (placeholder) {
+                return prev.map((msg) =>
+                  msg.id === 'streaming-message'
+                    ? { id: finalId, role: 'assistant', content: data.text, timestamp: Date.now() }
+                    : msg,
+                );
+              }
+              // Placeholder đã bị `chat_error` xoá (sidecar phát chat_error rồi
+              // chat_done ngay sau). Trước đây `.map` là no-op nên `data.text`
+              // biến mất không dấu vết. Thêm thành message mới.
+              if (!data.text) return prev;
+              // Nhưng nếu chat_error VỪA hiện đúng nội dung này (lỗi của sidecar
+              // kèm text trùng) thì append thêm là hiện lỗi 2 lần liên tiếp.
+              const last = prev[prev.length - 1];
+              if (last && last.role === 'assistant' && last.content.includes(data.text)) {
+                return prev;
+              }
+              return [
+                ...prev,
+                { id: finalId, role: 'assistant', content: data.text, timestamp: Date.now() },
+              ];
+            });
             setIsSending(false);
             setActiveFlow(null);
 
@@ -299,10 +316,14 @@ export function useChatSocket({
                 activeAgents: currentStats.activeAgents,
                 mcpConnections: currentStats.mcpConnections,
               });
-              const used = data.usage.totalTokens;
+              const raw = data.usage.totalTokens;
               const max = 128000;
+              // `percentage` phải tính từ CÙNG giá trị đã chặn với `used`.
+              // Trước đây `used` bị chặn còn `percentage` thì không, nên khi
+              // vượt ngưỡng UI hiện đồng thời "128000/128000" (=100%) và "156%".
+              const used = Math.min(raw, max);
               useAppStore.getState().setContextUsage({
-                used: Math.min(used, max),
+                used,
                 max,
                 percentage: Math.round((used / max) * 100),
               });
@@ -313,7 +334,7 @@ export function useChatSocket({
         addTracked('chat_error', (data: { message: string; runId?: string }) => {
           if (!active) return;
           stopStreamFlush();
-          
+
           if (data.runId) {
             useEditProposalStore.getState().removeForRun(data.runId);
           }
@@ -395,7 +416,7 @@ export function useChatSocket({
 
         addTracked('agent_run_done', (data: { runId?: string }) => {
           socket.emit('list_agent_runs', { limit: 30 });
-          
+
           // review from this run — the sidecar has drained them too, so
           // accepting one now would report a write that never happens.
           if (data?.runId) {

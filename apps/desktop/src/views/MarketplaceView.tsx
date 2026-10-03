@@ -133,10 +133,15 @@ export function MarketplaceView() {
       permissions: s.permissions,
     }));
     // Avoid duplicates: hardcoded plugins take priority
-    const hardcodedIds = new Set(localizedHardcoded.map((p) => p.id));
+    // Đều nhất hoá id trước khi so: bản hardcode dùng `ghita-github-assistant`
+    // còn catalog dùng `ghita.github-assistant`. So nguyên chuỗi thì khớp 0/6,
+    // nghĩa là MỌI plugin hiện MỘT lần hai, và cài bản này bản kia vẫn hiện
+    // nút "Cài đặt" với công tắc độc lập.
+    const normalizeId = (id: string) => id.toLowerCase().replace(/[._-]/g, '-');
+    const hardcodedIds = new Set(localizedHardcoded.map((p) => normalizeId(p.id)));
     const merged = [
       ...localizedHardcoded,
-      ...catalogAsPlugins.filter((p) => !hardcodedIds.has(p.id)),
+      ...catalogAsPlugins.filter((p) => !hardcodedIds.has(normalizeId(p.id))),
     ];
     return merged;
   }, [catalogSkills, t]);

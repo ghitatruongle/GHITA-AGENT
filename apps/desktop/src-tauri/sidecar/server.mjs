@@ -1,6 +1,6 @@
 ﻿// ==============================================================================
-// GHITA CODING AGENT â€” Communication Server Sidecar
-// Standalone Socket.io server for Desktop â†” Mobile communication
+// GHITA CODING AGENT — Communication Server Sidecar
+// Standalone Socket.io server for Desktop ↔ Mobile communication
 // ==============================================================================
 
 import { createServer } from 'node:http';
@@ -98,7 +98,7 @@ const HOST = LAN_ENABLED ? '0.0.0.0' : '127.0.0.1';
 // pairing codes + LAN IP + hostname are published to a third-party KV endpoint.
 const CLOUD_DISCOVERY_ENABLED = false; // Disabled — was: process.env.GHITA_CLOUD_DISCOVERY === '1'
 const AUTO_LIBERATE_PORTS = process.env.GHITA_LIBERATE_PORTS === '1';
-// Cloud relay code removed â€” was disabled (CLOUD_RELAY_ENABLED=false, initCloudSocket commented out)
+// Cloud relay code removed — was disabled (CLOUD_RELAY_ENABLED=false, initCloudSocket commented out)
 
 function broadcast(event, data) {
   io.to(['desktop', 'paired-devices']).emit(event, data);
@@ -960,7 +960,7 @@ function loadPairedDevices() {
 function savePairedDevices() {
   try {
     const list = Array.from(connectedDevices.values())
-      .filter((d) => d.id && d.id !== 'cloud_session') // Chá»‰ lÆ°u thiáº¿t bá»‹ LAN thá»±c táº¿, bá» cloud
+      .filter((d) => d.id && d.id !== 'cloud_session') // Chỉ lưu thiết bị LAN thực tế, bỏ cloud
       .map((d) => ({
         id: d.id,
         name: d.name,
@@ -1544,9 +1544,9 @@ function registerSocketEvents(socket, isCloud = false) {
 
     log(`Running Ralph Loop for task: "${task}"`);
 
-    // Gá»­i tÃ­n hiá»‡u báº¯t Ä‘áº§u
+    // Gửi tín hiệu bắt đầu
     broadcast('chat_start', {
-      text: `[Ralph Loop] Äang khá»Ÿi Ä‘á»™ng vÃ²ng láº·p tá»± sá»­a sai cho tÃ¡c vá»¥: "${task}"`,
+      text: `[Ralph Loop] Đang khởi động vòng lặp tự sửa sai cho tác vụ: "${task}"`,
       senderId: 'system',
       senderName: 'GHITA Engine',
     });
@@ -1655,9 +1655,9 @@ function registerSocketEvents(socket, isCloud = false) {
             code: progress.code,
           });
 
-          // Gá»­i text tiáº¿n trÃ¬nh vÃ o chat panel
+          // Gửi text tiến trình vào chat panel
           broadcast('chat_chunk', {
-            text: `\nðŸ”„ **[VÃ²ng láº·p ${progress.iteration}]** ${progress.message}\n`,
+            text: `\n🔄 **[Vòng lặp ${progress.iteration}]** ${progress.message}\n`,
           });
           if (progress.code) {
             broadcast('chat_chunk', { text: `\`\`\`tsx\n${progress.code}\n\`\`\`\n` });
@@ -1673,17 +1673,17 @@ function registerSocketEvents(socket, isCloud = false) {
         });
 
         broadcast('chat_done', {
-          text: `### ðŸŽ‰ Ralph Loop HoÃ n Táº¥t!
-- **Tráº¡ng thÃ¡i:** ${result.success ? 'ThÃ nh cÃ´ng âœ¨' : 'Tháº¥t báº¡i âŒ'}
-- **Sá»‘ lÆ°á»£t sá»­a lá»—i:** ${result.currentIteration} láº§n
-- **Tá»•ng lÆ°á»£ng token:** ${result.totalTokensUsed.totalTokens} tokens
-- **Tá»•ng chi phÃ­ Æ°á»›c tÃ­nh:** $${result.totalCostUsd.toFixed(5)} USD
-- **Giáº£i phÃ¡p cuá»‘i cÃ¹ng:** ÄÃ£ Ä‘Æ°á»£c Ä‘á»“ng bá»™ hÃ³a thÃ nh cÃ´ng!`,
+          text: `### 🎉 Ralph Loop Hoàn Tất!
+- **Trạng thái:** ${result.success ? 'Thành công ✨' : 'Thất bại ❌'}
+- **Số lượt sửa lỗi:** ${result.currentIteration} lần
+- **Tổng lượng token:** ${result.totalTokensUsed.totalTokens} tokens
+- **Tổng chi phí ước tính:** $${result.totalCostUsd.toFixed(5)} USD
+- **Giải pháp cuối cùng:** Đã được đồng bộ hóa thành công!`,
         });
       } else {
         socket.emit('chat_error', {
           message:
-            'âš™ï¸ AI Orchestrator chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh. Vui lÃ²ng má»Ÿ tab API Manager, thÃªm API Key vÃ  báº­t Active cho Ã­t nháº¥t 1 provider.',
+            '⚙️ AI Orchestrator chưa được cấu hình. Vui lòng mở tab API Manager, thêm API Key và bật Active cho ít nhất 1 provider.',
         });
       }
     } catch (err) {
@@ -2027,7 +2027,7 @@ function registerSocketEvents(socket, isCloud = false) {
 
     log(`Running Agentic ReAct loop ${runId} for task: "${task}"`);
     broadcast('chat_start', {
-      text: `ðŸ¤– [GHITA ReAct] Äang báº¯t Ä‘áº§u thá»±c hiá»‡n vÃ²ng láº·p Agentic ReAct cho tÃ¡c vá»¥: "${task}"`,
+      text: `🤖 [GHITA ReAct] Đang bắt đầu thực hiện vòng lặp Agentic ReAct cho tác vụ: "${task}"`,
       senderId: 'system',
       senderName: 'GHITA ReAct',
       runId,
@@ -2168,7 +2168,7 @@ function registerSocketEvents(socket, isCloud = false) {
             if (actions.length > 0) return actions;
           }
 
-          // 2. XML tags â€” `<tool_call name="...">{json}</tool_call>`
+          // 2. XML tags — `<tool_call name="...">{json}</tool_call>`
           //    Allocate a fresh regex on every call.
           {
             const xmlRegex =
@@ -2387,13 +2387,13 @@ State your reasoning step by step, then invoke a tool call. Repeat this cycle un
               return { role: 'user', content: msg.getText() };
             });
 
-            // Timeout 60s cho má»—i LLM call Ä‘á»ƒ trÃ¡nh bá»‹ treo vÃ´ háº¡n
+            // Timeout 60s cho mỗi LLM call để tránh bị treo vô hạn
             const LLM_TIMEOUT_MS = 60_000;
             let llmTimeoutId;
             const timeoutPromise = new Promise((_, reject) => {
               llmTimeoutId = setTimeout(
                 () =>
-                  reject(new Error('LLM call timeout after 60s - Opengateway khÃ´ng pháº£n há»“i')),
+                  reject(new Error('LLM call timeout after 60s - Opengateway không phản hồi')),
                 LLM_TIMEOUT_MS,
               );
             });
@@ -2449,7 +2449,7 @@ State your reasoning step by step, then invoke a tool call. Repeat this cycle un
                 child.kill('SIGTERM');
               }
             } catch {
-              // Ignore â€” child may have already exited
+              // Ignore — child may have already exited
             }
           }
           childRegistry.clear();
@@ -2459,17 +2459,17 @@ State your reasoning step by step, then invoke a tool call. Repeat this cycle un
           onStepStart: (step, action) => {
             broadcast('agent_step_start', { step, action });
             broadcast('chat_chunk', {
-              text: `\nðŸ¤” *[BÆ°á»›c ${step + 1}] Suy nghÄ©...* Gá»i cÃ´ng cá»¥ \`${action.tool}\`...\n`,
+              text: `\n🤔 *[Bước ${step + 1}] Suy nghĩ...* Gọi công cụ \`${action.tool}\`...\n`,
             });
           },
           onStepEnd: (step, observation) => {
             broadcast('agent_step_end', { step, observation });
             const preview =
               observation.length > 500
-                ? observation.slice(0, 500) + '... (trá»±c quan hÃ³a bá»‹ rÃºt gá»n)'
+                ? observation.slice(0, 500) + '... (trực quan hóa bị rút gọn)'
                 : observation;
             broadcast('chat_chunk', {
-              text: `\nðŸ“ *Káº¿t quáº£ cÃ´ng cá»¥:* \n\`\`\`\n${preview}\n\`\`\`\n`,
+              text: `\n📝 *Kết quả công cụ:* \n\`\`\`\n${preview}\n\`\`\`\n`,
             });
           },
           onToolCall: (tool, input) => {
@@ -2484,7 +2484,13 @@ State your reasoning step by step, then invoke a tool call. Repeat this cycle un
           agentTimeoutId = setTimeout(() => {
             runInterrupted = true;
             agentAbortController.abort();
-            reject(new Error('Agent timeout after 3 minutes - quÃ¡ thá»i gian chá»'));
+            // Timeout thật: 10 phút (review/custom) hoặc 3 phút (auto) —
+            // thông báo cứng "3 minutes" trước đây khiến người dùng hiểu nhầm.
+            reject(
+              new Error(
+                `Agent timeout after ${Math.round(AGENT_TIMEOUT_MS / 60_000)} minutes - quá thời gian chờ`,
+              ),
+            );
           }, AGENT_TIMEOUT_MS);
         });
         let result;
@@ -2512,14 +2518,14 @@ State your reasoning step by step, then invoke a tool call. Repeat this cycle un
         });
 
         broadcast('chat_done', {
-          text: `### âœ… HoÃ n thÃ nh tÃ¡c vá»¥ Agentic ReAct!
+          text: `### ✅ Hoàn thành tác vụ Agentic ReAct!
 ${result.output}`,
           kind: 'agent_final',
         });
       } else {
         socket.emit('chat_error', {
           message:
-            'âš™ï¸ AI Orchestrator chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh. Vui lÃ²ng má»Ÿ tab API Manager, thÃªm API Key vÃ  báº­t Active cho Ã­t nháº¥t 1 provider.',
+            '⚙️ AI Orchestrator chưa được cấu hình. Vui lòng mở tab API Manager, thêm API Key và bật Active cho ít nhất 1 provider.',
         });
       }
     } catch (err) {
@@ -2548,7 +2554,7 @@ ${result.output}`,
         });
       }
       broadcast('chat_done', {
-        text: `âŒ VÃ²ng láº·p Agentic ReAct gáº·p lá»—i: ${errorMessage}`,
+        text: `❌ Vòng lặp Agentic ReAct gặp lỗi: ${errorMessage}`,
         runId,
         resumable: finalStatus === 'interrupted' || finalStatus === 'exhausted',
       });
@@ -2575,12 +2581,12 @@ ${result.output}`,
     if (data?.text) {
       log(`Chat from ${senderName}: ${data.text}`);
 
-      // Náº¿u tá»« Mobile, emit lÃªn Tauri qua stdout
+      // Nếu từ Mobile, emit lên Tauri qua stdout
       if (!isDesktop) {
         ipcEmit(EVENTS.CHAT, { deviceId: senderId, text: data.text });
       }
 
-      // RÃ  quÃ©t báº£o máº­t PreToolUse Hook cho cÃ¡c lá»‡nh CLI tá»± cháº¡y hoáº·c cÃ¡c tá»« khÃ³a nháº¡y cáº£m
+      // Rà quét bảo mật PreToolUse Hook cho các lệnh CLI tự chạy hoặc các từ khóa nhạy cảm
       if (
         data.text.startsWith('/') ||
         data.text.includes('rm ') ||
@@ -2591,27 +2597,27 @@ ${result.output}`,
         const { SecurityGuard } = await loadAiEngine();
         const securityResult = SecurityGuard.scanCommand(data.text);
         if (!securityResult.safe) {
-          // KÃ­ch hoáº¡t ngay popup duyá»‡t tool cáº£nh bÃ¡o nguy háº¡i cao Ä‘á»™ (Human-in-the-loop)
+          // Kích hoạt ngay popup duyệt tool cảnh báo nguy hại cao độ (Human-in-the-loop)
           socket.emit('action_required', {
             toolCallId: `sec_${Date.now()}`,
             name: 'execute_dangerous_command',
             arguments: JSON.stringify({ command: data.text }, null, 2),
             warningMessage:
               securityResult.reason ||
-              'Lá»‡nh nÃ y chá»©a máº«u mÃ£ Ä‘á»™c nguy hiá»ƒm bá»‹ cáº¥m thá»±c thi trá»±c tiáº¿p!',
+              'Lệnh này chứa mẫu mã độc nguy hiểm bị cấm thực thi trực tiếp!',
           });
-          return; // Cháº·n Ä‘á»©ng tiáº¿n trÃ¬nh
+          return; // Chặn đứng tiến trình
         }
       }
 
-      // PhÃ¡t sá»± kiá»‡n báº¯t Ä‘áº§u streaming token cho cáº£ hai thiáº¿t bá»‹
+      // Phát sự kiện bắt đầu streaming token cho cả hai thiết bị
       broadcast('chat_start', { text: data.text, senderId, senderName });
 
       let fullResponse = '';
       try {
         const messages = [];
 
-        // Náº¿u cÃ³ history gá»­i kÃ¨m theo
+        // Nếu có history gửi kèm theo
         if (data.history && Array.isArray(data.history)) {
           messages.push(
             ...data.history.map((msg) => ({
@@ -2669,16 +2675,16 @@ ${result.output}`,
             },
           });
         } else {
-          // Fallback response náº¿u orchestrator chÆ°a sáºµn sÃ ng
-          const fallbackText = `âš™ï¸ **AI Engine chÆ°a sáºµn sÃ ng.**\n\nHá»‡ thá»‘ng nháº­n Ä‘Æ°á»£c tin nháº¯n: "${data.text}"\n\nÄá»ƒ sá»­ dá»¥ng Chat AI, vui lÃ²ng:\n1. Má»Ÿ tab **API Manager** (ðŸ”‘) trÃªn á»©ng dá»¥ng Desktop\n2. ThÃªm Ã­t nháº¥t 1 nhÃ  cung cáº¥p AI vÃ  nháº­p API Key\n3. Báº­t **Active** cho provider Ä‘Ã³\n\nSau Ä‘Ã³ hÃ£y thá»­ láº¡i!`;
+          // Fallback response nếu orchestrator chưa sẵn sàng
+          const fallbackText = `⚙️ **AI Engine chưa sẵn sàng.**\n\nHệ thống nhận được tin nhắn: "${data.text}"\n\nĐể sử dụng Chat AI, vui lòng:\n1. Mở tab **API Manager** (🔑) trên ứng dụng Desktop\n2. Thêm ít nhất 1 nhà cung cấp AI và nhập API Key\n3. Bật **Active** cho provider đó\n\nSau đó hãy thử lại!`;
           broadcast('chat_chunk', { text: fallbackText });
           broadcast('chat_done', { text: fallbackText });
         }
       } catch (err) {
         log(`Error generating AI streaming: ${err.message}`);
         broadcast('chat_error', { message: err.message });
-        // LuÃ´n phÃ¡t chat_done Ä‘á»ƒ giáº£i phÃ³ng tráº¡ng thÃ¡i UI trÃªn client
-        broadcast('chat_done', { text: fullResponse || `Lá»—i: ${err.message}` });
+        // Luôn phát chat_done để giải phóng trạng thái UI trên client
+        broadcast('chat_done', { text: fullResponse || `Lỗi: ${err.message}` });
       }
     }
   });
@@ -3096,7 +3102,7 @@ function shutdown(signal) {
   io.disconnectSockets(true);
   io.close();
 
-  // Äáº·t timeout cÆ°á»¡ng cháº¿ 1.5 giÃ¢y Ä‘á»ƒ trÃ¡nh zombie process cháº¡y ngáº§m
+  // Đặt timeout cưỡng chế 1.5 giây để tránh zombie process chạy ngầm
   const forceExitTimeout = setTimeout(() => {
     log(`Shutdown timed out, forcing process exit.`);
     process.exit(signal === 'SIGINT' || signal === 'SIGTERM' ? 0 : 1);
@@ -3132,7 +3138,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 
 // --- Global Exception & Rejection Shield ---
 process.on('uncaughtException', (err) => {
-  // Ignore EPIPE errors â€” they occur when the Tauri parent process closes
+  // Ignore EPIPE errors — they occur when the Tauri parent process closes
   // and the stdout pipe breaks. Logging would cause infinite EPIPE spam.
   if (err?.code === 'EPIPE' || err?.message?.includes('EPIPE')) return;
   log(`CRITICAL SHIELD: Uncaught Exception: ${err.message}`);
@@ -3201,7 +3207,7 @@ httpServer.on('listening', async () => {
   const code = getCode();
   log(`Pairing code: ${code}`);
   publishToCloudDiscovery();
-  // Khá»Ÿi Ä‘á»™ng gRPC Server (lazy-load ai-engine)
+  // Khởi động gRPC Server (lazy-load ai-engine)
   try {
     const { ConfigLoader, Orchestrator, GrpcServer } = await loadAiEngine();
     const configLoader = new ConfigLoader();
@@ -3217,7 +3223,7 @@ httpServer.on('listening', async () => {
     grpcServerInstance = new GrpcServer(orchestrator);
     syncApiConfigToOrchestrator();
 
-    // Cá»‘ gáº¯ng khá»Ÿi Ä‘á»™ng gRPC, tá»± Ä‘á»™ng thá»­ cá»•ng tiáº¿p theo náº¿u báº­n
+    // Cố gắng khởi động gRPC, tự động thử cổng tiếp theo nếu bận
     let grpcPort = 50051;
     let grpcStarted = false;
     let actualGrpcPort = 50051;

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { StorageBackend, SerializedEntry } from './types.js';
 
 export interface FileSystemStorageOptions {
@@ -21,9 +22,12 @@ export class FileSystemStorage<T = unknown> implements StorageBackend<T> {
   }
 
   private filePath(key: string): string {
-    // Sanitize key to safe filename
-    const safe = key.replace(/[^a-zA-Z0-9_-]/g, '_');
-    return `${this.basePath}/${safe}${this.extension}`;
+    // Thay ký tự lạ bằng `_` làm `user/name` và `user.name` cùng ra
+    // `user_name` — hai key KHÁC NHAU ghi đè lên nhau, mất dữ liệu âm thầm.
+    // Nên phần sanitize chỉ để đọc dễ, còn định danh thật là hash của key gốc.
+    const safe = key.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48);
+    const hash = createHash('sha256').update(key).digest('hex').slice(0, 16);
+    return `${this.basePath}/${safe}-${hash}${this.extension}`;
   }
 
   private isExpired(entry: SerializedEntry<T>): boolean {
@@ -88,13 +92,29 @@ export class FileSystemStorage<T = unknown> implements StorageBackend<T> {
     return true;
   }
 
+  /**
+   * Danh sách key GỐC, đọc từ nội dung file chứ không phải từ tên file.
+   *
+   * Tên file đã được băm hoá nên không còn khôi phục được key; nếu cắ tên file
+   * rồi trả về thì `delete(keys()[0])` sẽ băm lại một chuỗi KHÁC và xoá hụt —
+   * đúng lỗi khiến `clear()` im lặng bỏ sót dữ liệu.
+   */
   async keys(): Promise<string[]> {
     try {
       const fs = await import('node:fs/promises');
       const files = await fs.readdir(this.basePath);
-      return files
-        .filter((f) => f.endsWith(this.extension))
-        .map((f) => f.slice(0, -this.extension.length));
+      const out: string[] = [];
+      for (const f of files) {
+        if (!f.endsWith(this.extension)) continue;
+        try {
+          const raw = await fs.readFile(`${this.basePath}/${f}`, 'utf8');
+          const parsed = JSON.parse(raw) as { key?: string };
+          if (typeof parsed.key === 'string') out.push(parsed.key);
+        } catch {
+          // File hỏng: bỏ qua thay vì làm hỏng cả lệnh liệt kê.
+        }
+      }
+      return out;
     } catch {
       return [];
     }

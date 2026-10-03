@@ -1,5 +1,4 @@
 import { execFileSync } from 'child_process';
-import { setTimeout as sleep } from 'timers/promises';
 import fs from 'fs';
 import * as path from 'path';
 import type { AgentMiddleware, MiddlewareContext } from '../middleware/types.js';
@@ -38,11 +37,25 @@ function tokenizeCommand(cmd: string): string[] {
 }
 
 function shellEscape(value: string): string {
-  return `'${  value.replace(/'/g, "'\\''")  }'`;
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+/**
+ * Chờ `ms` mili-giây theo kiểu ĐỒNG BỘ.
+ *
+ * Chỉ dùng trong `execGit` — hàm đó không thể `await` vì phải giữ nguyên chữ ký
+ * đồng bộ cho các caller (`createSafePoint`, ...). `Atomics.wait` chặn thread
+ * hiện tại; dùng ở đây chấp nhận được vì đây là đường retry ngắn, không nằm
+ * trong vòng lặp UI.
+ */
+function sleepSync(ms: number): void {
+  if (ms <= 0) return;
+  const buf = new Int32Array(new SharedArrayBuffer(4));
+  Atomics.wait(buf, 0, 0, ms);
 }
 
 export class GitSafePointManager {
-  private static readonly LOCK_TIMEOUT_MS = 10000; 
+  private static readonly LOCK_TIMEOUT_MS = 10000;
 
   public static checkAndReleaseLock(cwd: string): void {
     const lockPath = path.join(cwd, '.git', 'index.lock');
@@ -76,8 +89,12 @@ export class GitSafePointManager {
         lastError = err instanceof Error ? err : new Error(String(err));
         if (lastError.message.includes('lock')) {
           const backoff = delay * Math.pow(2, attempt);
-          
-          sleep(backoff);
+          // `execGit` là HÀM ĐỒNG BỘ (dùng execFileSync) nên không `await` được.
+          // Trước đây `sleep(backoff)` không await — Promise bị bỏ đi, retry chạy
+          // liền nhau trong vài chục ms thay vì hàng giây, tức là toàn bộ backoff
+          // vô nghĩa, đúng cái race giữa các agent mà module này sinh ra để chống.
+          // `Atomics.wait` là cách chờ đồng bộ duy nhất ở đây.
+          sleepSync(backoff);
           continue;
         }
         throw lastError;
@@ -90,16 +107,15 @@ export class GitSafePointManager {
 
   public static createSafePoint(cwd: string): boolean {
     try {
-      
       try {
         this.execGit('git rev-parse --is-inside-work-tree', cwd);
       } catch {
-        return false; 
+        return false;
       }
 
       const status = this.execGit('git status --porcelain', cwd).trim();
       if (!status) {
-        return false; 
+        return false;
       }
 
       this.execGit('git add -A', cwd);
@@ -117,7 +133,6 @@ export class GitSafePointManager {
 
   public static rollback(cwd: string): boolean {
     try {
-      
       try {
         this.execGit('git rev-parse --is-inside-work-tree', cwd);
       } catch {
@@ -127,13 +142,11 @@ export class GitSafePointManager {
       const lastCommitMsg = this.execGit('git log -1 --pretty=%s', cwd).trim();
 
       if (lastCommitMsg === 'ghita-temp-safepoint') {
-        
         this.execGit('git reset --hard HEAD~1', cwd);
         this.execGit('git clean -fd', cwd);
         this.logGitAction(cwd, 'ROLLBACK', 'Hard rollbacked ghita-temp-safepoint successfully');
         return true;
       } else {
-        
         this.execGit('git reset --hard HEAD', cwd);
         this.execGit('git clean -fd', cwd);
         this.logGitAction(cwd, 'ROLLBACK', 'Cleaned working directory (no safepoint found)');
@@ -165,7 +178,7 @@ export class GitSafePointManager {
 
 export class GitSafePointMiddleware implements AgentMiddleware {
   readonly name = 'GitSafePointMiddleware';
-  readonly priority = 5; 
+  readonly priority = 5;
 
   private activeSafepoints = new Set<string>();
 
@@ -197,7 +210,6 @@ export class GitSafePointMiddleware implements AgentMiddleware {
     result: string,
     _context: MiddlewareContext,
   ): Promise<{ modifiedResult?: string } | void> {
-    
     if (toolName !== 'run_command' && toolName !== 'runCommand') return;
 
     const errorKeywords = [
@@ -223,7 +235,7 @@ export class GitSafePointMiddleware implements AgentMiddleware {
     if (hasError) {
       const cwd = process.cwd();
       const rolledBack = GitSafePointManager.rollback(cwd);
-      this.activeSafepoints.delete(cwd); 
+      this.activeSafepoints.delete(cwd);
 
       if (rolledBack) {
         return {

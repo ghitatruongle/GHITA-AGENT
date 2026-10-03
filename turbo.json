@@ -18,6 +18,10 @@
       "dependsOn": ["^build"],
       "inputs": ["src/**/*.ts", "src/**/*.tsx", "tsconfig.json"]
     },
+    "quality:tests": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],

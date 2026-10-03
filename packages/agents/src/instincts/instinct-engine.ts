@@ -106,9 +106,16 @@ export class InstinctEngine {
   evaluate(context: InstinctContext): { activeInstincts: InstinctRule[]; combinedPrompt: string } {
     const matched: InstinctRule[] = [];
 
-    const activeExt = context.activeFile
-      ? `.${context.activeFile.split('.').pop()?.toLowerCase()}`
-      : undefined;
+    // `split('.').pop()` trên tên KHÔNG có dấu chấm trả về chính tên đó, nên
+    // `Makefile` sinh ra extension giả `.makefile` và khớp oan mọi rule khai
+    // báo trùng tên file (Dockerfile → .dockerfile, LICENSE → .license).
+    const activeExt = (() => {
+      const name = context.activeFile;
+      if (!name) return undefined;
+      const dot = name.lastIndexOf('.');
+      if (dot <= 0 || dot === name.length - 1) return undefined;
+      return `.${name.slice(dot + 1).toLowerCase()}`;
+    })();
     const promptLower = (context.userPrompt || '').toLowerCase();
     const workspaceFiles = context.workspaceFiles || [];
 

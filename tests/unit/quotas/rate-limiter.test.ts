@@ -53,10 +53,15 @@ describe('Quotas - Rate Limiter', () => {
     expect(peekAfter).toBeLessThan(10);
   });
 
-  it('should allow unlimited when no limit registered', () => {
+  it('should fail CLOSED when no limit registered (Track 2 security fix)', () => {
     const limiter = new RateLimiter();
     const result = limiter.check('user-1', 'nonexistent');
-    expect(result.allowed).toBe(true);
+    // Limit chưa đăng ký phải CHẶN, không được cấp phát vô hạn — nếu không
+    // một lỗi gõ nhầm id hay quên register là bỏ qua toàn bộ rate limiting.
+    // Kỳ vọng cũ (allowed=true) là hợp đồng fail-open đã bị thay.
+    expect(result.allowed).toBe(false);
+    expect(result.limit).toBe(0);
+    expect(result.retryAfterMs).toBeGreaterThan(0);
   });
 
   it('should return stats', () => {

@@ -12,7 +12,7 @@
 //                         before they reach the model (preModel)
 
 import type { AgentMiddleware, MiddlewareContext, PreModelResult } from './types.js';
-import { SystemMessage, ToolMessage } from '../messages/message.js';
+import { SystemMessage, ToolMessage, messageFromData } from '../messages/message.js';
 import type { BaseMessage } from '../messages/message.js';
 
 // Helpers
@@ -228,12 +228,12 @@ export function createPiiRedactionMiddleware(options: PiiRedactionOptions = {}):
               { metadata: data.metadata },
             );
           }
-          const Ctor = msg.constructor as new (
-            content: string,
-            opts?: Record<string, unknown>,
-          ) => BaseMessage;
+          // `messageFromData` giữ lại đầy đủ các trường phụ — quan trọng nhất
+          // là `toolCalls` của AIMessage. Dùng `new Ctor(...)` chỉ truyền
+          // `metadata`, nên chỉ cần MỘT email trong nội dung assistant là
+          // TOÀN BỘ lệnh gọi tool của agent bị xoá, vòng tool-calling gãy.
           try {
-            return new Ctor(redacted, { metadata: data.metadata });
+            return messageFromData({ ...data, content: redacted });
           } catch {
             return msg;
           }

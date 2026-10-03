@@ -9,9 +9,15 @@
 //! Std-only (HashMap + Vec) so `cargo test` runs offline; addon exposes napi.
 
 pub mod importance;
+pub mod incremental;
 pub mod splitters;
 
+// `#[napi]` sinh ra mã đăng ký hàm vào addon, mà phân tích dead-code của
+// clippy không nhìn thấy — nên mọi hàm export trong đây đều bị báo "never
+// used" dù chúng thật sự được gọi từ JS. Tắt cảnh báo cho cả module thay vì
+// 7 dòng `#[allow]`, và ghi lý do để người sau không tưởng là code chết.
 #[cfg(feature = "addon")]
+#[allow(dead_code)]
 mod napi;
 
 use std::collections::HashMap;
@@ -45,33 +51,64 @@ pub struct BM25Index {
 impl BM25Index {
     /// Build the inverted index in one pass over the corpus.
     pub fn build(chunks: &[Chunk], k1: f64, b: f64) -> Self {
-        let n = chunks.len();
+        let tokenized: Vec<HashMap<String, u32>> = chunks
+            .iter()
+            .map(|c| {
+                let mut seen: HashMap<String, u32> = HashMap::new();
+                for token in tokenize(&c.text) {
+                    *seen.entry(token).or_insert(0) += 1;
+                }
+                seen
+            })
+            .collect();
         let lengths: Vec<usize> = chunks.iter().map(|c| c.text.len()).collect();
+        Self::from_token_counts(&tokenized, &lengths, k1, b)
+    }
+
+    /// Dựng chỉ mục từ số đếm từ đã tính sẵn.
+    ///
+    /// Tách riêng khỏi `build` để `incremental.rs` tái dùng được kết quả
+    /// tokenize của những file KHÔNG đổi. `build` luôn phải tokenize lại toàn
+    /// bộ, nên gọi nó mỗi lần re-index là tốn công vô ích — đó chính là lý do
+    /// "incremental" trước đây không tăng tốc được gì.
+    pub fn from_token_counts(
+        tokenized: &[HashMap<String, u32>],
+        lengths: &[usize],
+        k1: f64,
+        b: f64,
+    ) -> Self {
+        // Hai slice phải cùng độ dài: lệch nhau thì build vẫn "thành công" nhưng
+        // `query` sau đó panic index-out-of-bounds — xa gọi lỗi gấp mùa, và qua
+        // napi là đau cả process Node. Chặn ở đây với thông báo rõ ràng.
+        assert_eq!(
+            tokenized.len(),
+            lengths.len(),
+            "from_token_counts: tokenized ({}) và lengths ({}) phải cùng độ dài",
+            tokenized.len(),
+            lengths.len()
+        );
+        let n = tokenized.len();
         let total: usize = lengths.iter().sum();
         let avg_len = total as f64 / n.max(1) as f64;
         let mut index: HashMap<String, TermEntry> = HashMap::new();
 
-        for (ci, chunk) in chunks.iter().enumerate() {
-            let mut seen: HashMap<String, u32> = HashMap::new();
-            for token in tokenize(&chunk.text) {
-                *seen.entry(token).or_insert(0) += 1;
-            }
+        for (ci, seen) in tokenized.iter().enumerate() {
             for (token, tf) in seen {
-                let entry = index.entry(token).or_insert(TermEntry {
+                let entry = index.entry(token.clone()).or_insert(TermEntry {
                     df: 0,
                     postings: Vec::new(),
                 });
                 entry.df += 1;
                 entry.postings.push(Posting {
                     chunk: ci as u32,
-                    tf,
+                    tf: *tf,
                 });
             }
         }
 
         BM25Index {
             index,
-            lengths,
+            lengths: lengths.to_vec(),
             avg_len,
             n,
             k1,
@@ -90,7 +127,9 @@ impl BM25Index {
                 (1.0 + (self.n as f64 - entry.df as f64 + 0.5) / (entry.df as f64 + 0.5)).ln();
             for posting in &entry.postings {
                 let chunk_idx = posting.chunk as usize;
-                let len = self.lengths[chunk_idx] as f64;
+                // Phòng thủ: index lệch (caller dựng sai qua from_token_counts)
+                // không được panic — coi chunk rỗng là đủ để trả kết quả an toàn.
+                let len = self.lengths.get(chunk_idx).copied().unwrap_or(0) as f64;
                 let tf_norm = (posting.tf as f64 * (self.k1 + 1.0))
                     / (posting.tf as f64
                         + self.k1 * (1.0 - self.b + self.b * (len / self.avg_len)));

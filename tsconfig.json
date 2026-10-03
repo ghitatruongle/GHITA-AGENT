@@ -1,0 +1,29 @@
+{
+  // Typecheck + lint CÓ CHẶN cho test ở thư mục gốc.
+  //
+  // Vì sao cần: `turbo typecheck` chỉ chạy script `typecheck` của từng package,
+  // mà script đó chỉ soi `src/`. Thư mục `tests/` ở gốc vì vậy KHÔNG BAO GIỜ
+  // được typecheck — lỗi kiểu lọt qua CI hoàn toàn. Đợt review demo2 đã phát
+  // hiện 2 lỗi TS trong file mới bằng tay, chứng tỏ lỗ hổng là có thật.
+  //
+  // Chạy: pnpm quality:tests
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "composite": false,
+    "incremental": false,
+    "sourceMap": false,
+    "types": ["node", "vitest/globals"],
+    "allowImportingTsExtensions": true,
+    // Test hay truy cập mảng theo chỉ số và tạo biến chỉ để dán nhãn trong
+    // assertion. Hai quy tắc này sinh hơn 110 cảnh báo ở test cũ mà không bắt
+    // lỗi thật nào. Source của từng package vẫn giữ bản strict đầy đủ.
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["tests/demo2-baseline/**/*.ts", "tests/demo2-adversarial/**/*.ts"],
+  "exclude": ["node_modules", "refer_project", "**/dist", "**/coverage"]
+}

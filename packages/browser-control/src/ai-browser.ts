@@ -7,6 +7,27 @@ export interface AIBrowserContext {
   maxCandidates?: number;
   /** Timeout for one LLM call in ms. */
   timeoutMs?: number;
+  /**
+   * Trần số lần thử khi hành động hỏng (self-heal). Mặc định 2.
+   * demo2 P3.1 (Điểm 4): trước đây cứng, không cấu hình được.
+   */
+  maxAttempts?: number;
+  /**
+   * Nhận số liệu sau mỗi lượt act — đẩy lên UI/telemetry.
+   * demo2 P3.1 (Điểm 4): trước đây `attempts` không đi đâu.
+   */
+  onMetric?: (m: ActMetric) => void;
+}
+
+/** Số liệu một lượt hành động. */
+export interface ActMetric {
+  /** Số lần thử đã dùng (kể cả lượt retry do self-heal). */
+  attempts: number;
+  success: boolean;
+  action: 'click' | 'fill';
+  /** Có tự hồi phục được hay không (thử > 1 lần mới thành công). */
+  recovered: boolean;
+  error?: string;
 }
 
 export interface PageElementCandidate {
@@ -50,7 +71,7 @@ export async function collectCandidates(page: unknown, max = 30): Promise<PageEl
           el.tagName.toLowerCase() +
           (el.id ? `#${el.id}` : '') +
           (el.className && typeof el.className === 'string'
-            ? `.${  el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+            ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
             : ''),
         text: (el.textContent ?? '').trim().slice(0, 80),
         tag: el.tagName.toLowerCase(),

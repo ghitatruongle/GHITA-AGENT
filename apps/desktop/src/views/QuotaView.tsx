@@ -84,7 +84,9 @@ export function QuotaView() {
     setSnap({
       limits: limiter.listLimits(),
       usage: usage.slice(-50),
-      summary: [summary],
+      // `summary` là MỘT object, bọc vào mảng làm `summary.length` luôn = 1,
+      // nên nhánh "chưa có dữ liệu" ở dưới không bao giờ chạy.
+      summary: summary.totalRequests > 0 ? [summary] : [],
       spent: budget.getCurrentSpent(),
       limit: budget.getLimit(),
     });

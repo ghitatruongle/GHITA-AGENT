@@ -307,6 +307,11 @@ async function discoverAndIndex(
   graph: CodeKnowledgeGraph,
   dir: string,
 ): Promise<number> {
+  // Phải xoá sạch trước khi index lại: graph là singleton cấp module, còn
+  // `indexFile` chỉ gỡ file tương ứng với chính nó. Không `clear()` thì đổi
+  // workspace từ A sang B, kết quả gồm node của CẢ HAI repo, trong khi
+  // `totalFiles` chỉ đếm repo mới — bảng và số liệu tự mâu thuẫn.
+  graph.clear();
   const files = await mod.discoverFiles(dir);
   for (const file of files) {
     graph.indexFile(file);

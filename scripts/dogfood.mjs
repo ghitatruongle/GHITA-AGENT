@@ -44,6 +44,7 @@ run('API docs', 'pnpm build:docs');
 
 console.log('\n🔍 Static quality:');
 run('typecheck', `${heapPrefix}pnpm exec turbo typecheck --concurrency=1`);
+run('tests/ typecheck (root tsconfig)', 'pnpm quality:tests');
 run('lint', `${heapPrefix}pnpm exec turbo lint --concurrency=1`);
 
 console.log('\n🧪 Full test suite:');

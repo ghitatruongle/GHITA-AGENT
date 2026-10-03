@@ -5,6 +5,210 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.2.0-demo1] - 2026-10-04 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
+
+> **Bản demo, chưa phải bản phát hành.** 10 điểm cải tiến đã có bằng chứng đo
+> được, nhưng phần UI chưa nối vào hết (xem "Chưa nối UI" bên dưới). Cần thử
+> nghiệm lâu dài trước khi coi là dùng được.
+
+Mốc demo2: 5 dự án tham khảo → 10 điểm cải tiến → map 1-1 vào 10 tính năng đã
+có. Không thêm tính năng mới; tất cả là làm một tính năng đang tồn tại trở nên
+thật. Bằng chứng: `docs/research-demo2-10-points.md` · `docs/demo2-baseline.json`
+(chạy lại bằng `pnpm benchmark:demo2`).
+
+### Vòng review toàn diện + debug (2026-10-04)
+
+Review toàn bộ thay đổi (26 file sửa + 20 file mới) theo 6 vùng độc lập, rồi
+sửa ~30 lỗi tìm được. Đáng chú ý nhất:
+
+- **Treo vô hạn agent** (`search-replace.ts`): một khối `...` bị ngược làm phần
+  mở rộng ra chuỗi rỗng, rồi bộ đếm khớp quay vô tận. Chặn ở cả nguồn và ở bộ đếm.
+- **Hỏng file âm thầm**: `$&`/`$1` trong nội dung thay bị hiểu thành mẫu thay;
+  file CRLF của Windows không khớp được và bị ghi lẫn `\r\n` với `\n`; thay nhầm
+  dòng khi mẫu khớp giữa token (`xreturn`).
+- **Gate typecheck vô hiệu**: `turbo quality:tests` không chạy task ở package
+  root, nên `pnpm typecheck` chưa từng kiểm tra gì ở gate mới. Đã nối lại, và
+  nối luôn suite test đối kháng (`tests/demo2-adversarial`) vào `pnpm test`.
+- **Cổng hoàn thành bị qua mặt**: `<task-done>` kèm `exitCode` khác 0 (lệnh vừa
+  fail) vẫn được nhận là "xong" — nay chỉ `exitCode: 0` mới tính là bằng chứng.
+- **UI kẹt trạng thái**: nối node tạo vòng lặp bị chặn thì WorkflowView kẹt luôn
+  ở chế độ nối (chỉ Escape mới ra được); thiếu bù scroll ở 2 chỗ tạo node.
+- **Rò rỉ trong subagent channel**: reply tới sớm làm timer và subscription
+  `reply:<id>` rò vĩnh viễn. Flow đếm sai số lần retry; `maxConcurrency = NaN`
+  khiến flow chạy 0 step mà vẫn báo `completed`.
+- **Rust**: `from_token_counts` thiếu kiểm tra độ dài (lệch là panic lúc `query` —
+  qua napi là chết process Node); lọc NaN/Infinity cho tham số k1/b.
+- Lỗi nhỏ khác: lỗi chat hiện 2 lần, metric ghi nhần click/fill, MCP health `get()`
+  trả bản ghi nội bộ, `fix-mojibake.mjs` chặn file nhị phân trước khi ghi.
+
+Kiểm chứng sau khi sửa: `pnpm typecheck` 44/44 · `turbo test --force` 44/44 ·
+`pnpm test:root` 702/702 · `cargo test` exit 0 · repro 3/3 hành vi lỗi đã hết.
+
+### Track 0 — Sửa lỗi hiển thị
+
+- **Mojibake 36 chỗ trong sidecar** (`apps/desktop/src-tauri/sidecar/server.mjs`):
+  text tiếng Việt bị đọc sai kiểu cp1252 rồi lưu lại thành UTF-8. Người dùng thấy
+  `chÆ°a ÄÆ°£c cáº¤u hÌnh` thay vì "chưa được cấu hình", emoji `ðŸŽ‰` thay vì 🏆.
+  Đây là thứ **mọi người dùng mới đều nhìn thấy đầu tiên** và dễ tưởng app bị lỗi font.
+  Sửa bằng `scripts/fix-mojibake.mjs` — chỉ repair khi kết quả hợp lệ tuyệt đối
+  (không sinh ký tự thay thế, không sinh ký tự điều khiển), nên ký tự đang **đúng**
+  như `—` được giữ nguyên.
+
+### Track 1 — Nghiên cứu 5 dự án tham khảo
+
+- 5 dự án khảo sát sâu: `aider` (Apache-2.0), `stagehand` (MIT), `continue`
+  (Apache-2.0), `openhands` (MIT), `claude-code` (**proprietary** — chỉ học ý
+  tưởng kiến trúc, tự viết lại, không sao chép văn bản; bản clone không chứa source agent).
+- Xếp hạng lại theo giá trị thực tế: `aider` hạng 1, `claude-code` hạng 6.
+
+### Track 2 — Mười điểm cải tiến (đều có số liệu trước → sau)
+
+| #   | Điểm                                                                          | Tính năng                | Trước                                       | Sau                                           |
+| --- | ----------------------------------------------------------------------------- | ------------------------ | ------------------------------------------- | --------------------------------------------- |
+| 1   | Tool `search_replace` cascade 4 tầng + lỗi **hành động được**                 | A5 AI edit-apply         | chỉ khớp chính xác (40% tình huống thực tế) | **100%**; file không bị ghi khi còn khối hỏng |
+| 2   | Vòng verify lint→test có trần, **hết trần thì DỪNG hỏi người dùng**           | A6 Multi-file edit queue | không hề kiểm tra gì                        | `retry → retry → retry → escalate`            |
+| 3   | Cache best-effort cho browser observe/act/extract                             | D4 Browser control       | 5 lần gọi LLM / 5 `act()`                   | **1 lần** (−80%)                              |
+| 4   | `attempts` đẩy lên UI/telemetry + trần retry cấu hình được                    | A30 WebView panel        | không đi đâu, trần cứng 2                   | qua `ctx.onMetric`                            |
+| 5   | Content-addressed incremental indexing                                        | A24 CodeGraph view       | dựng lại toàn bộ kho                        | đổi 95/200 file → chỉ re-index 95 file        |
+| 6   | Context provider fan-out, try/catch độc lập từng nguồn + dedup theo vùng dòng | D1 Memory/RAG            | 1 nguồn chết là mất sạch ngữ cảnh           | **2/3 nguồn sống**; dedup 2 chunk trùng → 1   |
+| 7   | Compaction thành sự kiện 4 outcome + đo chất lượng nén                        | A2 Dashboard             | im lặng, không ai biết                      | `CompactionMonitor` + `retention`             |
+| 8   | Tầng MCP health 4 trạng thái + TTL, verdict **không persist**                 | D3 MCP                   | chỉ có `connected: boolean`                 | phân biệt `unknown` với `degraded`            |
+| 9   | Completion-promise contract + cổng chặn                                       | A3 Chat streaming        | tự nói "xong" không bằng chứng              | `CompletionGate`, hết 3 lượt thì dừng hỏi     |
+| 10  | Bản kê bắt buộc cho subagent + đo tỉ lệ sửa nhầm file                         | A13 Agents view          | không có                                    | `EvidenceManifest`                            |
+
+### Phát hiện: đừng đổi chiến lược compaction mặc định
+
+Đo trên transcript 198.690 token có đường dẫn và tên hàm thật:
+
+| Chiến lược              | Giảm token | **Giữ lại thông tin then chốt** |
+| ----------------------- | ---------- | ------------------------------- |
+| `summary`               | 99%        | **0,8%**                        |
+| `sliding_window`        | 61%        | 38,6%                           |
+| `trajectory` (mặc định) | 54%        | **77,4%**                       |
+
+Nhìn số token thì `summary` thắng áp đảo, nhưng nó **giữ lại 0,8% đường dẫn và tên
+hàm** — agent sẽ không biết mình đang sửa cái gì, và lỗi đó hiện ra âm thầm.
+Mặc định hiện tại là cân bằng tốt nhất nên **giữ nguyên**, chỉ thêm sự kiện để đo.
+
+Bài học: chỉ số "giảm token" một mình là chỉ số **nguy hiểm** — nó thưởng cho
+hành vi ném bỏ thông tin. Mọi tối ưu sau này phải đi kèm một chỉ số chất lượng.
+
+### Vòng review + debug (2026-09-27) — 14 lỗi tìm được, đã sửa hết
+
+Đợt này viết bộ test đối kháng riêng (38 test, `tests/demo2-adversarial/`) cố
+làm hỏng từng module mới, cộng một lượt rà soát độc lập cho phần Rust + script.
+Kết quả: **14 lỗi thật**, đã sửa hết và thêm test hồi quy cho từng cái.
+
+**Nghiêm trọng nhất — BUG-006: "incremental indexing" không tăng tốc gì.**
+Doc comment khẳng định _"không tốn công tokenize lại"_, nhưng `reindex()` gọi
+`BM25Index::build()` với toàn bộ chunk nên tokenize lại 100%. Đo được: đổi 1/400
+file mất 8163 µs, đổi 400/400 file mất 7138 µs — **tỉ lệ reindex giảm 499 lần mà
+thời gian không giảm**. Test chỉ assert trên tỉ lệ nên vẫn xanh: số liệu đẹp,
+sự thật thì không. Sửa bằng cách cache dạng **đã tokenize** và tách
+`BM25Index::from_token_counts()` khỏi `build()`. Đo lại: dựng lạnh **34,3 ms**,
+đổi 1/400 file **7,8 ms** (nhanh gấp 4,4 lần, tokenize giảm 727 lần).
+Chạy lại: `cargo run --release -p ghita-retrieval --example bench_incremental`.
+
+**BUG-001 — `search: ''` khớp ở mọi vị trí.** Model sinh thẻ bị cắt cụt sẽ khiến
+lệnh ghi bậy nội dung vào file. Đã chặn và báo lý do cụ thể.
+
+**BUG-010 — `fix-mojibake.mjs` sửa nhầm file KHÔNG phải mojibake, im lặng.**
+Bản đầu chỉ kiểm "bytes giải ra UTF-8 hợp lệ", nên `É©` (tiếng Pháp) bị đổi thành
+`ɩ` mà không cảnh báo. Đã thêm điều kiện "trông như mojibake thật": ký tự dẫn
+đầu cp1252 **và** ký tự kế nằm trong 0x80–0xBF — nhờ đó `Ärger` (tiếng Đức) và
+`É©` (tiếng Pháp) giữ nguyên. `--write` giờ luôn tạo bản `.bak`.
+
+**BUG-013 — chỉ số `bestStrategy` chọn theo tiêu chí mà chính file cảnh báo là
+nguy hiểm.** Nó xếp theo số token thấp nhất, nên tôn vinh `summary` (giảm 99%
+token nhưng chỉ giữ lại 0,8% thông tin). Đã đổi: loại chiến lược có retention
+< 50% trước, rồi mới ưu tiên giữ thông tin — kết quả chuyển sang `trajectory`.
+
+**Còn lại:** khoá `k1`/`b` bị bỏ qua khi nội dung không đổi (đổi tham số vô tác
+dụng); `plan()` trả vector không ổn định giữa các process; `plan()` hash kho hai
+lần; `index_size` thực chất là số từ khoá chứ không phải số chunk; script bỏ sót
+ký tự điều khiển C1; `searchReplaceBatch` ném thay vì trả lỗi gọn; xoá dòng để
+lại dòng trống; `🎉 Xong!` không bị chặn; hai module trả `'abort'`/`'escalate'`
+cho cùng một việc.
+
+**Phát hiện thêm:** `track7/act-cache.ts` đã tồn tại từ trước và cache đúng thứ
+Điểm 3 nhắm tới (SQLite, TTL, SHA-256) nhưng **không được nối vào đâu**. Đã nâng
+`AIPageCache` lên SHA-256 để không kém — với cache hành động trình duyệt, va
+chạm hash nghĩa là **click nhầm phần tử**. Hai bản nên gộp ở mốc sau.
+
+### Vòng review mở rộng ra toàn repo (2026-09-27) — 29 lỗi nữa
+
+Mở rà từ phần demo2 sang những nơi chưa từng được soi: 9.700 dòng
+`packages/agents` không ai gọi, các view "có vỏ không ruột", hai cache trình duyệt,
+8 cảnh báo clippy bị trì hoãn. **29 lỗi thật, đã sửa 13 cái nặng nhất.**
+
+Nặng nhất ở `packages/agents`:
+
+- **BUG-015** — glob `**` bị thay hai lần trong `markdownGate.ts`: chuỗi thay thế
+  `(?:.*/)?` chứa ký tự `*` nên bị lượt sau cắn, thành `.[^/]*`. Hệ quả:
+  `**/*.md` chỉ khớp 1 cấp thư mục → **bỏ sót mọi file markdown từ độ sâu 2 trở
+  lên**, đồng thời không loại trừ được `dist/**` ở độ sâu con.
+- **BUG-016** — `enforceInboxCap` xoá `mailbox_messages` mà không xoá
+  `mailbox_deliveries` (schema bật foreign keys) → ném `FOREIGN KEY constraint
+failed`, `send()` thứ tư ném exception và rollback: **mất tin nhắn**.
+- **BUG-017** — `chunkArray` với `maxConcurrency = 0` → `i += 0` không bao giờ
+  tăng: **vòng lặp vô tận nuốt CPU**, làm OOM worker Node.
+- **BUG-018** — `sleep(backoff)` không `await` trong `execGit`: 5 lần retry chạy
+  liền trong 24 ms thay vì 1,5 s. Đúng cái race giữa các agent mà module này sinh
+  ra để chống lại, bị vô hiệu hoá.
+- **BUG-019** — PII redaction dựng lại message bằng `new Ctor(redacted, {metadata})`
+  mất `toolCalls`: chỉ cần MỘT email trong nội dung assistant là **toàn bộ lệnh
+  gọi tool của agent bị xoá**, vòng tool-calling gãy.
+
+Còn sửa: timer timeout không huỷ (BUG-020), `retries` lệch 1 (021), timer 30 s rò
+rỉ sau khi reply tới sớm (022), hai key khác nhau ghi đè nhau sau sanitize — mất
+dữ liệu âm thầm (023), extension giả cho file không có đuôi (024), evaluator sập
+vì finding dữ liệu bẩn (025), đồng bộ cha–con âm thầm mất (026), plan không ổn
+định (027).
+
+Ở UI — các lỗi người dùng nhìn thấy ngay:
+
+- **BUG-028** — `used` bị chặn 128000 nhưng `percentage` tính từ giá trị chưa chặn
+  → Dashboard hiện đồng thời "128000/128000" (=100%) và **"156%"**.
+- **BUG-029** — `chat_done` dùng `.map` chỉ đổi placeholder; placeholder đã bị
+  `chat_error` xoá thì `.map` là no-op → **nội dung trả về biến mất không dấu vết**.
+- **BUG-030** — id hardcode dùng `-` còn catalog dùng `.` → dedup khớp **0/6**,
+  MỌI plugin hiện 2 thẻ, cài bản này bản kia vẫn hiện nút "Cài đặt".
+- **BUG-031** — `summary: [summary]` bọc object vào mảng → nhánh "chưa có dữ liệu"
+  không bao giờ chạy, luôn thấy một dòng toàn số 0.
+- **BUG-032** — graph là singleton nhưng `discoverAndIndex` không `clear()` → đổi
+  workspace thì kết quả gồm node của **cả hai repo**.
+- **BUG-033/034** — kéo node không trừ scroll (node nhảy ngược khi cuộn xa); cho
+  phép tạo chu trình thì `Flow.runDAG` ném lỗi lúc chạy.
+
+Hạ tầng đo lường:
+
+- **BUG-035** — `tests/` ở gốc **không bao giờ được typecheck**. Đã thêm
+  `tsconfig.json` gốc + turbo task `quality:tests`, nối vào `pnpm typecheck` và
+  `dogfood`. `tsconfig.tests-full.json` ghi lại **103 lỗi type còn nợ**, phần lớn
+  là API drift — test tham chiếu tới thứ không tồn tại
+  (`PROTOCOL_EVENT.APPROVAL_RESPONSE`, `CommunicationGateway.simulateMessage`,
+  `SkillInvocation.args`): luồng approval hiện **không được kiểm chứng gì**.
+- **BUG-036** — 8 cảnh báo clippy trong `napi.rs`: chỉ **1** là lint thật
+  (`manual_is_multiple_of`); 7 còn lại là cảnh báo giả vì các hàm có `#[napi]` đã
+  được đăng ký sang JS. Đã sửa lint thật và ghi chú cho `#[allow(dead_code)]`.
+
+**Phát hiện lớn nhất: addon Rust chưa bao giờ được JS nạp.** `loadNative()` toàn
+repo chỉ được gọi một lần cho `tokenizer`. Toàn bộ addon `retrieval` (BM25, RRF,
+vector search, splitter) nằm im — JS fallback luôn chạy. Đi kèm BUG-006, điều này
+cho thấy phần Rust hoá hiện tại có công sức port nhưng chưa có đường dẫn chạy thật.
+
+### Chưa nối UI (cần mốc sau)
+
+Các lớp dưới đã có và đã test, nhưng **chưa** được nối vào giao diện:
+`AIPageCache`, `CompactionMonitor`, `McpHealthStore`, `VerifyLoop`, `CompletionGate`.
+10/10 điểm có bằng chứng ở tầng thư viện, chưa có ở tầng màn hình.
+
+### Kiểm chứng
+
+`turbo test` 13/13 task · ai-engine 70 test file · browser-control 11 · agents 29 ·
+mcp 2 · `cargo test -p ghita-retrieval` 39/39 · `cargo fmt` sạch · `sync-version` OK ·
+`check-artifacts` OK · 23 chỉ số trong `docs/demo2-baseline.json`.
+
 ## [1.2.0-demo1] - 2026-08-31 (chưa phát hành — chờ owner nghiệm)
 
 ### Track 1 — Ổn định 100%
@@ -62,7 +266,7 @@ typecheck 44/44 · lint 43/43 · turbo test 44/44 (desktop 209, memory 270, inge
 - **Memory DB (L win)**: SQLite mở với `WAL` + `synchronous=NORMAL` + `auto_vacuum=INCREMENTAL`; autoVacuum chạy `PRAGMA incremental_vacuum` thay vì full-file `VACUUM` mỗi 10 lần ghi (trước đây rewrite toàn bộ DB dưới exclusive lock, đơ sidecar giữa cuộc chat); prepared statements cache cho hot path `indexChatMessage`. **Micro-bench 2.000 inserts: 14.0–23.6s → ~225–260ms (~60–90×)**.
 - **KvStore (Rust)**: `PRAGMA journal_mode=WAL` khi mở; thêm `set_many(keys, values)` — N key chỉ tốn 1 commit thay vì N fsync round-trip.
 - **Streaming UI**: `MarkdownMessage` được `memo()` với bảng components ổn định; trong lúc stream render plain-text (markdown parse O(n²) theo độ dài phản hồi trước đây chạy mỗi flush 50ms); post-chunk hooks coalesce theo batch ~40ms (`streamWithHooks`) thay vì gọi per-token.
-- **Startup**: Monaco (~2MB + 5 workers) không còn nằm trong entry chunk — lazy-load đúng lúc CodeEditor mount đầu tiên; MarketplaceView/SymbolOutline chuyển sang deep imports (@ghita/skills/marketplace/*, @ghita/code-graph/ast-parser) để khỏi kéo PTY pool/MCP server/better-sqlite3 vào renderer bundle.
+- **Startup**: Monaco (~2MB + 5 workers) không còn nằm trong entry chunk — lazy-load đúng lúc CodeEditor mount đầu tiên; MarketplaceView/SymbolOutline chuyển sang deep imports (@ghita/skills/marketplace/\*, @ghita/code-graph/ast-parser) để khỏi kéo PTY pool/MCP server/better-sqlite3 vào renderer bundle.
 - **Parallelization**: `testAll()` providers, MCP `connectAll()`, và cache-warmer sources chạy song song (hết cộng dồn latency tuần tự); semantic-dedup `bulkAdd` embed batch 8 luồng.
 - **Sidecar & tools**: Ralph loop `tsc --noEmit` chuyển sang `execFile` async (trước đây block event loop tới 30s); edit-review đọc file và checkpoint ghi file qua `fs/promises`; `listDirectory` có cap 500 entries/depth 12, trả compact JSON kèm chú thích truncate.
 - **Compaction**: `scoreAll` pre-tokenize mỗi entry một lần vào Map (bỏ vòng tokenize O(n²) trên tối đa 5.000 entries).

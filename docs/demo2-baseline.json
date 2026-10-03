@@ -1,0 +1,249 @@
+{
+  "version": "1.2.0-demo1",
+  "phase": "P2.2",
+  "generatedAt": "2026-09-27T12:31:58.454Z",
+  "note": "Đo offline, không cần API key. Giá trị 0 kèm kind=structural-absent nghĩa là khả năng chưa tồn tại, KHÔNG phải đã đo được 0.",
+  "summary": {
+    "browserLlmCallsPerRepeatedAct": 5,
+    "browserRepeatedActCount": 5,
+    "selfHealRecoverAttempts": 2,
+    "selfHealUnrecoverAttempts": 2,
+    "contextTokensBeforeCompact": 198690,
+    "contextNeedsCompactByDefault": true,
+    "contextPerStrategy": {
+      "sliding_window": {
+        "before": 198690,
+        "after": 76716,
+        "ms": 0,
+        "msgs": 348,
+        "retention": 0.38555555555555554,
+        "outcome": "compacted"
+      },
+      "summary": {
+        "before": 198690,
+        "after": 1063,
+        "ms": 0,
+        "msgs": 5,
+        "retention": 0.0077777777777777776,
+        "outcome": "compacted"
+      },
+      "trajectory": {
+        "before": 198690,
+        "after": 90807,
+        "ms": 6,
+        "msgs": 900,
+        "retention": 0.7744444444444445,
+        "outcome": "compacted"
+      }
+    }
+  },
+  "measurements": [
+    {
+      "id": "B1.browser.llmCallsPerRepeatedAct",
+      "point": 3,
+      "metric": "Số lần gọi LLM cho 5 act() giống hệt nhau — KHÔNG cache (trước demo2)",
+      "value": 5,
+      "unit": "calls",
+      "note": "Baseline 1.1.5: không có cache, mỗi act() gọi LLM lại từ đầu.",
+      "kind": "measured"
+    },
+    {
+      "id": "B1c.browser.llmCallsPerRepeatedActCached",
+      "point": 3,
+      "metric": "Số lần gọi LLM cho 5 act() giống hệt nhau — CÓ cache (sau demo2)",
+      "value": 1,
+      "unit": "calls",
+      "note": "Giảm 80% so với B1. Cache hits=4, misses=1, lỗi cache=0.",
+      "kind": "measured"
+    },
+    {
+      "id": "B2.browser.actAttemptsOnRecover",
+      "point": 4,
+      "metric": "Số lần thử khi click hỏng lần đầu",
+      "value": 2,
+      "unit": "attempts",
+      "note": "Self-heal đã tồn tại (tối đa 2). Thiếu: attempts chưa đưa lên UI/telemetry. Recovery thành công=true.",
+      "kind": "measured"
+    },
+    {
+      "id": "B2b.browser.actAttemptsUnrecoverable",
+      "point": 4,
+      "metric": "Số lần thử khi hỏng không hồi phục được",
+      "value": 2,
+      "unit": "attempts",
+      "note": "Trần cứng 2 lần, không cấu hình được, không ghi metric. success=false.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.context.tokensBeforeCompact",
+      "point": 7,
+      "metric": "Token trước compact (900 lượt)",
+      "value": 198690,
+      "unit": "tokens",
+      "note": "needsCompact với config mặc định = true (ngưỡng 128000*0.8=102400). Ước lượng chars/3, không dùng tokenizer thật.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.sliding_window.tokenReductionPct",
+      "point": 7,
+      "metric": "Giảm token sau compact — sliding_window",
+      "value": 61,
+      "unit": "%",
+      "note": "198690 → 76716 token, 0ms, còn 348/900 lượt.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.sliding_window.retention",
+      "point": 7,
+      "metric": "Retention sau compact — sliding_window",
+      "value": 38.6,
+      "unit": "%",
+      "note": "Giữ lại 39% đường dẫn/tên hàm còn nguyên. outcome=compacted.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.summary.tokenReductionPct",
+      "point": 7,
+      "metric": "Giảm token sau compact — summary",
+      "value": 99,
+      "unit": "%",
+      "note": "198690 → 1063 token, 0ms, còn 5/900 lượt.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.summary.retention",
+      "point": 7,
+      "metric": "Retention sau compact — summary",
+      "value": 0.8,
+      "unit": "%",
+      "note": "Giữ lại 1% đường dẫn/tên hàm còn nguyên. outcome=compacted.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.trajectory.tokenReductionPct",
+      "point": 7,
+      "metric": "Giảm token sau compact — trajectory",
+      "value": 54,
+      "unit": "%",
+      "note": "198690 → 90807 token, 6ms, còn 900/900 lượt.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3.trajectory.retention",
+      "point": 7,
+      "metric": "Retention sau compact — trajectory",
+      "value": 77.4,
+      "unit": "%",
+      "note": "Giữ lại 77% đường dẫn/tên hàm còn nguyên. outcome=compacted.",
+      "kind": "measured"
+    },
+    {
+      "id": "B3c.context.bestStrategy",
+      "point": 7,
+      "metric": "Chiến lược compact đáng dùng (retention ≥ 50%, ưu tiên giữ thông tin)",
+      "value": "trajectory",
+      "unit": "name",
+      "note": "Còn 90807 token sau compact, giữ 77% thông tin. ĐÃ LOẠI vì mất quá nhiều thông tin: sliding_window, summary.",
+      "kind": "measured"
+    },
+    {
+      "id": "B4.aiEngine.searchReplaceToolCount",
+      "point": 1,
+      "metric": "Số module edit SEARCH/REPLACE trong ai-engine",
+      "value": 1,
+      "unit": "present",
+      "note": "P3.4 Điểm 1 ĐÃ LÀM: ai-engine/src/tools/search-replace.ts — cascade 4 tầng + lỗi hành động được.",
+      "kind": "implemented"
+    },
+    {
+      "id": "B5.aiEngine.lmRetryAttemptsOn429",
+      "point": 1,
+      "metric": "Số lần thử lại khi provider trả 429/503",
+      "value": 0,
+      "unit": "absent",
+      "note": "sidecar/server.mjs dùng Promise.race với timeout hardcode, KHÔNG retry. 1 lần rồi chat_error.",
+      "kind": "structural-absent"
+    },
+    {
+      "id": "B6.mcp.healthStorePresent",
+      "point": 8,
+      "metric": "Có tầng health cho MCP không",
+      "value": 1,
+      "unit": "present",
+      "note": "P3.2 Điểm 8 ĐÃ LÀM: mcp/src/health.ts — 4 trạng thái + TTL, verdict không persist, xác thực 3 trị.",
+      "kind": "implemented"
+    },
+    {
+      "id": "B7.codeGraph.incrementalReindexMs",
+      "point": 5,
+      "metric": "Thời gian re-index sau khi đổi branch",
+      "value": 0,
+      "unit": "absent",
+      "note": "Chưa làm (P3.3). Cần content-addressed cache trong crates/codegraph + crates/retrieval.",
+      "kind": "structural-absent"
+    },
+    {
+      "id": "B8.agents.taskDoneContractPresent",
+      "point": 9,
+      "metric": "Có cổng chặn hoàn thành không",
+      "value": 1,
+      "unit": "present",
+      "note": "P3.5 Điểm 9 ĐÃ LÀM: agents/src/track5/completion-contract.ts — CompletionGate, trần 3 lượt rồi DỪNG hỏi user.",
+      "kind": "implemented"
+    },
+    {
+      "id": "B9.agents.evidenceManifestHelpers",
+      "point": 10,
+      "metric": "Có bản kê bắt buộc cho subagent không",
+      "value": 1,
+      "unit": "present",
+      "note": "P3.5 Điểm 10 ĐÃ LÀM: EvidenceManifest + isManifestComplete + outOfManifestEditRate đo sửa nhầm file.",
+      "kind": "implemented"
+    },
+    {
+      "id": "B10.searchReplace.cascadeMatchRate",
+      "point": 1,
+      "metric": "Tỉ lệ khớp cascade trên 5 tình huống thực tế",
+      "value": 100,
+      "unit": "%",
+      "note": "Trước demo2 chỉ khớp chính xác → 3/5 tình huống hỏng. Giờ 4 tầng: exact → ellipsis → bỏ dòng trống → bỏ thụt đầu.",
+      "kind": "measured"
+    },
+    {
+      "id": "B10b.searchReplace.fileUntouchedOnFailure",
+      "point": 1,
+      "metric": "File KHÔNG bị ghi khi còn khối hỏng",
+      "value": 1,
+      "unit": "bool",
+      "note": "outcome=partial, applied=1, failed=1. Mặc định không ghi khi partial; phải truyền allowPartial mới ghi.",
+      "kind": "measured"
+    },
+    {
+      "id": "B11.verifyLoop.stopsAfterMaxReflections",
+      "point": 2,
+      "metric": "Có DỪNG hỏi người dùng khi hết lượt không",
+      "value": 1,
+      "unit": "bool",
+      "note": "Chuỗi quyết định: retry → retry → retry → escalate. Trần 3 lượt rồi escalate — không tự đoán tiếp.",
+      "kind": "measured"
+    },
+    {
+      "id": "B12.context.survivesDeadProvider",
+      "point": 6,
+      "metric": "Số nguồn còn sống sau khi 1 nguồn chết",
+      "value": 2,
+      "unit": "sources",
+      "note": "healthy=fts,git-diff; failed=embeddings. Một nguồn chết KHÔNG kéo theo mất ngữ cảnh.",
+      "kind": "measured"
+    },
+    {
+      "id": "B12b.context.dedupByLineRange",
+      "point": 6,
+      "metric": "Số chunk còn lại sau dedup (từ 2 chunk trùng)",
+      "value": 1,
+      "unit": "chunks",
+      "note": "Dedup theo (file, startLine, endLine). Vùng lồng nhau thì KHÔNG gộp để khỏi mất bối cảnh.",
+      "kind": "measured"
+    }
+  ]
+}

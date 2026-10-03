@@ -1,0 +1,20 @@
+{
+  // Bản ĐẦY ĐỦ cho toàn bộ `tests/` — KHÔNG nằm trong gate, dùng để đo nợ kỹ
+  // thuật và trả nợ dần.
+  //
+  //   npx tsc -p tsconfig.tests-full.json --noEmit
+  //
+  // Nợ hiện tại (2026-09-27): 103 lỗi, phần lớn là API drift — test tham chiếu
+  // tới thứ không tồn tại trong code sản phẩm:
+  //   • `PROTOCOL_EVENT.APPROVAL_RESPONSE` — không có trong enum (mobile-desktop-sync)
+  //   • `CommunicationGateway.simulateMessage` — không có phương thức này
+  //   • `SkillInvocation.args` — không có trường này
+  // Ba cái trên đáng chú ý vì chúng cho thấy test được viết theo API cũ, còn
+  // luồng approval mà chúng kiểm thì hiện KHÔNG được kiểm chứng.
+  //
+  // Không nới lỏng cấu hình cho tới khi sạch: nới lỏng để "cho xanh" là giấu
+  // đúng loại trôi này.
+  "extends": "./tsconfig.json",
+  "include": ["tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["node_modules", "refer_project", "**/dist", "**/coverage"]
+}

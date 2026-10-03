@@ -31,7 +31,7 @@ export class AgentChannel {
   }
 
   // Subscription Management
-  
+
   /**
    * Subscribe an agent to a topic.
    * Returns a subscription id that can be used to unsubscribe.
@@ -100,7 +100,7 @@ export class AgentChannel {
   }
 
   // Messaging
-  
+
   /**
    * Publish a message to a topic. Delivered to all subscribers of that topic.
    * Returns the message id.
@@ -204,20 +204,36 @@ export class AgentChannel {
     const msgId = await this.publish(from, topic, payload);
 
     return new Promise<ChannelMessage | null>((resolve) => {
+      // `settled` để callback reply đến sớm không bị coi là chưa xong: trước đây
+      // reply tới trước lúc gán `timer` thì `clearTimeout(null)` là no-op, nên
+      // sau khi `request()` ĐÃ trả về thành công vẫn còn timer 30s treo.
+      let settled = false;
       let timer: ReturnType<typeof setTimeout> | null = null;
       let replySubId: string | null = null;
 
-      // Subscribe to replies on this message
-      replySubId = this.subscribe(from, `reply:${msgId}`, (reply) => {
+      const finish = (value: ChannelMessage | null) => {
+        if (settled) return;
+        settled = true;
         if (timer) clearTimeout(timer);
         if (replySubId) this.unsubscribe(replySubId);
-        resolve(reply);
+        resolve(value);
+      };
+
+      // Hẹn giờ TRƯỚC khi subscribe: subscribe() có thể đồng bộ xả dead-letter
+      // (reply tới sớm nằm chờ ở đó) và gọi finish() ngay bên trong nó. Nếu
+      // gán timer sau subscribe thì timer sinh ra SAU finish sẽ không bao giờ
+      // được xoá (giữ event loop sống thêm timeoutMs), và subscription reply
+      // bị rò rỉ vĩnh viễn vì finish thấy replySubId === null.
+      timer = setTimeout(() => finish(null), timeoutMs);
+
+      // Subscribe to replies on this message
+      replySubId = this.subscribe(from, `reply:${msgId}`, (reply) => {
+        finish(reply);
       });
 
-      timer = setTimeout(() => {
-        if (replySubId) this.unsubscribe(replySubId);
-        resolve(null); // Timeout
-      }, timeoutMs);
+      // finish() đã chạy trong lúc subscribe() xả dead-letter: replySubId còn
+      // null lúc đó nên phải tự huỷ ở đây.
+      if (settled && replySubId) this.unsubscribe(replySubId);
     });
   }
 
@@ -229,7 +245,7 @@ export class AgentChannel {
   }
 
   // Query & Inspection
-  
+
   /** Get all messages in history, optionally filtered by topic */
   getHistory(topic?: string): ChannelMessage[] {
     if (topic) return this.history.filter((m) => m.topic === topic);
@@ -259,7 +275,7 @@ export class AgentChannel {
   }
 
   // Private Helpers
-  
+
   private addToHistory(msg: ChannelMessage): void {
     this.history.push(msg);
     if (this.history.length > this.maxHistory) {

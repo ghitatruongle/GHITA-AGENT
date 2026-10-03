@@ -213,10 +213,22 @@ export class Flow {
         let output: unknown;
 
         if (step.timeout && step.timeout > 0) {
-          const timeoutPromise = new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Step "${step.id}" timed out`)), step.timeout),
-          );
-          output = await Promise.race([step.execute(depOutputs, context), timeoutPromise]);
+          // Timer phải được huỷ khi step xong sớm — nếu không, Promise.race đã
+          // settle nhưng setTimeout vẫn treo tới hết `step.timeout`, giữ process
+          // sống thừa đúng bằng thời gian timeout. `workflow-advanced.ts` đã
+          // làm đúng chuyện này; bản ở `flow` thì bỏ sót.
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            timer = setTimeout(
+              () => reject(new Error(`Step "${step.id}" timed out`)),
+              step.timeout,
+            );
+          });
+          try {
+            output = await Promise.race([step.execute(depOutputs, context), timeoutPromise]);
+          } finally {
+            if (timer !== undefined) clearTimeout(timer);
+          }
         } else {
           output = await step.execute(depOutputs, context);
         }
@@ -226,11 +238,14 @@ export class Flow {
           status: 'completed',
           output,
           duration: Date.now() - startTime,
-          retries,
+          // `attempt` là số lần thử lại ĐÃ DÙNG trên nhánh thành công (thử
+          // đầu = 0). Dùng biến `retries` ở đây sẽ trả giá trị cũ của lần
+          // catch gần nhất — fail 1 lần rồi thành công bị báo nhầm 0 retries.
+          retries: attempt,
         };
       } catch (err) {
         lastError = err instanceof Error ? err.message : String(err);
-        retries = attempt + 1;
+        retries = attempt; // `attempt` đã là số lần retry thực — cộng 1 là lệch
         if (attempt < maxRetries) {
           await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
         }
@@ -247,9 +262,14 @@ export class Flow {
   }
 
   private chunkArray<T>(arr: T[], size: number): T[][] {
+    // `size <= 0` khiến `i` không bao giờ tăng → vòng lặp vô tận nuốt CPU.
+    // maxConcurrency tới từ người gọi nên phải chặn ở đây, không chỉ ở constructor.
+    // NaN cũng phải chặn: Math.max(1, NaN) vẫn là NaN, `i += NaN` là false
+    // ngay vòng đầu → cả flow chạy 0 step mà vẫn báo "completed".
+    const step = Number.isFinite(size) ? Math.max(1, Math.floor(size)) : 1;
     const chunks: T[][] = [];
-    for (let i = 0; i < arr.length; i += size) {
-      chunks.push(arr.slice(i, i + size));
+    for (let i = 0; i < arr.length; i += step) {
+      chunks.push(arr.slice(i, i + step));
     }
     return chunks;
   }

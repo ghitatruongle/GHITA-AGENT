@@ -43,22 +43,33 @@ function matchesAny(path: string, patterns: string[]): boolean {
 function matchGlob(pattern: string, path: string): boolean {
   const norm = path.replace(/\\/g, '/');
   const pat = pattern.replace(/\\/g, '/');
+  // Thứ tự thay thế là mấu chốt: `**` → `.*` phải chạy SAU `*` → `[^/]*`.
+  // Nếu đảo, chuỗi thay thế `(?:.*/)?` mang theo chính ký tự `*` nên lượt sau
+  // biến `.*` thành `.[^/]*` — phá luôn kết quả của lượt trước, khiến
+  // `**/*.md` chỉ khớp tối đa MỘT cấp thư mục và không loại trừ được
+  // `dist/**` ở độ sâu con. Placeholder là ký tự Private Use Area (U+E000):
+  // không bao giờ xuất hiện trong đường dẫn thật, và ESLint không coi nó là
+  // ký tự điều khiển.
+  const PLACEHOLDER = '';
   const re = new RegExp(
-    `^${ 
-      pat
-        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-        .replace(/^\*\*\//, '(?:.*/)?')
-        .replace(/\/\*\*$/, '(?:/.*)?')
-        .replace(/\*\*/g, '.*')
-        .replace(/\*/g, '[^/]*') 
-      }$`,
+    `^${pat
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replace(/\*\*/g, PLACEHOLDER)
+      .replace(/\*/g, '[^/]*')
+      // Hai nhánh tuỳ chọn PHẢI xử lý TRƯỚC khi placeholder còn lại biến thành
+      // `.*`. Đảo thứ tự thì `**/*.md` không khớp được file nằm ngay gốc thư
+      // mục nữa (`.*\/` bắt buộc có dấu gạch chéo).
+      .replace(new RegExp(`${PLACEHOLDER}/`, 'g'), '(?:.*/)?')
+      .replace(new RegExp(`/${PLACEHOLDER}(?![^/])`, 'g'), '(?:/.*)?')
+      .split(PLACEHOLDER)
+      .join('.*')}$`,
   );
   return re.test(norm);
 }
 
 function joinFn(a: string, b: string): string {
   if (a.endsWith('/') || a.endsWith('\\')) return a + b;
-  return `${a  }/${  b}`;
+  return `${a}/${b}`;
 }
 
 // File discovery

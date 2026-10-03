@@ -108,13 +108,26 @@ export function WorkflowView() {
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
     const canvasRect = canvasRef.current.getBoundingClientRect();
+    // `getBoundingClientRect()` trả toạ độ viewport; canvas là overflow-auto
+    // nên phải cộng thêm scrollLeft/scrollTop, nếu không kéo càng xa càng lệch.
+    const scrollX = canvasRef.current.scrollLeft;
+    const scrollY = canvasRef.current.scrollTop;
     if (draggingNodeId) {
-      const x = Math.max(10, Math.min(2000, e.clientX - canvasRect.left - dragOffsetRef.current.x));
-      const y = Math.max(10, Math.min(1000, e.clientY - canvasRect.top - dragOffsetRef.current.y));
+      const x = Math.max(
+        10,
+        Math.min(2000, e.clientX - canvasRect.left + scrollX - dragOffsetRef.current.x),
+      );
+      const y = Math.max(
+        10,
+        Math.min(1000, e.clientY - canvasRect.top + scrollY - dragOffsetRef.current.y),
+      );
       setNodes((prev) => prev.map((n) => (n.id === draggingNodeId ? { ...n, x, y } : n)));
     }
     if (linkingFrom) {
-      setMousePos({ x: e.clientX - canvasRect.left, y: e.clientY - canvasRect.top });
+      setMousePos({
+        x: e.clientX - canvasRect.left + scrollX,
+        y: e.clientY - canvasRect.top + scrollY,
+      });
     }
   };
 
@@ -128,8 +141,8 @@ export function WorkflowView() {
     const type = e.dataTransfer.getData('nodeType') as WorkflowNode['type'];
     if (!type) return;
     const canvasRect = canvasRef.current.getBoundingClientRect();
-    const x = Math.max(10, e.clientX - canvasRect.left - 80);
-    const y = Math.max(10, e.clientY - canvasRect.top - 24);
+    const x = Math.max(10, e.clientX - canvasRect.left + canvasRef.current.scrollLeft - 80);
+    const y = Math.max(10, e.clientY - canvasRect.top + canvasRef.current.scrollTop - 24);
     const newNode: WorkflowNode = {
       id: `node-${Date.now()}`,
       type,
@@ -179,8 +192,10 @@ export function WorkflowView() {
   const handleCanvasDoubleClick = (e: React.MouseEvent) => {
     if (e.target !== canvasRef.current || !canvasRef.current) return;
     const canvasRect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - canvasRect.left - 80;
-    const y = e.clientY - canvasRect.top - 24;
+    // Như handleDrop: cộng scroll để node rơi đúng chỗ dưới con trỏ kể cả khi
+    // canvas đã cuộn.
+    const x = e.clientX - canvasRect.left + canvasRef.current.scrollLeft - 80;
+    const y = e.clientY - canvasRect.top + canvasRef.current.scrollTop - 24;
     const newNode: WorkflowNode = {
       id: `node-${Date.now()}`,
       type: 'command',
@@ -198,13 +213,48 @@ export function WorkflowView() {
     if (!canvasRef.current) return;
     const canvasRect = canvasRef.current.getBoundingClientRect();
     setLinkingFrom({ nodeId, port });
-    setMousePos({ x: e.clientX - canvasRect.left, y: e.clientY - canvasRect.top });
+    // Cộng scroll ngay từ đầu, nếu không đường nối preview nhảy một đoạn
+    // bằng đúng mức cuộn cho tới khi mousemove đầu tiên chạy.
+    setMousePos({
+      x: e.clientX - canvasRect.left + canvasRef.current.scrollLeft,
+      y: e.clientY - canvasRect.top + canvasRef.current.scrollTop,
+    });
+  };
+
+  // Kết nối từ `from` vào `to` tạo chu trình nếu `to` là tổ tiên của `from`.
+  const wouldCreateCycle = (from: string, to: string, edges: WorkflowConnection[]): boolean => {
+    const parents = new Map<string, string[]>();
+    for (const e of edges) {
+      const list = parents.get(e.toId) ?? [];
+      list.push(e.fromId);
+      parents.set(e.toId, list);
+    }
+    const seen = new Set<string>([to]);
+    const stack = [to];
+    while (stack.length) {
+      const cur = stack.pop();
+      if (cur === undefined) break;
+      if (cur === from) return true;
+      for (const p of parents.get(cur) ?? []) {
+        if (!seen.has(p)) {
+          seen.add(p);
+          stack.push(p);
+        }
+      }
+    }
+    return false;
   };
 
   const handleConnect = (e: React.MouseEvent, toNodeId: string) => {
     e.stopPropagation();
     if (!linkingFrom) return;
     if (linkingFrom.nodeId !== toNodeId) {
+      if (wouldCreateCycle(linkingFrom.nodeId, toNodeId, connections)) {
+        // Phải thoát chế độ nối, nếu không đường nối vàng kẹt theo con trỏ và
+        // không kéo được node nào cho tới khi bấm Escape.
+        setLinkingFrom(null);
+        return;
+      }
       setConnections((prev) =>
         prev
           .filter((c) => !(c.fromId === linkingFrom.nodeId && c.fromPort === linkingFrom.port))

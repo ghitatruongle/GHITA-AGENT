@@ -48,7 +48,9 @@ impl Bm25Index {
             })
             .collect();
         let k1 = k1.filter(|v| v.is_finite() && *v > 0.0).unwrap_or(1.5);
-        let b = b.filter(|v| v.is_finite() && *v >= 0.0 && *v <= 1.0).unwrap_or(0.75);
+        let b = b
+            .filter(|v| v.is_finite() && *v >= 0.0 && *v <= 1.0)
+            .unwrap_or(0.75);
         Bm25Index {
             inner: CoreBM25Index::build(&core_chunks, k1, b),
         }
@@ -117,7 +119,7 @@ pub fn vector_search(
     }
     // Reject trailing partial vectors instead of silently dropping floats —
     // a mismatched flat buffer is a caller bug that must surface as empty.
-    if !corpus_flat.is_empty() && corpus_flat.len() % d != 0 {
+    if !corpus_flat.is_empty() && !corpus_flat.len().is_multiple_of(d) {
         return QueryResult {
             ids: Vec::new().into(),
             scores: Vec::new().into(),
