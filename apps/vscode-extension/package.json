@@ -78,7 +78,7 @@
   },
   "dependencies": {
     "@ghita/shared": "workspace:*",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
     "@types/vscode": "^1.96.0",
