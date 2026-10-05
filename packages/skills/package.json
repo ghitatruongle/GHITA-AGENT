@@ -38,8 +38,8 @@
     "@ghita/shared": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^20.19.43",
     "typescript": "^5.6.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.7"
   }
 }
