@@ -6,7 +6,7 @@
 
 ## Context
 
-GHITA CODING AGENT consists of multiple packages (ai-engine, agents, skills, communication, etc.) and apps (desktop, mobile, vscode-extension). These share common types and utilities. Managing separate repositories would create coordination overhead and version drift.
+Ghita Agent consists of multiple packages (ai-engine, agents, skills, communication, etc.) and apps (desktop, mobile, vscode-extension). These share common types and utilities. Managing separate repositories would create coordination overhead and version drift.
 
 ## Decision
 

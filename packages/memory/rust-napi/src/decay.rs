@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Parallel Decay Scoring (Phase 3 Rust NAPI)
+// Ghita Agent — Parallel Decay Scoring (Phase 3 Rust NAPI)
 // ==============================================================================
 //
 // Exponential decay scoring parallelised with rayon. Used by the memory

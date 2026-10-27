@@ -1,4 +1,4 @@
 // ==============================================================================
-// GHITA Coding Agent - Docs Site Entry Point (Phase 45)
+// Ghita Agent - Docs Site Entry Point (Phase 45)
 // ==============================================================================
 import '@docusaurus/core/lib/client';

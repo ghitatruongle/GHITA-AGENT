@@ -1,4 +1,4 @@
-// Example: Custom Skill for GHITA CODING AGENT
+// Example: Custom Skill for Ghita Agent
 // This demonstrates how to create a custom skill.
 
 export interface SkillDefinition {

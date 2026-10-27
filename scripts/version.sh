@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# GHITA CODING AGENT — Version Bump Script
+# Ghita Agent — Version Bump Script
 # ==============================================================================
 # Usage: ./scripts/version.sh <version>
 # Example: ./scripts/version.sh 0.0.5

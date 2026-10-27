@@ -1,9 +1,9 @@
 {
   "name": "@ghita/mobile-companion",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Mobile companion helper modules for GHITA CODING AGENT",
+  "description": "Mobile companion helper modules for Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

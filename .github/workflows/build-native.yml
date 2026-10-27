@@ -1,5 +1,5 @@
 # ==============================================================================
-# GHITA CODING AGENT - Native addon build matrix (v1.1.1 Track 8)
+# Ghita Agent - Native addon build matrix (v1.1.1 Track 8)
 # ------------------------------------------------------------------------------
 # Builds the napi-rs addons (secscan / retrieval / codegraph / memory-napi) on
 # win/linux/mac, runs the Rust test suites and the native benchmarks, and fails

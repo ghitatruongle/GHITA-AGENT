@@ -1,6 +1,6 @@
 # Custom Skill Example
 
-Demonstrates how to create a custom skill for GHITA CODING AGENT.
+Demonstrates how to create a custom skill for Ghita Agent.
 
 ## Run
 

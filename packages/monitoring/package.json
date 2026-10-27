@@ -1,9 +1,9 @@
 {
   "name": "@ghita/monitoring",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Error monitoring (Sentry), performance tracing & alert rules cho GHITA CODING AGENT",
+  "description": "Error monitoring (Sentry), performance tracing & alert rules cho Ghita Agent",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

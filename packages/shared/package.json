@@ -1,9 +1,9 @@
 {
   "name": "@ghita/shared",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Shared types, constants, utils cho GHITA CODING AGENT",
+  "description": "Shared types, constants, utils cho Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

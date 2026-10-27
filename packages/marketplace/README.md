@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Plugin marketplace for GHITA Coding Agent -- install, uninstall, update, dependency resolution, and lockfile management for community and official plugins.
+Plugin marketplace for Ghita Agent -- install, uninstall, update, dependency resolution, and lockfile management for community and official plugins.
 
 ## Key Features
 

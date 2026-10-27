@@ -1,5 +1,5 @@
 {
-  "name": "GHITA CODING AGENT API Reference",
+  "name": "Ghita Agent API Reference",
   "entryPointStrategy": "packages",
   "entryPoints": [
     "packages/ai-engine",

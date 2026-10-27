@@ -6,4 +6,4 @@ export { ServiceRegistry } from './service-registry.js';
 export { HealthCheckAggregator } from './health-check.js';
 export type { ServiceHealth, EventHandler, ServiceDefinition } from './types.js';
 
-export const INTEGRATION_VERSION = '1.2.0-demo1';
+export const INTEGRATION_VERSION = '0.0.0-preview';

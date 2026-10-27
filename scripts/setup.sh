@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# GHITA CODING AGENT v1.0.0 — One-command setup (Linux / macOS)
+# Ghita Agent v1.0.0 — One-command setup (Linux / macOS)
 # ==============================================================================
 # Usage (from the repo root):
 #     bash scripts/setup.sh
@@ -16,7 +16,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo ''
-echo '=== GHITA CODING AGENT - Setup (v1.0.0) ==='
+echo '=== Ghita Agent - Setup (v1.0.0) ==='
 
 # --- 1. Node.js ---------------------------------------------------------------
 if ! command -v node >/dev/null 2>&1; then

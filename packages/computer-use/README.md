@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Desktop automation engine for GHITA Coding Agent, providing screen capture, UI interaction, sandboxed execution, and vision-guided action parsing via Tauri-native Rust backend.
+Desktop automation engine for Ghita Agent, providing screen capture, UI interaction, sandboxed execution, and vision-guided action parsing via Tauri-native Rust backend.
 
 ## Key Features
 

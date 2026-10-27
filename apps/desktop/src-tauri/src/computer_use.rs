@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Native Computer-Use Module (Phase 1 Rust Rewrite)
+// Ghita Agent — Native Computer-Use Module (Phase 1 Rust Rewrite)
 // ==============================================================================
 //
 // Provides high-performance native implementations for:

@@ -105,7 +105,7 @@ export interface MemorySample {
 export interface MemoryMonitorOptions {
   /** Sampling interval ms (default 30_000). */
   intervalMs?: number;
-  
+
   heapCapBytes?: number;
   /** Rss cap in bytes (default 1.2 GB). */
   rssCapBytes?: number;
@@ -223,7 +223,7 @@ export class ScrollbackBudget {
   push(line: string): boolean {
     const next = this.bytes + line.length;
     if (this.lines.length >= this.options.maxLines || next > this.options.maxBytes) {
-      return false; 
+      return false;
     }
     this.lines.push(line);
     this.bytes = next;
@@ -267,4 +267,4 @@ export class ScreenPreviewBudget {
   }
 }
 
-export const RESOURCE_BUDGET_VERSION = '1.2.0-demo1';
+export const RESOURCE_BUDGET_VERSION = '0.0.0-preview';

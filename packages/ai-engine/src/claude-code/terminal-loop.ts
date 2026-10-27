@@ -11,7 +11,7 @@ export class ClaudeCodeTerminalLoop {
    * Generate Claude Code-style compact terminal agent system prompt.
    */
   static generateSystemPrompt(config: TerminalFramingConfig): string {
-    return `You are GHITA CODING AGENT (Terminal Agent Mode).
+    return `You are Ghita Agent (Terminal Agent Mode).
 Working Directory: ${config.workspaceCwd}
 Host OS: ${config.osPlatform}
 Safety Mode: ${config.dangerLevel.toUpperCase()}

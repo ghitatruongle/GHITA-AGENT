@@ -1,9 +1,9 @@
 {
   "name": "@ghita/integration",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Cross-package integration facade for GHITA CODING AGENT",
+  "description": "Cross-package integration facade for Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

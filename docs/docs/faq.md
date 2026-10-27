@@ -2,7 +2,7 @@
 
 ## General
 
-### What is GHITA CODING AGENT?
+### What is Ghita Agent?
 
 An AI-powered desktop application with remote Android control, similar to Claude Code but self-hosted. It provides a VS Code-style code editor, multi-provider AI support, a skill system, agent teams, and remote computer control via Android phone.
 
@@ -49,8 +49,8 @@ Yes! See [Contributing](./contributing.md) for guidelines.
 ### How do I build from source?
 
 ```bash
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 pnpm install
 cp .env.example .env  # Edit with your API keys
 pnpm build:packages

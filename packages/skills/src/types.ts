@@ -4,7 +4,7 @@
 import type { Skill, SkillCategory, SkillResult } from '@ghita/shared';
 
 /** Version constant for the skills package assets. */
-export const SKILLS_VERSION = '1.2.0-demo1';
+export const SKILLS_VERSION = '0.0.0-preview';
 
 /** Ready, disabled, or missing status states for loaded skills. */
 export type SkillStatus = 'ready' | 'disabled' | 'missing-adapter' | 'error';
@@ -45,7 +45,7 @@ export interface SkillDefinition extends Skill {
   dangerous?: boolean;
   /** Main executor executing the skill's business logic. */
   run: (invocation: SkillInvocation, context: SkillExecutionContext) => Promise<SkillResult>;
-  
+
   /** Tool allowlist: adapter keys permitted at execution boundary (deny others). */
   allowedTools?: string[];
   /** Sandbox permission level requested by the skill. */

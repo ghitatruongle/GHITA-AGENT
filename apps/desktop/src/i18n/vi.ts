@@ -30,8 +30,8 @@ export const vi: TranslationKeys = {
     run: 'Chạy',
   },
   app: {
-    brand: 'GHITA CODING AGENT',
-    version: 'v1.2.0-demo1',
+    brand: 'Ghita Agent',
+    version: 'v0.0.0-preview',
     deviceReconnected: 'Khôi phục kết nối với thiết bị: {{name}}',
     devicePaired: 'Đã ghép đôi thành công thiết bị: {{name}}',
     commandReceived: 'Đã nhận lệnh từ thiết bị: {{action}}',
@@ -77,7 +77,7 @@ export const vi: TranslationKeys = {
     autoSaveOn: 'Bật',
     autoSaveOff: 'Tắt',
     title: 'Cài đặt',
-    subtitle: 'Cấu hình và tùy chỉnh hệ thống GHITA CODING AGENT',
+    subtitle: 'Cấu hình và tùy chỉnh hệ thống Ghita Agent',
     appearance: 'Giao diện',
     theme: 'Chủ đề',
     themeDesc: 'Lựa chọn chế độ giao diện sáng hoặc tối',
@@ -208,7 +208,7 @@ export const vi: TranslationKeys = {
   },
   dashboard: {
     title: 'Bảng điều khiển',
-    subtitle: 'Giám sát hiệu suất thời gian thực của hệ thống GHITA CODING AGENT',
+    subtitle: 'Giám sát hiệu suất thời gian thực của hệ thống Ghita Agent',
     totalTokens: 'Tổng lượng Token',
     totalCost: 'Tổng chi phí LLM',
     activeAgents: 'Trợ lý AI hoạt động',
@@ -385,7 +385,7 @@ export const vi: TranslationKeys = {
     deployCheck: 'Kiểm tra lỗi trước khi triển khai (Deploy Check)',
     summary: 'Tóm tắt nội dung hội thoại',
     systemPrompt:
-      'Bạn là GHITA Assistant, trợ lý AI thông minh được tích hợp trong ứng dụng GHITA CODING AGENT.\n\nKHẢ NĂNG CỐT LÕI: Bạn có thể trực tiếp thực thi lệnh trên máy tính của người dùng. Khi người dùng yêu cầu mở ứng dụng, chạy lệnh, quản lý file — hãy LUÔN đặt lệnh trong code block với ngôn ngữ cmd hoặc powershell. Hệ thống sẽ TỰ ĐỘNG chạy lệnh đó. KHÔNG BAO GIỜ nói "không thể" hay "không có khả năng".\n\nQUY TẮC BẮT BUỘC: Khi cần chạy lệnh, LUÔN sử dụng format sau:\n```cmd\nlệnh cần chạy\n```\nHoặc:\n```powershell\nlệnh cần chạy\n```\n\nVí dụ mở Microsoft Word:\n```cmd\nstart winword\n```\n\nVí dụ mở Notepad:\n```cmd\nnotepad\n```\n\nBạn cũng hỗ trợ: code review, refactor, chạy test, format code, lint, security audit, generate docs.\n\nLuôn tự giới thiệu mình là GHITA Assistant khi được hỏi về danh tính. Trả lời ngắn gọn, trực tiếp.',
+      'Bạn là GHITA Assistant, trợ lý AI thông minh được tích hợp trong ứng dụng Ghita Agent.\n\nKHẢ NĂNG CỐT LÕI: Bạn có thể trực tiếp thực thi lệnh trên máy tính của người dùng. Khi người dùng yêu cầu mở ứng dụng, chạy lệnh, quản lý file — hãy LUÔN đặt lệnh trong code block với ngôn ngữ cmd hoặc powershell. Hệ thống sẽ TỰ ĐỘNG chạy lệnh đó. KHÔNG BAO GIỜ nói "không thể" hay "không có khả năng".\n\nQUY TẮC BẮT BUỘC: Khi cần chạy lệnh, LUÔN sử dụng format sau:\n```cmd\nlệnh cần chạy\n```\nHoặc:\n```powershell\nlệnh cần chạy\n```\n\nVí dụ mở Microsoft Word:\n```cmd\nstart winword\n```\n\nVí dụ mở Notepad:\n```cmd\nnotepad\n```\n\nBạn cũng hỗ trợ: code review, refactor, chạy test, format code, lint, security audit, generate docs.\n\nLuôn tự giới thiệu mình là GHITA Assistant khi được hỏi về danh tính. Trả lời ngắn gọn, trực tiếp.',
     openclawEngine: 'GHITA Assistant',
     skillLearned:
       'Tự động học Skill: Trợ lý AI vừa đề xuất và tự tích hợp thành công kỹ năng mới...',
@@ -415,7 +415,7 @@ export const vi: TranslationKeys = {
     clear: 'Xóa',
   },
   terminal: {
-    title: 'Cửa sổ dòng lệnh GHITA CODING AGENT Terminal',
+    title: 'Cửa sổ dòng lệnh Ghita Agent Terminal',
     shellSwitchHint: 'Nhấn vào tên Shell để chuyển đổi qua lại giữa cmd.exe và PowerShell',
     running: 'Đang chạy lệnh...',
     placeholder: 'Nhập lệnh thực thi tại đây...',
@@ -473,7 +473,7 @@ export const vi: TranslationKeys = {
     hide: 'Ẩn đi',
     show: 'Hiển thị',
     fetch: 'Lấy dữ liệu',
-    
+
     addKey: 'Thêm API Key',
     removeKey: 'Xóa bỏ',
     keyStrategy: 'Chiến lược xoay vòng API Keys',
@@ -538,7 +538,7 @@ export const vi: TranslationKeys = {
     noContainersDesc:
       'Sandbox cách ly sẽ tự động kích hoạt khi Trợ lý AI cần thực thi các bộ test E2E hoặc các dịch vụ độc lập.',
   },
-  
+
   notification: {
     ariaLabel: 'Thông báo',
     title: 'Thông báo',
@@ -547,7 +547,7 @@ export const vi: TranslationKeys = {
     unreadBadge: '{{count}}',
     dismiss: 'Bỏ qua thông báo',
   },
-  
+
   voice: {
     start: 'Bắt đầu nhập giọng nói',
     stop: 'Dừng nghe',
@@ -555,7 +555,7 @@ export const vi: TranslationKeys = {
     unsupported: 'Nhập giọng nói không được hỗ trợ',
     unsupportedHint: 'Nhận dạng giọng nói không khả dụng trong môi trường này',
   },
-  
+
   monitoring: {
     title: 'Giám sát',
     loading: 'Đang tải giám sát…',
@@ -577,7 +577,7 @@ export const vi: TranslationKeys = {
     lastSeen: 'Lần cuối thấy',
     refresh: 'Làm mới',
   },
-  
+
   quota: {
     title: 'Hạn mức & Giới hạn tốc độ',
     loading: 'Đang tải hạn mức…',
@@ -601,7 +601,7 @@ export const vi: TranslationKeys = {
     refresh: 'Làm mới',
     budgetUsage: 'Mức sử dụng ngân sách',
   },
-  
+
   codeGraph: {
     title: 'Đồ thị mã nguồn',
     workspacePath: 'Đường dẫn workspace',
@@ -683,7 +683,7 @@ export const vi: TranslationKeys = {
   },
   // v0.7.0 — Welcome
   welcome: {
-    title: 'GHITA CODING AGENT',
+    title: 'Ghita Agent',
     subtitle:
       'Trợ lý lập trình thông minh của bạn với AI đa nhà cung cấp, skills, và computer use.',
     openFolder: 'Mở thư mục',

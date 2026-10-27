@@ -1,10 +1,10 @@
 {
   "name": "@ghita/resource-budget",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "description": "GHITA CODING AGENT - Resource budgeting: deny-default caps, memory monitor, chat/terminal/screen budgets (v1.1.0 Track 9)",
+  "description": "Ghita Agent - Resource budgeting: deny-default caps, memory monitor, chat/terminal/screen budgets (v1.1.0 Track 9)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

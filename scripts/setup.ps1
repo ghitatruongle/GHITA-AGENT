@@ -1,5 +1,5 @@
 # ==============================================================================
-# GHITA CODING AGENT v1.0.0 — One-command setup (Windows)
+# Ghita Agent v1.0.0 — One-command setup (Windows)
 # ==============================================================================
 # Usage (PowerShell, from the repo root):
 #     powershell -ExecutionPolicy Bypass -File scripts/setup.ps1
@@ -15,7 +15,7 @@ $ErrorActionPreference = 'Stop'
 Set-Location (Split-Path -Parent $PSScriptRoot)
 
 Write-Host ''
-Write-Host '=== GHITA CODING AGENT - Setup (v1.0.0) ===' -ForegroundColor Cyan
+Write-Host '=== Ghita Agent - Setup (v1.0.0) ===' -ForegroundColor Cyan
 
 # --- 1. Node.js ---------------------------------------------------------------
 $node = Get-Command node -ErrorAction SilentlyContinue

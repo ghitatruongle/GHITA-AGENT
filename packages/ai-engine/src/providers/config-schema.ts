@@ -271,7 +271,7 @@ export class ProviderConfigLoader {
    * Generate a template YAML config file with example providers.
    */
   static generateTemplate(): string {
-    return `# GHITA CODING AGENT — Provider Configuration
+    return `# Ghita Agent — Provider Configuration
 # Schema version (do not change)
 version: 1
 

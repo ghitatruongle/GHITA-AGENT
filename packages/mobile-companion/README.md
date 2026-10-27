@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Mobile companion package for GHITA Coding Agent -- remote monitoring, task approval, notifications, and lightweight code review from iOS and Android devices.
+Mobile companion package for Ghita Agent -- remote monitoring, task approval, notifications, and lightweight code review from iOS and Android devices.
 
 ## Key Features
 

@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Documentation Site (Docusaurus)
+// Ghita Agent — Documentation Site (Docusaurus)
 // ==============================================================================
 // Run: pnpm --filter @ghita/docs start
 // Build: pnpm --filter @ghita/docs build
@@ -9,7 +9,7 @@ import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'GHITA CODING AGENT',
+  title: 'Ghita Agent',
   tagline: 'Multi-provider desktop AI agent với skills, computer use, và memory',
   favicon: 'img/favicon.ico',
 
@@ -46,13 +46,13 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/ghitatruongle/ghita-coding-agent/edit/main/docs/',
+          editUrl: 'https://github.com/ghitatruongle/GHITA-AGENT/edit/main/docs/',
           routeBasePath: '/',
           showLastUpdateTime: true,
         },
         blog: {
           showReadingTime: true,
-          editUrl: 'https://github.com/ghitatruongle/ghita-coding-agent/edit/main/docs/',
+          editUrl: 'https://github.com/ghitatruongle/GHITA-AGENT/edit/main/docs/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -83,7 +83,7 @@ const config: Config = {
         { type: 'docSidebar', sidebarId: 'apiSidebar', position: 'left', label: 'API' },
         { to: '/blog', label: 'Blog', position: 'left' },
         {
-          href: 'https://github.com/ghitatruongle/ghita-coding-agent',
+          href: 'https://github.com/ghitatruongle/GHITA-AGENT',
           label: 'GitHub',
           position: 'right',
         },
@@ -105,9 +105,9 @@ const config: Config = {
           items: [
             {
               label: 'GitHub Discussions',
-              href: 'https://github.com/ghitatruongle/ghita-coding-agent/discussions',
+              href: 'https://github.com/ghitatruongle/GHITA-AGENT/discussions',
             },
-            { label: 'Issues', href: 'https://github.com/ghitatruongle/ghita-coding-agent/issues' },
+            { label: 'Issues', href: 'https://github.com/ghitatruongle/GHITA-AGENT/issues' },
           ],
         },
         {

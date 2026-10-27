@@ -56,7 +56,7 @@ function semverSatisfiesMin(version, min) {
   return true;
 }
 
-console.log('\n\ud83e\ude7a GHITA CODING AGENT \u2014 Doctor');
+console.log('\n\ud83e\ude7a Ghita Agent \u2014 Doctor');
 console.log('='.repeat(48));
 
 // --- 1. Runtime -------------------------------------------------------------

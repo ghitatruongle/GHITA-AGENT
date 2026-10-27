@@ -1643,7 +1643,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-coding-agent"
-version = "1.2.0-demo1"
+version = "0.0.0-preview"
 dependencies = [
  "base64 0.22.1",
  "bytes",

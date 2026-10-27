@@ -7,7 +7,7 @@ sidebar_position: 1
 
 # Architecture
 
-GHITA CODING AGENT là monorepo pnpm workspace gồm **15+ packages** và **3 apps**.
+Ghita Agent là monorepo pnpm workspace gồm **15+ packages** và **3 apps**.
 
 ## Sơ đồ tổng quan
 

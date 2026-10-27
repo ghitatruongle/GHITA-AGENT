@@ -7,7 +7,7 @@ sidebar_position: 2
 
 # User Guide
 
-This guide walks you through everything you need to start using GHITA CODING AGENT — from first launch to advanced AI automation.
+This guide walks you through everything you need to start using Ghita Agent — from first launch to advanced AI automation.
 
 ## Prerequisites
 
@@ -20,8 +20,8 @@ This guide walks you through everything you need to start using GHITA CODING AGE
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/ghitatruongle/ghita-coding-agent
-cd ghita-coding-agent
+git clone https://github.com/ghitatruongle/GHITA-AGENT
+cd GHITA-AGENT
 
 # 2. Install dependencies
 pnpm install

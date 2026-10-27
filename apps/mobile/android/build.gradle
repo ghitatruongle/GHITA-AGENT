@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Android root build file (React Native 0.76+ layout)
+// Ghita Agent — Android root build file (React Native 0.76+ layout)
 //
 // Constraint (Gradle 8.10): `plugins {}` block MUST come immediately
 // after the file header — no `ext {}`, no `allprojects {}`, no

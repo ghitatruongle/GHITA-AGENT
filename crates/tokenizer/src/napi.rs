@@ -1,4 +1,4 @@
-//! GHITA CODING AGENT — Tokenizer NAPI addon
+//! Ghita Agent — Tokenizer NAPI addon
 //! Exposes exact BPE token counting to Node.js via @ghita/native-bridge.
 //! Compiled only with --features addon. Uses dyn-symbols for Windows compat.
 #![expect(dead_code)]

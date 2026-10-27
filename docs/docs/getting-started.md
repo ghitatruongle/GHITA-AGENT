@@ -7,7 +7,7 @@ sidebar_position: 1
 
 # Getting Started
 
-Hướng dẫn cài đặt GHITA CODING AGENT trong 5 phút.
+Hướng dẫn cài đặt Ghita Agent trong 5 phút.
 
 ## Yêu cầu
 
@@ -20,8 +20,8 @@ Hướng dẫn cài đặt GHITA CODING AGENT trong 5 phút.
 
 ```bash
 # Clone repo
-git clone https://github.com/ghitatruongle/ghita-coding-agent
-cd ghita-coding-agent
+git clone https://github.com/ghitatruongle/GHITA-AGENT
+cd GHITA-AGENT
 
 # Cài dependencies
 pnpm install

@@ -15,7 +15,7 @@ interface UseChatSendConfig {
   connectionStatus: 'connecting' | 'connected' | 'disconnected';
   modelOptions: DynamicModelOption[];
   provider: string;
-  
+
   // (or Enter while the send button is disabled) emitted two identical
   // requests, double-billing and double-running tools.
   isSending: boolean;
@@ -116,7 +116,6 @@ export function useChatSend({
   };
 
   const handleSend = async () => {
-    
     if (isSending) return;
     const trimmedInput = input.trim();
     if (!trimmedInput) return;
@@ -272,7 +271,7 @@ export function useChatSend({
         task: outgoingInput,
         maxIterations: 3,
         costLimitUsd: 0.15,
-        
+
         // use it; previously the image was only rendered locally and silently
         // dropped from every payload.
         ...(attachedImage ? { image: attachedImage } : {}),
@@ -304,7 +303,7 @@ export function useChatSend({
         model: selectedModel,
         baseUrl: providerBaseUrl,
         permissionMode,
-        
+
         ...(attachedImage ? { image: attachedImage } : {}),
       });
       setActiveFlow('agent');
@@ -315,7 +314,7 @@ export function useChatSend({
         ? `\n\nThe user's current working directory is: ${terminalCwd}. This is where the user is working. When the user asks "what project am I working on", tell them this path and extract the project name from it. The last folder in the path is typically the project name.`
         : '';
       const safeSystemPrompt = [
-        'You are GHITA Assistant, an AI coding assistant inside the GHITA CODING AGENT desktop app.',
+        'You are GHITA Assistant, an AI coding assistant inside the Ghita Agent desktop app.',
         'You may suggest shell commands in fenced code blocks, but the app will not run them automatically.',
         'Ask for explicit user confirmation before commands that modify files, install packages, delete data, access secrets, or change system state.',
         'Answer concisely and directly.',
@@ -351,7 +350,7 @@ export function useChatSend({
         agentRole: agentRole,
         history: [...history, { role: 'user', content: outgoingInput }],
         baseUrl: providerBaseUrl,
-        
+
         ...(attachedImage ? { image: attachedImage } : {}),
       });
     }

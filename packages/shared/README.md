@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Shared types, constants, utilities, and common infrastructure for the GHITA Coding Agent monorepo -- the foundational package consumed by all other packages.
+Shared types, constants, utilities, and common infrastructure for the Ghita Agent monorepo -- the foundational package consumed by all other packages.
 
 ## Key Features
 

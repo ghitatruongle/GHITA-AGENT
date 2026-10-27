@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — HNSW Approximate Nearest Neighbor Index (Phase 3)
+// Ghita Agent — HNSW Approximate Nearest Neighbor Index (Phase 3)
 // ==============================================================================
 //
 // Hierarchical Navigable Small World graph for sub-linear ANN search.

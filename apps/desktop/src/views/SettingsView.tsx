@@ -122,7 +122,9 @@ export function SettingsView() {
     setUpdateStatus(null);
     try {
       const result = await invoke<unknown>('check_update');
-      setUpdateStatus(typeof result === 'string' ? result : JSON.stringify(result ?? 'No update info'));
+      setUpdateStatus(
+        typeof result === 'string' ? result : JSON.stringify(result ?? 'No update info'),
+      );
     } catch (e) {
       setUpdateStatus(e instanceof Error ? e.message : 'Update check failed');
     } finally {
@@ -544,7 +546,7 @@ export function SettingsView() {
       </Section>
 
       <Section title={`ℹ ${t('settings.info')}`}>
-        <SettingRow label={t('settings.version')} description="GHITA CODING AGENT">
+        <SettingRow label={t('settings.version')} description="Ghita Agent">
           <span className="text-sm text-[var(--accent-primary)] font-semibold">
             {t('app.version')}
           </span>

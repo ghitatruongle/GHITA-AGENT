@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Data migration framework for the GHITA Coding Agent -- schema versioning, incremental migrations, rollback support, and migration scripts for SQLite and filesystem stores.
+Data migration framework for the Ghita Agent -- schema versioning, incremental migrations, rollback support, and migration scripts for SQLite and filesystem stores.
 
 ## Key Features
 

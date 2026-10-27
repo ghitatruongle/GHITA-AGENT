@@ -118,7 +118,7 @@ Run `pnpm typecheck` to see all errors. Common fixes:
 
 If none of the above solutions work:
 
-1. Check [GitHub Issues](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues) for similar problems
+1. Check [GitHub Issues](https://github.com/ghitatruongle/GHITA-AGENT/issues) for similar problems
 2. Create a new issue with:
    - Your OS and version
    - Steps to reproduce

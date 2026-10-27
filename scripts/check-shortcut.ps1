@@ -1,4 +1,4 @@
-$s = (New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Acer\Desktop\GHITA CODING AGENT.lnk')
+$s = (New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Acer\Desktop\Ghita Agent.lnk')
 Write-Host 'Target:' $s.TargetPath
 Write-Host 'WorkDir:' $s.WorkingDirectory
 Write-Host 'Icon:' $s.IconLocation

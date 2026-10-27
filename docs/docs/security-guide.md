@@ -2,7 +2,7 @@
 
 ## Overview
 
-GHITA CODING AGENT takes security seriously. This guide covers the security architecture, threat model, and best practices for using and developing the application.
+Ghita Agent takes security seriously. This guide covers the security architecture, threat model, and best practices for using and developing the application.
 
 ## Security Architecture
 
@@ -135,7 +135,7 @@ if (!limiter.allow(clientIp)) {
 If you discover a security vulnerability, please follow responsible disclosure:
 
 1. **Do NOT** open a public GitHub issue
-2. Send details to the project maintainer via [GitHub Security Advisories](https://github.com/ghitatruongle/GHITA-CODING-AGENT/security/advisories)
+2. Send details to the project maintainer via [GitHub Security Advisories](https://github.com/ghitatruongle/GHITA-AGENT/security/advisories)
 3. Include: description, steps to reproduce, affected versions, and suggested fix if any
 4. Expect initial response within 48 hours
 5. We will coordinate disclosure timeline

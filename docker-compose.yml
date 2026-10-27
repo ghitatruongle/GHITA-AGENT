@@ -1,5 +1,5 @@
 # ==============================================================================
-# GHITA CODING AGENT — Docker Compose (Production)
+# Ghita Agent — Docker Compose (Production)
 # ==============================================================================
 # Services:
 #   - sidecar:  Node.js sidecar server (Socket.IO + API proxy)

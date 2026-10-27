@@ -1,9 +1,9 @@
 {
   "name": "@ghita/memory",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Agent memory system cho GHITA CODING AGENT",
+  "description": "Agent memory system cho Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

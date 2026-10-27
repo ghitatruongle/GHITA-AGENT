@@ -1,10 +1,10 @@
 {
   "name": "@ghita/evals",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "description": "GHITA CODING AGENT - Evals framework: evidence-based agent evaluation (v1.1.0 Track 1)",
+  "description": "Ghita Agent - Evals framework: evidence-based agent evaluation (v1.1.0 Track 1)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

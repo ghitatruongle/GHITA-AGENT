@@ -30,8 +30,8 @@ export const zh: TranslationKeys = {
     run: '运行',
   },
   app: {
-    brand: 'GHITA CODING AGENT',
-    version: 'v1.2.0-demo1',
+    brand: 'Ghita Agent',
+    version: 'v0.0.0-preview',
     deviceReconnected: '已重新连接设备: {{name}}',
     devicePaired: '成功配对设备: {{name}}',
     commandReceived: '从设备收到命令: {{action}}',
@@ -76,7 +76,7 @@ export const zh: TranslationKeys = {
     autoSaveOn: '已启用',
     autoSaveOff: '已关闭',
     title: '设置',
-    subtitle: '配置与自定义 GHITA CODING AGENT 系统',
+    subtitle: '配置与自定义 Ghita Agent 系统',
     appearance: '外观',
     theme: '主题',
     themeDesc: '选择深色或浅色界面模式',
@@ -202,7 +202,7 @@ export const zh: TranslationKeys = {
   },
   dashboard: {
     title: '控制台',
-    subtitle: '实时监视 GHITA CODING AGENT 运行状态',
+    subtitle: '实时监视 Ghita Agent 运行状态',
     totalTokens: '总 Token 使用量',
     totalCost: '总 LLM 花费',
     activeAgents: '活跃 AI 智能体',
@@ -370,7 +370,7 @@ export const zh: TranslationKeys = {
     deployCheck: '运行部署前置校验 (Deploy Check)',
     summary: '总结当前会话上下文',
     systemPrompt:
-      '你是 GHITA Assistant，一个内置于 GHITA CODING AGENT 应用程序中的智能 AI 助手。\n\n核心能力：你可以直接在用户的机器上执行命令。当用户要求打开应用程序、运行命令或管理文件时——始终将命令包裹在使用 cmd 或 powershell 语言标签的代码块中。系统将自动执行该命令。绝不要说“我不能”或“我没有能力”。\n\n强制性规则：当需要运行命令时，始终使用以下格式：\n```cmd\n要运行的命令\n```\n或者：\n```powershell\n要运行的命令\n```\n\n打开 Microsoft Word 的示例：\n```cmd\nstart winword\n```\n\n打开记事本的示例：\n```cmd\nnotepad\n```\n\n你还支持：代码审查、重构、运行测试、格式化代码、静态分析、安全审计、生成文档。\n\n当被问及身份时，始终表明自己是 GHITA Assistant。保持直接和简明。',
+      '你是 GHITA Assistant，一个内置于 Ghita Agent 应用程序中的智能 AI 助手。\n\n核心能力：你可以直接在用户的机器上执行命令。当用户要求打开应用程序、运行命令或管理文件时——始终将命令包裹在使用 cmd 或 powershell 语言标签的代码块中。系统将自动执行该命令。绝不要说“我不能”或“我没有能力”。\n\n强制性规则：当需要运行命令时，始终使用以下格式：\n```cmd\n要运行的命令\n```\n或者：\n```powershell\n要运行的命令\n```\n\n打开 Microsoft Word 的示例：\n```cmd\nstart winword\n```\n\n打开记事本的示例：\n```cmd\nnotepad\n```\n\n你还支持：代码审查、重构、运行测试、格式化代码、静态分析、安全审计、生成文档。\n\n当被问及身份时，始终表明自己是 GHITA Assistant。保持直接和简明。',
     openclawEngine: 'GHITA Assistant',
     skillLearned: '技能自动学习：AI 智能体刚提议并成功习得了一项新技能...',
     runningAutomation: '正在执行屏幕图像模拟自动化步骤...',
@@ -399,7 +399,7 @@ export const zh: TranslationKeys = {
     clear: '清除',
   },
   terminal: {
-    title: 'GHITA CODING AGENT 系统终端',
+    title: 'Ghita Agent 系统终端',
     shellSwitchHint: '点击 Shell 切换栏以在 cmd.exe 和 PowerShell 之间切换',
     running: '正在执行命令...',
     placeholder: '在此处输入 Shell 命令行...',
@@ -455,7 +455,7 @@ export const zh: TranslationKeys = {
     hide: '隐藏密钥',
     show: '显示密钥',
     fetch: '获取数据',
-    
+
     addKey: '新增 API Key',
     removeKey: '移除',
     keyStrategy: 'API 密钥轮换与调度策略',
@@ -516,7 +516,7 @@ export const zh: TranslationKeys = {
     noContainersDesc:
       '当 AI 智能体需要在此隔离沙箱中运行端到端 (E2E) 测试或高风险系统命令时，容器会自动创建启动。',
   },
-  
+
   notification: {
     ariaLabel: '通知',
     title: '通知',
@@ -525,7 +525,7 @@ export const zh: TranslationKeys = {
     unreadBadge: '{{count}}',
     dismiss: '关闭通知',
   },
-  
+
   voice: {
     start: '开始语音输入',
     stop: '停止聆听',
@@ -533,7 +533,7 @@ export const zh: TranslationKeys = {
     unsupported: '不支持语音输入',
     unsupportedHint: '当前环境不支持语音识别',
   },
-  
+
   monitoring: {
     title: '监控',
     loading: '加载监控中…',
@@ -555,7 +555,7 @@ export const zh: TranslationKeys = {
     lastSeen: '最后出现',
     refresh: '刷新',
   },
-  
+
   quota: {
     title: '配额与限流',
     loading: '加载配额中…',
@@ -579,7 +579,7 @@ export const zh: TranslationKeys = {
     refresh: '刷新',
     budgetUsage: '预算使用',
   },
-  
+
   codeGraph: {
     title: '代码知识图谱',
     workspacePath: '工作区路径',
@@ -657,7 +657,7 @@ export const zh: TranslationKeys = {
     editorConfig: '编辑器配置',
   },
   welcome: {
-    title: 'GHITA CODING AGENT',
+    title: 'Ghita Agent',
     subtitle: '您的智能编程助手，支持多提供商 AI、技能以及计算机使用功能。',
     openFolder: '打开文件夹',
     recentWorkspaces: '最近的工作区',

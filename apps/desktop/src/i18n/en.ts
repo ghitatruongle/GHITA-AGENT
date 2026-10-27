@@ -30,8 +30,8 @@ export const en: TranslationKeys = {
     run: 'Run',
   },
   app: {
-    brand: 'GHITA CODING AGENT',
-    version: 'v1.2.0-demo1',
+    brand: 'Ghita Agent',
+    version: 'v0.0.0-preview',
     deviceReconnected: 'Reconnected to device: {{name}}',
     devicePaired: 'Successfully paired device: {{name}}',
     commandReceived: 'Command received from device: {{action}}',
@@ -77,7 +77,7 @@ export const en: TranslationKeys = {
     autoSaveOn: 'On',
     autoSaveOff: 'Off',
     title: 'Settings',
-    subtitle: 'Configure and customize the GHITA CODING AGENT application',
+    subtitle: 'Configure and customize the Ghita Agent application',
     appearance: 'Appearance',
     theme: 'Theme',
     themeDesc: 'Select light or dark user interface mode',
@@ -207,7 +207,7 @@ export const en: TranslationKeys = {
   },
   dashboard: {
     title: 'Dashboard',
-    subtitle: 'Real-time performance monitoring for GHITA CODING AGENT',
+    subtitle: 'Real-time performance monitoring for Ghita Agent',
     totalTokens: 'Total Token Usage',
     totalCost: 'Total LLM Cost',
     activeAgents: 'Active AI Agents',
@@ -346,7 +346,7 @@ export const en: TranslationKeys = {
   },
   chat: {
     welcomeMessage:
-      "Welcome to GHITA Coding Agent. I am GHITA Assistant, your AI partner. I can write code, run terminal commands, manage files, and automate complex tasks. Let's get started!",
+      "Welcome to Ghita Agent. I am GHITA Assistant, your AI partner. I can write code, run terminal commands, manage files, and automate complex tasks. Let's get started!",
     notConnected: 'No connection to background service...',
     notConnectedHint:
       'Not connected to service -- type something to see configuration instructions...',
@@ -381,7 +381,7 @@ export const en: TranslationKeys = {
     deployCheck: 'Check code before deploying',
     summary: 'Summarize conversation',
     systemPrompt:
-      'You are GHITA Assistant, an intelligent AI assistant built into the GHITA CODING AGENT application.\n\nCORE CAPABILITY: You can directly execute commands on the user\'s machine. When users ask to open applications, run commands, or manage files — ALWAYS wrap the command in a code block with cmd or powershell language tag. The system will AUTO-EXECUTE the command. NEVER say "I cannot" or "I don\'t have the ability".\n\nMANDATORY RULE: When you need to run a command, ALWAYS use this format:\n```cmd\ncommand to run\n```\nOr:\n```powershell\ncommand to run\n```\n\nExample to open Microsoft Word:\n```cmd\nstart winword\n```\n\nExample to open Notepad:\n```cmd\nnotepad\n```\n\nYou also support: code review, refactor, run tests, format code, lint, security audit, generate docs.\n\nAlways identify yourself as GHITA Assistant when asked about your identity. Be direct and concise.',
+      'You are GHITA Assistant, an intelligent AI assistant built into the Ghita Agent application.\n\nCORE CAPABILITY: You can directly execute commands on the user\'s machine. When users ask to open applications, run commands, or manage files — ALWAYS wrap the command in a code block with cmd or powershell language tag. The system will AUTO-EXECUTE the command. NEVER say "I cannot" or "I don\'t have the ability".\n\nMANDATORY RULE: When you need to run a command, ALWAYS use this format:\n```cmd\ncommand to run\n```\nOr:\n```powershell\ncommand to run\n```\n\nExample to open Microsoft Word:\n```cmd\nstart winword\n```\n\nExample to open Notepad:\n```cmd\nnotepad\n```\n\nYou also support: code review, refactor, run tests, format code, lint, security audit, generate docs.\n\nAlways identify yourself as GHITA Assistant when asked about your identity. Be direct and concise.',
     openclawEngine: 'GHITA Assistant',
     skillLearned: 'Skill Auto-Learning: AI agent proposed and integrated a new skill...',
     runningAutomation: 'Executing screen simulation automation steps...',
@@ -410,7 +410,7 @@ export const en: TranslationKeys = {
     clear: 'Clear',
   },
   terminal: {
-    title: 'GHITA CODING AGENT Command Terminal',
+    title: 'Ghita Agent Command Terminal',
     shellSwitchHint: 'Click shell name to toggle between cmd.exe and PowerShell',
     running: 'Executing command...',
     placeholder: 'Type command here...',
@@ -467,7 +467,7 @@ export const en: TranslationKeys = {
     hide: 'Hide Key',
     show: 'Show Key',
     fetch: 'Fetch',
-    
+
     addKey: 'Add Key',
     removeKey: 'Remove',
     keyStrategy: 'API Key Rotation Strategy',
@@ -532,7 +532,7 @@ export const en: TranslationKeys = {
     noContainersDesc:
       'An isolated Docker container will launch automatically when AI needs to execute tests or unsafe operations.',
   },
-  
+
   notification: {
     ariaLabel: 'Notifications',
     title: 'Notifications',
@@ -541,7 +541,7 @@ export const en: TranslationKeys = {
     unreadBadge: '{{count}}',
     dismiss: 'Dismiss notification',
   },
-  
+
   voice: {
     start: 'Start voice input',
     stop: 'Stop listening',
@@ -549,7 +549,7 @@ export const en: TranslationKeys = {
     unsupported: 'Voice input not supported',
     unsupportedHint: 'Speech recognition is not available in this environment',
   },
-  
+
   monitoring: {
     title: 'Monitoring',
     loading: 'Loading monitoring…',
@@ -571,7 +571,7 @@ export const en: TranslationKeys = {
     lastSeen: 'Last seen',
     refresh: 'Refresh',
   },
-  
+
   quota: {
     title: 'Quota & Rate Limiting',
     loading: 'Loading quota…',
@@ -595,7 +595,7 @@ export const en: TranslationKeys = {
     refresh: 'Refresh',
     budgetUsage: 'Budget usage',
   },
-  
+
   codeGraph: {
     title: 'Code Knowledge Graph',
     workspacePath: 'Workspace path',
@@ -677,7 +677,7 @@ export const en: TranslationKeys = {
   },
   // v0.7.0 — Welcome
   welcome: {
-    title: 'GHITA CODING AGENT',
+    title: 'Ghita Agent',
     subtitle: 'Your intelligent coding assistant with multi-provider AI, skills, and computer use.',
     openFolder: 'Open Folder',
     recentWorkspaces: 'Recent Workspaces',

@@ -10,7 +10,7 @@ class NotificationService {
     // Create a channel (required for Android)
     this.channelId = await notifee.createChannel({
       id: 'ghita-agent-default',
-      name: 'GHITA Coding Agent Notifications',
+      name: 'Ghita Agent Notifications',
       importance: AndroidImportance.HIGH,
     });
 

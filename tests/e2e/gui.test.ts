@@ -78,7 +78,7 @@ describe('Phase 46 - Playwright GUI Tests', () => {
 
     // Dashboard page
     pw.registerPage('/dashboard', 'GHITA Dashboard', [
-      { selector: '#app-title', visible: true, text: 'GHITA Coding Agent' },
+      { selector: '#app-title', visible: true, text: 'Ghita Agent' },
       { selector: '#sidebar', visible: true },
       { selector: '#chat-panel', visible: true },
       { selector: '#settings-btn', visible: true },
@@ -108,7 +108,7 @@ describe('Phase 46 - Playwright GUI Tests', () => {
       setupPages();
       await pw.navigateTo('/dashboard');
       const title = await pw.getTextContent('#app-title');
-      expect(title).toBe('GHITA Coding Agent');
+      expect(title).toBe('Ghita Agent');
     });
 
     it('has visible navigation elements', async () => {

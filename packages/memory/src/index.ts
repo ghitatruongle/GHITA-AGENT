@@ -39,7 +39,7 @@ export type {
   GuardrailConfig,
 } from './guardrail/types.js';
 
-export const MEMORY_VERSION = '1.2.0-demo1';
+export const MEMORY_VERSION = '0.0.0-preview';
 
 export interface RememberInput {
   type: MemoryEntry['type'];

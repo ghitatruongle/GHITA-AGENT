@@ -259,7 +259,7 @@ export function CodeView() {
     try {
       await fsWriteText(file.path, contentToSave, cache.encoding);
       cache.originalContent = contentToSave;
-      
+
       // to avoid the stale-closure resurrection race.
       setOpenFiles(
         useAppStore.getState().codeOpenFiles.map((f) => {
@@ -295,7 +295,6 @@ export function CodeView() {
 
       const file = openFiles.find((f) => f.path === activePath);
       if (file && file.modified !== isModified) {
-        
         // to avoid the stale-closure resurrection race.
         setOpenFiles(
           useAppStore
@@ -340,7 +339,6 @@ export function CodeView() {
         continue;
       }
       try {
-        
         // compare against the live cache afterwards — the previous
         // `cache.content === cache.content` tautology always evaluated true.
         const contentToSave = cache.content;
@@ -352,9 +350,8 @@ export function CodeView() {
       }
     }
     if (savedContents.size > 0) {
-      
       // (avoid stale-closure) AND re-check whether the user typed during the
-      
+
       setOpenFiles(
         useAppStore.getState().codeOpenFiles.map((f) => {
           if (!savedContents.has(f.path)) return f;
@@ -885,7 +882,7 @@ export function CodeView() {
                 {/* Typography: Welcome & Subtitle */}
                 <div className="flex flex-col gap-1.5">
                   <h3 className="text-xl font-bold tracking-wide text-text-primary">
-                    {t('app.brand') || 'GHITA CODING AGENT'}
+                    {t('app.brand') || 'Ghita Agent'}
                   </h3>
                   <p className="text-xs text-text-secondary max-w-xs leading-relaxed">
                     {t('codeView.openFileHint') ||

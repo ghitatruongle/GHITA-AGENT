@@ -44,9 +44,9 @@ describe('FallbackManager & Cost Tracker', () => {
   });
 
   it('should count tokens accurately using custom tokenizer', () => {
-    const text = 'Hello world from GHITA Coding Agent';
+    const text = 'Hello world from Ghita Agent';
     const tokenCount = manager.countTokens(text);
-    // 'Hello world from GHITA Coding Agent' -> 6 words. Estimated tokens should be around 6-10.
+    // 'Hello world from Ghita Agent' -> 6 words. Estimated tokens should be around 6-10.
     expect(tokenCount).toBeGreaterThan(0);
     expect(tokenCount).toBeLessThan(20);
 
@@ -113,7 +113,6 @@ describe('FallbackManager & Cost Tracker', () => {
   });
 
   it('should throw error when cost budget limit is reached', async () => {
-    
     manager.logCost({
       sessionId: (manager as any).sessionId,
       provider: 'openai',

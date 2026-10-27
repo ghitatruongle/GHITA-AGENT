@@ -1,10 +1,10 @@
 {
   "name": "@ghita/terminal-session",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "description": "GHITA CODING AGENT - Terminal session primitives: buffer serialize/restore, flow control, resize (v1.1.0 Track 7)",
+  "description": "Ghita Agent - Terminal session primitives: buffer serialize/restore, flow control, resize (v1.1.0 Track 7)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

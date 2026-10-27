@@ -1,9 +1,9 @@
 {
   "name": "@ghita/notification",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Notification system: priority levels, channel routing, DND scheduling, history cho GHITA Coding Agent",
+  "description": "Notification system: priority levels, channel routing, DND scheduling, history cho Ghita Agent",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

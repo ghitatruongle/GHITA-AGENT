@@ -647,7 +647,7 @@ pub fn find_free_port(preferred: u16) -> std::io::Result<u16> {
 
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! Welcome to GHITA CODING AGENT.", name)
+    format!("Hello, {}! Welcome to Ghita Agent.", name)
 }
 
 /// Put the sidecar process into a Windows Job Object with
@@ -758,7 +758,7 @@ async fn check_update(app: tauri::AppHandle) -> Result<String, String> {
             let approved = app
                 .dialog()
                 .message(format!(
-                    "Update GHITA CODING AGENT to version {version} now?\n\nThe update is signature-verified and will restart the application."
+                    "Update Ghita Agent to version {version} now?\n\nThe update is signature-verified and will restart the application."
                 ))
                 .title("Update available")
                 .kind(MessageDialogKind::Info)

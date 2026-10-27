@@ -26,7 +26,7 @@ export class ReadmeGenerator {
       lines.push('');
     }
 
-    lines.push(description.trim() || 'A GHITA Coding Agent skill.');
+    lines.push(description.trim() || 'A Ghita Agent skill.');
     lines.push('');
 
     if (tags.length > 0) {
@@ -59,7 +59,7 @@ export class ReadmeGenerator {
     sections.push('Author');
     lines.push('## Author');
     lines.push('');
-    lines.push(`Built by **${authorName}** for [GHITA Coding Agent](https://github.com/ghita-ai).`);
+    lines.push(`Built by **${authorName}** for [Ghita Agent](https://github.com/ghita-ai).`);
     lines.push('');
 
     if (options.contributing) {

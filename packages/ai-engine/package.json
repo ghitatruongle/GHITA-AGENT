@@ -1,9 +1,9 @@
 {
   "name": "@ghita/ai-engine",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "AI multi-provider engine cho GHITA CODING AGENT",
+  "description": "AI multi-provider engine cho Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

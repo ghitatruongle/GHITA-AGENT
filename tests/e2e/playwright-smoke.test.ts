@@ -14,7 +14,7 @@ test.describe('Desktop App E2E Smoke Tests', () => {
     await page.goto(`file://${splashPath}`);
 
     // Verify splash renders
-    await expect(page).toHaveTitle(/GHITA CODING AGENT/i);
+    await expect(page).toHaveTitle(/Ghita Agent/i);
   });
 
   test('index.html loads without errors', async ({ page }) => {

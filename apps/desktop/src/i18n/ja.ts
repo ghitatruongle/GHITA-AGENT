@@ -30,8 +30,8 @@ export const ja: TranslationKeys = {
     run: '実行',
   },
   app: {
-    brand: 'GHITA CODING AGENT',
-    version: 'v1.2.0-demo1',
+    brand: 'Ghita Agent',
+    version: 'v0.0.0-preview',
     deviceReconnected: 'デバイスに再接続しました: {{name}}',
     devicePaired: 'デバイスのペアリングに成功しました: {{name}}',
     commandReceived: 'デバイスからコマンドを受信しました: {{action}}',
@@ -77,7 +77,7 @@ export const ja: TranslationKeys = {
     autoSaveOn: 'オン',
     autoSaveOff: 'オフ',
     title: '設定',
-    subtitle: 'GHITA CODING AGENTアプリケーションの設定とカスタマイズ',
+    subtitle: 'Ghita Agentアプリケーションの設定とカスタマイズ',
     appearance: '外観',
     theme: 'テーマ',
     themeDesc: 'ライトまたはダークモードを選択',
@@ -208,7 +208,7 @@ export const ja: TranslationKeys = {
   },
   dashboard: {
     title: 'ダッシュボード',
-    subtitle: 'GHITA CODING AGENTのリアルタイムパフォーマンスモニタリング',
+    subtitle: 'Ghita Agentのリアルタイムパフォーマンスモニタリング',
     totalTokens: '合計トークン使用量',
     totalCost: '合計LLMコスト',
     activeAgents: 'アクティブAIエージェント',
@@ -345,7 +345,7 @@ export const ja: TranslationKeys = {
   },
   chat: {
     welcomeMessage:
-      'GHITA Coding Agentへようこそ。私はGHITAアシスタントです。コードの作成、ターミナルコマンドの実行、ファイル管理、複雑なタスクの自動化をお手伝いします。始めましょう！',
+      'Ghita Agentへようこそ。私はGHITAアシスタントです。コードの作成、ターミナルコマンドの実行、ファイル管理、複雑なタスクの自動化をお手伝いします。始めましょう！',
     notConnected: 'バックグラウンドサービスに接続されていません...',
     notConnectedHint: 'サービスに未接続 -- 何か入力すると設定手順が表示されます...',
     noProvider: 'AIプロバイダーが設定されていません...',
@@ -378,7 +378,7 @@ export const ja: TranslationKeys = {
     deployCheck: 'デプロイ前のコードチェック',
     summary: '会話を要約',
     systemPrompt:
-      'あなたはGHITAアシスタントです。GHITA CODING AGENTアプリケーションに組み込まれたインテリジェントAIアシスタントです。\n\nコア機能: ユーザーのマシンで直接コマンドを実行できます。',
+      'あなたはGHITAアシスタントです。Ghita Agentアプリケーションに組み込まれたインテリジェントAIアシスタントです。\n\nコア機能: ユーザーのマシンで直接コマンドを実行できます。',
     openclawEngine: 'GHITAアシスタント',
     skillLearned: 'スキル自動学習: AIエージェントが新しいスキルを提案し統合しました...',
     runningAutomation: '画面シミュレーション自動化ステップを実行中...',
@@ -408,7 +408,7 @@ export const ja: TranslationKeys = {
     clear: 'クリア',
   },
   terminal: {
-    title: 'GHITA CODING AGENTコマンドターミナル',
+    title: 'Ghita Agentコマンドターミナル',
     shellSwitchHint: 'シェル名をクリックしてcmd.exeとPowerShellを切り替え',
     running: 'コマンドを実行中...',
     placeholder: 'コマンドを入力...',
@@ -527,7 +527,7 @@ export const ja: TranslationKeys = {
     noContainersDesc:
       'AIがテストまたは安全でない操作を実行する必要がある場合、隔離されたDockerコンテナが自動的に起動します。',
   },
-  
+
   notification: {
     ariaLabel: '通知',
     title: '通知',
@@ -536,7 +536,7 @@ export const ja: TranslationKeys = {
     unreadBadge: '{{count}}',
     dismiss: '通知を閉じる',
   },
-  
+
   voice: {
     start: '音声入力を開始',
     stop: '停止',
@@ -544,7 +544,7 @@ export const ja: TranslationKeys = {
     unsupported: '音声入力はサポートされていません',
     unsupportedHint: 'この環境では音声認識は利用できません',
   },
-  
+
   monitoring: {
     title: 'モニタリング',
     loading: 'モニタリングを読み込み中…',
@@ -566,7 +566,7 @@ export const ja: TranslationKeys = {
     lastSeen: '最終確認',
     refresh: '更新',
   },
-  
+
   quota: {
     title: 'クォータとレート制限',
     loading: 'クォータを読み込み中…',
@@ -590,7 +590,7 @@ export const ja: TranslationKeys = {
     refresh: '更新',
     budgetUsage: '予算使用状況',
   },
-  
+
   codeGraph: {
     title: 'コードナレッジグラフ',
     workspacePath: 'ワークスペースパス',
@@ -668,7 +668,7 @@ export const ja: TranslationKeys = {
     editorConfig: 'エディター設定',
   },
   welcome: {
-    title: 'GHITA CODING AGENT',
+    title: 'Ghita Agent',
     subtitle:
       'マルチプロバイダーAI、スキル、コンピューター操作を備えたインテリジェントコーディングアシスタント。',
     openFolder: 'フォルダーを開く',

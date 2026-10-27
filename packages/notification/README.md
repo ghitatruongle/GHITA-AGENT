@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.4-blue)
 
-Notification system for GHITA Coding Agent -- priority levels, channel routing, DND scheduling, history tracking, and templated notification delivery.
+Notification system for Ghita Agent -- priority levels, channel routing, DND scheduling, history tracking, and templated notification delivery.
 
 ## Key Features
 

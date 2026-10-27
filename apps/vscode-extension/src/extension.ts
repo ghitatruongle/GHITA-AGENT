@@ -43,7 +43,7 @@ let syncStats: SyncStats = emptyStats();
 
 function log(message: string): void {
   outputChannel?.appendLine(`[${new Date().toISOString()}] ${message}`);
-  console.log(`[GHITA-Sidecar] ${message}`);
+  console.info(`[GHITA-Sidecar] ${message}`);
 }
 
 function getConfig(): SyncConfig {
@@ -269,7 +269,7 @@ async function syncWorkspace(): Promise<void> {
 // Activation
 
 export function activate(context: vscode.ExtensionContext): void {
-  log('GHITA CODING AGENT VS Code Sidecar is activating...');
+  log('Ghita Agent VS Code Sidecar is activating...');
 
   statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   statusBarItem.command = 'ghita.toggleConnection';
@@ -371,5 +371,5 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   disconnectSocket();
   debouncer?.cancel();
-  log('GHITA CODING AGENT VS Code Sidecar is deactivated.');
+  log('Ghita Agent VS Code Sidecar is deactivated.');
 }

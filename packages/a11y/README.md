@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Accessibility toolkit for the GHITA Coding Agent, providing WCAG compliance checks, screen-reader support, and keyboard navigation helpers across desktop and web surfaces.
+Accessibility toolkit for the Ghita Agent, providing WCAG compliance checks, screen-reader support, and keyboard navigation helpers across desktop and web surfaces.
 
 ## Key Features
 

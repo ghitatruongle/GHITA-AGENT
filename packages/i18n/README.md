@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Internationalization layer for the GHITA Coding Agent, providing locale detection, translation management, and dynamic language switching across all surfaces.
+Internationalization layer for the Ghita Agent, providing locale detection, translation management, and dynamic language switching across all surfaces.
 
 ## Key Features
 

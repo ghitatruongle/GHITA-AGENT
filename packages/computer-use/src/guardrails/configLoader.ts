@@ -109,7 +109,7 @@ export async function loadSecurityConfig(cwd?: string): Promise<SecurityBlacklis
 
 export function generateSampleConfig(): string {
   return `# =============================================================================
-# GHITA CODING AGENT - Security Blacklist Configuration
+# Ghita Agent - Security Blacklist Configuration
 # Cấu hình danh sách cấm lệnh terminal tùy chỉnh
 # =============================================================================
 

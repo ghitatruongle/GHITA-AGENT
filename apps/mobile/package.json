@@ -1,8 +1,8 @@
 {
   "name": "@ghita/mobile",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
-  "description": "GHITA CODING AGENT — Mobile Remote Control (React Native Android, minSdk=28)",
+  "description": "Ghita Agent — Mobile Remote Control (React Native Android, minSdk=28)",
   "scripts": {
     "android": "react-native run-android",
     "start": "react-native start",

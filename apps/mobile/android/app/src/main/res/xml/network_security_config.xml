@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  GHITA CODING AGENT — Network Security Config
+  Ghita Agent — Network Security Config
 
   Cleartext (HTTP) is ONLY allowed for RFC1918 private LAN addresses used by the
   desktop sidecar (Socket.IO + health check on port 8080). All public traffic —

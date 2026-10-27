@@ -15,7 +15,7 @@ const tauriConf = JSON.parse(
   require('fs').readFileSync(join(ROOT, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'),
 );
 const VERSION = tauriConf.version;
-const PRODUCT = (tauriConf.productName || 'GHITA CODING AGENT')
+const PRODUCT = (tauriConf.productName || 'Ghita Agent')
   .replace(/\s+/g, '-')
   .replace(/[^A-Za-z0-9-]/g, '');
 

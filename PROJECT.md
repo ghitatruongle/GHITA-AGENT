@@ -1,4 +1,4 @@
-# GHITA CODING AGENT — Project Context
+# Ghita Agent — Project Context
 
 > This file is the canonical **project charter** for the repository. It
 > describes what the code in this monorepo actually builds and which
@@ -9,7 +9,7 @@
 
 ## What this project is
 
-GHITA CODING AGENT is a **multi-platform, AI-driven coding assistant**
+Ghita Agent is a **multi-platform, AI-driven coding assistant**
 delivered as a Turborepo + pnpm monorepo. It bundles a desktop app
 (Tauri + React + Rust), a mobile companion app (React Native +
 Kotlin), and a VS Code extension, all sharing a common workspace of
@@ -24,7 +24,7 @@ strictly-scoped proxy.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────┐
-│                       GHITA CODING AGENT                          │
+│                       Ghita Agent                          │
 │                                                                    │
 │  apps/desktop  ─── apps/mobile  ─── apps/vscode-extension          │
 │      │                │                    │                       │
@@ -97,5 +97,5 @@ strictly-scoped proxy.
 
 ## Owners
 
-- **Codebase**: GHITA Coding Agent maintainers — see `CODEOWNERS`.
+- **Codebase**: Ghita Agent maintainers — see `CODEOWNERS`.
 - **Security disclosures**: see [`SECURITY.md`](./SECURITY.md).

@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Memory NAPI Module Entry Point (Phase 3)
+// Ghita Agent — Memory NAPI Module Entry Point (Phase 3)
 // ==============================================================================
 //
 // This crate compiles to a Node.js native addon (.node) that provides:

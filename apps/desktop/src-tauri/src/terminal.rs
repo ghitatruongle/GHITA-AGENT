@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — Native PTY Terminal Module (Rust)
+// Ghita Agent — Native PTY Terminal Module (Rust)
 // ==============================================================================
 // Replaces the Node.js sidecar node-pty implementation with a native Rust PTY
 // using the `portable-pty` crate.  On Windows this uses ConPTY (Win10 1809+),

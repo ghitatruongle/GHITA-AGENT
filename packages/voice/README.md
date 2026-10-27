@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.4-blue)
 
-Voice I/O pipeline for GHITA Coding Agent -- STT (Whisper), TTS abstraction, wake-word detection, VAD (voice activity detection), and audio streaming.
+Voice I/O pipeline for Ghita Agent -- STT (Whisper), TTS abstraction, wake-word detection, VAD (voice activity detection), and audio streaming.
 
 ## Key Features
 

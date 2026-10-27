@@ -1,9 +1,9 @@
 {
   "name": "@ghita/browser-control",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Browser automation (Playwright + CloakBrowser) cho GHITA CODING AGENT",
+  "description": "Browser automation (Playwright + CloakBrowser) cho Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

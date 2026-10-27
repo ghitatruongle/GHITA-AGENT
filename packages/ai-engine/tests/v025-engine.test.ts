@@ -59,7 +59,7 @@ describe('v0.2.5 AI Engine Integration', () => {
       dangerLevel: 'normal',
     });
 
-    expect(prompt).toContain('GHITA CODING AGENT');
+    expect(prompt).toContain('Ghita Agent');
     expect(prompt).toContain('/home/user/project');
   });
 });

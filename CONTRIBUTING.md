@@ -1,4 +1,4 @@
-# Contributing to GHITA CODING AGENT
+# Contributing to Ghita Agent
 
 ---
 
@@ -18,8 +18,8 @@ Thank you for your interest in the project! Here are the contribution guidelines
 
 ```bash
 # Clone repo
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 
 # Install dependencies
 pnpm install
@@ -135,7 +135,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## Bug Reports
 
-Use [GitHub Issues](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues) to report bugs.
+Use [GitHub Issues](https://github.com/ghitatruongle/GHITA-AGENT/issues) to report bugs.
 
 </details>
 
@@ -155,8 +155,8 @@ Cảm ơn sự quan tâm của bạn dành cho dự án! Dưới đây là các 
 
 ```bash
 # Nhân bản dự án (Clone)
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 
 # Cài đặt gói phụ thuộc
 pnpm install
@@ -272,6 +272,6 @@ Sử dụng chuẩn [Conventional Commits](https://www.conventionalcommits.org/)
 
 ## Báo cáo lỗi
 
-Sử dụng mục [GitHub Issues](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues) để báo cáo lỗi hoặc đề xuất tính năng mới.
+Sử dụng mục [GitHub Issues](https://github.com/ghitatruongle/GHITA-AGENT/issues) để báo cáo lỗi hoặc đề xuất tính năng mới.
 
 </details>

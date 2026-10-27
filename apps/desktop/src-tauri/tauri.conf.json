@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "GHITA CODING AGENT",
-  "version": "1.2.0-demo1",
+  "productName": "Ghita Agent",
+  "version": "0.0.0-preview",
   "identifier": "com.ghita.coding-agent",
   "build": {
     "frontendDist": "../dist",
@@ -13,7 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
-        "title": "GHITA CODING AGENT",
+        "title": "Ghita Agent",
         "label": "main",
         "width": 1400,
         "height": 900,
@@ -44,18 +44,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis",
-      "msi",
-      "deb",
-      "appimage",
-      "dmg"
-    ],
+    "targets": ["nsis", "msi", "deb", "appimage", "dmg"],
     "createUpdaterArtifacts": false,
-    "resources": [
-      "sidecar/*",
-      "proto/*"
-    ],
+    "resources": ["sidecar/*", "proto/*"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -70,17 +61,15 @@
       },
       "nsis": {
         "installMode": "currentUser",
-        "languages": [
-          "English",
-          "Vietnamese"
-        ]
+        "installerHooks": "./windows/hooks.nsh",
+        "languages": ["English", "Vietnamese"]
       }
     }
   },
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/ghitatruongle/GHITA-CODING-AGENT/releases/latest/download/latest.json"
+        "https://github.com/ghitatruongle/GHITA-AGENT/releases/latest/download/latest.json"
       ],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEMyN0Q2QkFDNUUyNTM3RjAKUldUd055VmVyR3Q5d3VTT2FnR3Ntd1BibjVJeEhqejNadVdmU2pVSFVxb1lETkYwZC9MY3hvdUcK"
     }

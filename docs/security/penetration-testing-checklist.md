@@ -1,4 +1,4 @@
-# Penetration Testing Checklist — GHITA CODING AGENT
+# Penetration Testing Checklist — Ghita Agent
 
 > **Version:** 1.0
 > **Last Updated:** 2026-06-24

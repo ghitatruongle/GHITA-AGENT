@@ -30,8 +30,8 @@ export const ko: TranslationKeys = {
     run: '실행',
   },
   app: {
-    brand: 'GHITA CODING AGENT',
-    version: 'v1.2.0-demo1',
+    brand: 'Ghita Agent',
+    version: 'v0.0.0-preview',
     deviceReconnected: '기기에 다시 연결됨: {{name}}',
     devicePaired: '기기 페어링 성공: {{name}}',
     commandReceived: '기기로부터 명령 수신: {{action}}',
@@ -77,7 +77,7 @@ export const ko: TranslationKeys = {
     autoSaveOn: '켜짐',
     autoSaveOff: '꺼짐',
     title: '설정',
-    subtitle: 'GHITA CODING AGENT 애플리케이션 구성 및 맞춤 설정',
+    subtitle: 'Ghita Agent 애플리케이션 구성 및 맞춤 설정',
     appearance: '테마 및 스타일',
     theme: '테마',
     themeDesc: '라이트 모드 또는 다크 모드 사용자 인터페이스 선택',
@@ -206,7 +206,7 @@ export const ko: TranslationKeys = {
   },
   dashboard: {
     title: '대시보드',
-    subtitle: 'GHITA CODING AGENT의 실시간 성능 모니터링',
+    subtitle: 'Ghita Agent의 실시간 성능 모니터링',
     totalTokens: '총 토큰 사용량',
     totalCost: '총 LLM 비용',
     activeAgents: '활성 AI 에이전트',
@@ -344,7 +344,7 @@ export const ko: TranslationKeys = {
   },
   chat: {
     welcomeMessage:
-      'GHITA Coding Agent에 오신 것을 환영합니다. 저는 당신의 AI 파트너인 GHITA Assistant입니다. 코드를 작성하고, 터미널 명령을 실행하고, 파일을 관리하며 복잡한 작업을 자동화할 수 있습니다. 시작해 볼까요!',
+      'Ghita Agent에 오신 것을 환영합니다. 저는 당신의 AI 파트너인 GHITA Assistant입니다. 코드를 작성하고, 터미널 명령을 실행하고, 파일을 관리하며 복잡한 작업을 자동화할 수 있습니다. 시작해 볼까요!',
     notConnected: '백그라운드 서비스에 연결되지 않음...',
     notConnectedHint:
       '서비스에 연결되지 않았습니다 -- 구성 안내를 보려면 아무 내용이나 입력하세요...',
@@ -379,7 +379,7 @@ export const ko: TranslationKeys = {
     deployCheck: '배포 전 코드 검사',
     summary: '대화 요약',
     systemPrompt:
-      'You are GHITA Assistant, an intelligent AI assistant built into the GHITA CODING AGENT application.\n\nCORE CAPABILITY: You can directly execute commands on the user\'s machine. When users ask to open applications, run commands, or manage files — ALWAYS wrap the command in a code block with cmd or powershell language tag. The system will AUTO-EXECUTE the command. NEVER say "I cannot" or "I don\'t have the ability".\n\nMANDATORY RULE: When you need to run a command, ALWAYS use this format:\n```cmd\ncommand to run\n```\nOr:\n```powershell\ncommand to run\n```\n\nExample to open Microsoft Word:\n```cmd\nstart winword\n```\n\nExample to open Notepad:\n```cmd\nnotepad\n```\n\nYou also support: code review, refactor, run tests, format code, lint, security audit, generate docs.\n\nAlways identify yourself as GHITA Assistant when asked about your identity. Be direct and concise.',
+      'You are GHITA Assistant, an intelligent AI assistant built into the Ghita Agent application.\n\nCORE CAPABILITY: You can directly execute commands on the user\'s machine. When users ask to open applications, run commands, or manage files — ALWAYS wrap the command in a code block with cmd or powershell language tag. The system will AUTO-EXECUTE the command. NEVER say "I cannot" or "I don\'t have the ability".\n\nMANDATORY RULE: When you need to run a command, ALWAYS use this format:\n```cmd\ncommand to run\n```\nOr:\n```powershell\ncommand to run\n```\n\nExample to open Microsoft Word:\n```cmd\nstart winword\n```\n\nExample to open Notepad:\n```cmd\nnotepad\n```\n\nYou also support: code review, refactor, run tests, format code, lint, security audit, generate docs.\n\nAlways identify yourself as GHITA Assistant when asked about your identity. Be direct and concise.',
     openclawEngine: 'GHITA Assistant',
     skillLearned: '스킬 자동 학습: AI 에이전트가 새로운 스킬을 제안하고 통합했습니다...',
     runningAutomation: '화면 시뮬레이션 자동화 단계 실행 중...',
@@ -408,7 +408,7 @@ export const ko: TranslationKeys = {
     clear: '지우기',
   },
   terminal: {
-    title: 'GHITA CODING AGENT 명령 터미널',
+    title: 'Ghita Agent 명령 터미널',
     shellSwitchHint: '셸 이름을 클릭하여 cmd.exe와 PowerShell 간에 전환합니다',
     running: '명령 실행 중...',
     placeholder: '여기에 명령 입력...',
@@ -464,7 +464,7 @@ export const ko: TranslationKeys = {
     hide: '키 숨기기',
     show: '키 표시',
     fetch: '가져오기',
-    
+
     addKey: '키 추가',
     removeKey: '제거',
     keyStrategy: 'API 키 순환 전략',
@@ -527,7 +527,7 @@ export const ko: TranslationKeys = {
     noContainersDesc:
       'AI가 테스트 또는 안전하지 않은 작업을 실행해야 할 때 격리된 Docker 컨테이너가 자동으로 시작됩니다.',
   },
-  
+
   notification: {
     ariaLabel: '알림',
     title: '알림',
@@ -536,7 +536,7 @@ export const ko: TranslationKeys = {
     unreadBadge: '{{count}}',
     dismiss: '알림 닫기',
   },
-  
+
   voice: {
     start: '음성 입력 시작',
     stop: '리스닝 중지',
@@ -544,7 +544,7 @@ export const ko: TranslationKeys = {
     unsupported: '음성 입력이 지원되지 않음',
     unsupportedHint: '이 환경에서는 음성 인식을 사용할 수 없습니다',
   },
-  
+
   monitoring: {
     title: '모니터링',
     loading: '모니터링 로드 중…',
@@ -566,7 +566,7 @@ export const ko: TranslationKeys = {
     lastSeen: '마지막 감지',
     refresh: '새로 고침',
   },
-  
+
   quota: {
     title: '할당량 및 속도 제한',
     loading: '할당량 로드 중…',
@@ -590,7 +590,7 @@ export const ko: TranslationKeys = {
     refresh: '새로 고침',
     budgetUsage: '예산 사용',
   },
-  
+
   codeGraph: {
     title: '코드 지식 그래프',
     workspacePath: '워크스페이스 경로',
@@ -668,7 +668,7 @@ export const ko: TranslationKeys = {
     editorConfig: '편집기 설정',
   },
   welcome: {
-    title: 'GHITA CODING AGENT',
+    title: 'Ghita Agent',
     subtitle: '멀티프로바이더 AI, 스킬, 컴퓨터 사용을 갖춘 지능형 코딩 어시스턴트.',
     openFolder: '폴더 열기',
     recentWorkspaces: '최근 작업 공간',

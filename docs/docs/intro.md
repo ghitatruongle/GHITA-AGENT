@@ -1,12 +1,12 @@
 ---
 id: intro
-title: Welcome to GHITA CODING AGENT
+title: Welcome to Ghita Agent
 sidebar_label: Introduction
 sidebar_position: 0
 slug: /
 ---
 
-# GHITA CODING AGENT
+# Ghita Agent
 
 **Trợ lý lập trình AI đa nhà cung cấp với skills, computer use và bộ nhớ dài hạn**,
 dành cho lập trình viên cần toàn quyền kiểm soát môi trường làm việc.
@@ -23,8 +23,8 @@ dành cho lập trình viên cần toàn quyền kiểm soát môi trường là
 ## Cài đặt nhanh
 
 ```bash
-git clone https://github.com/ghitatruongle/ghita-coding-agent
-cd ghita-coding-agent
+git clone https://github.com/ghitatruongle/GHITA-AGENT
+cd GHITA-AGENT
 pnpm install --frozen-lockfile
 pnpm dev:desktop
 ```

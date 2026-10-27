@@ -1,4 +1,4 @@
-//! GHITA CODING AGENT — Sandboxed Process Execution
+//! Ghita Agent — Sandboxed Process Execution
 //! Zero-dependency sandboxed spawn with multi-platform enforcement tiers:
 //! - linux   : Landlock (kernel write-scoping via raw syscalls, NO_NEW_PRIVS)
 //! - macos   : Seatbelt (`sandbox-exec` SBPL profile wrapper)

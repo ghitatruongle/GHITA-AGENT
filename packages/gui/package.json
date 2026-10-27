@@ -1,9 +1,9 @@
 {
   "name": "@ghita/gui",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Tauri window management, persistence, tray, global shortcuts, theme switching cho GHITA Coding Agent",
+  "description": "Tauri window management, persistence, tray, global shortcuts, theme switching cho Ghita Agent",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -1,4 +1,4 @@
-//! GHITA CODING AGENT — Exact BPE Token Counter & Cached Estimator
+//! Ghita Agent — Exact BPE Token Counter & Cached Estimator
 //! Wraps tiktoken-rs to provide exact token counts for OpenAI/Claude/GPT models.
 //! Features:
 //! 1. Exact BPE token counting across o200k, cl100k, r50k encodings.

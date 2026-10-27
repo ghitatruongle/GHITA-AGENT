@@ -1,9 +1,9 @@
 {
   "name": "@ghita/i18n",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Internationalization engine for GHITA CODING AGENT",
+  "description": "Internationalization engine for Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

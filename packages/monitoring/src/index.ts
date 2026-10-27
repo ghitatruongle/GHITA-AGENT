@@ -24,4 +24,4 @@ export type {
   MonitoringStats,
 } from './types.js';
 
-export const MONITORING_VERSION = '1.2.0-demo1';
+export const MONITORING_VERSION = '0.0.0-preview';

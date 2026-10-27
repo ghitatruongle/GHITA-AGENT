@@ -1,9 +1,9 @@
 {
   "name": "@ghita/skills",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Skill system cho GHITA CODING AGENT",
+  "description": "Skill system cho Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

@@ -1,10 +1,10 @@
 {
   "name": "@ghita/quotas",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
   "type": "module",
-  "description": "GHITA CODING AGENT - Rate Limiting & Quota Management (Phase 43)",
+  "description": "Ghita Agent - Rate Limiting & Quota Management (Phase 43)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

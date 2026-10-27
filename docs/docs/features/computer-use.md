@@ -7,7 +7,7 @@ sidebar_position: 3
 
 # Computer Use
 
-GHITA CODING AGENT can control your desktop — mouse, keyboard, screenshots, and terminal — through its native Rust Computer Use module.
+Ghita Agent can control your desktop — mouse, keyboard, screenshots, and terminal — through its native Rust Computer Use module.
 
 ## Architecture
 

@@ -4,7 +4,7 @@ use std::env;
 use std::panic;
 
 fn print_help() {
-    println!("GHITA CODING AGENT v0.7.1");
+    println!("Ghita Agent v0.7.1");
     println!();
     println!("Usage:");
     println!("  ghita-coding-agent [OPTIONS]");

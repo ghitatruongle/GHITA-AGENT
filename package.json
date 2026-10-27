@@ -1,9 +1,9 @@
 {
   "name": "ghita-coding-agent",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "type": "module",
-  "description": "GHITA CODING AGENT - Desktop AI Agent với multi-provider, skills, computer use",
+  "description": "Ghita Agent - Desktop AI Agent với multi-provider, skills, computer use",
   "author": "ghitatruongle",
   "license": "MIT",
   "scripts": {

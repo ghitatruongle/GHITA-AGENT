@@ -1,4 +1,4 @@
-# 📦 GHITA CODING AGENT — Phát hành Installer
+# 📦 Ghita Agent — Phát hành Installer
 
 Từ v1.0.0, mỗi lần build tạo ra **ĐÚNG 1 file installer duy nhất** (kiểu
 Cursor / Antigravity) — người dùng tải 1 file, chạy là cài xong, không cần
@@ -14,8 +14,8 @@ Kết quả (thư mục `release/`):
 
 ```
 release/
-├── GHITA-CODING-AGENT-Setup-v1.0.0.exe   ← file duy nhất cần phát hành
-└── GHITA-CODING-AGENT-Setup-v1.0.0.exe.sha256
+├── Ghita Agent-Setup-v0.0.0-preview.exe   ← file duy nhất cần phát hành
+└── Ghita Agent-Setup-v0.0.0-preview.exe.sha256
 ```
 
 - Tên file **cố định theo version** — mỗi lần build ghi đè đúng 1 file.
@@ -27,7 +27,7 @@ release/
 ### Cách 1 — GitHub Releases (khuyến nghị)
 
 1. Tạo release tag `v1.0.0` trên GitHub.
-2. Upload `GHITA-CODING-AGENT-Setup-v1.0.0.exe` + `.sha256`.
+2. Upload `Ghita Agent-Setup-v0.0.0-preview.exe` + `.sha256`.
 3. Người dùng tải 1 file, chạy, cài xong.
 
 ### Cách 2 — Gửi trực tiếp

@@ -5,13 +5,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import {
-  calculateQualityMetrics,
-  MockLLMSearchEngine,
-  compareSearchMethods,
-  BenchmarkQuery,
-  SearchResult,
-} from './evaluator.js';
+import { MockLLMSearchEngine, compareSearchMethods } from './evaluator.js';
+import type { BenchmarkQuery, SearchResult } from './evaluator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const benchmarkPath = path.resolve(__dirname, 'benchmark.json');
@@ -53,21 +48,21 @@ const regexFn = (q: BenchmarkQuery): SearchResult[] => {
 };
 
 // ====== Run comparison ======
-console.log('='.repeat(70));
-console.log('GHITA CODING AGENT — Search Method Comparison Report');
-console.log(`Benchmark: ${queries.length} queries`);
-console.log('='.repeat(70));
+console.info('='.repeat(70));
+console.info('Ghita Agent — Search Method Comparison Report');
+console.info(`Benchmark: ${queries.length} queries`);
+console.info('='.repeat(70));
 
 const results = compareSearchMethods(queries, pageRankFn, regexFn);
 
 for (const r of results) {
-  console.log(`\n--- ${r.method} ---`);
-  console.log(`  Precision:    ${(r.metrics.precision * 100).toFixed(1)}%`);
-  console.log(`  Recall:       ${(r.metrics.recall * 100).toFixed(1)}%`);
-  console.log(`  F1-Score:     ${(r.metrics.f1Score * 100).toFixed(1)}%`);
-  console.log(`  Matched:      ${r.metrics.matchedQueries} / ${r.metrics.totalQueries}`);
-  console.log(`  Avg Score:    ${r.metrics.avgScore.toFixed(3)}`);
-  console.log(`  Exec Time:    ${r.executionTimeMs.toFixed(2)} ms`);
+  console.info(`\n--- ${r.method} ---`);
+  console.info(`  Precision:    ${(r.metrics.precision * 100).toFixed(1)}%`);
+  console.info(`  Recall:       ${(r.metrics.recall * 100).toFixed(1)}%`);
+  console.info(`  F1-Score:     ${(r.metrics.f1Score * 100).toFixed(1)}%`);
+  console.info(`  Matched:      ${r.metrics.matchedQueries} / ${r.metrics.totalQueries}`);
+  console.info(`  Avg Score:    ${r.metrics.avgScore.toFixed(3)}`);
+  console.info(`  Exec Time:    ${r.executionTimeMs.toFixed(2)} ms`);
 }
 
 // Summary
@@ -76,6 +71,6 @@ const rxF1 = results[1].metrics.f1Score;
 const winner = prF1 >= rxF1 ? 'PageRank' : 'RegexSearch';
 const diff = Math.abs(prF1 - rxF1) * 100;
 
-console.log(`\n${'='.repeat(70)}`);
-console.log(`WINNER: ${winner} (F1 diff: ${diff.toFixed(1)}%)`);
-console.log('='.repeat(70));
+console.info(`\n${'='.repeat(70)}`);
+console.info(`WINNER: ${winner} (F1 diff: ${diff.toFixed(1)}%)`);
+console.info('='.repeat(70));

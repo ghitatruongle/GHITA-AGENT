@@ -1,6 +1,6 @@
 # GHITA Documentation
 
-This is the Docusaurus documentation site for GHITA CODING AGENT (v0.0.3).
+This is the Docusaurus documentation site for Ghita Agent (v0.0.3).
 
 ## Develop
 

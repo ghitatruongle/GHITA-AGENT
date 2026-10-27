@@ -6,7 +6,7 @@ import type { TrayMenuItem } from './types.js';
  */
 export class TrayController {
   private items: TrayMenuItem[] = [];
-  private tooltip = 'GHITA Coding Agent';
+  private tooltip = 'Ghita Agent';
 
   /**
    * Set the tooltip shown on hover.

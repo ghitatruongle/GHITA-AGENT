@@ -191,7 +191,7 @@ export type {
 
 // --- Original exports below ---
 
-export const AGENTS_VERSION = '1.2.0-demo1';
+export const AGENTS_VERSION = '0.0.0-preview';
 
 export type AgentStatus = 'idle' | 'working' | 'completed' | 'error';
 

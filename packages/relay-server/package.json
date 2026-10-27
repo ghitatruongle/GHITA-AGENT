@@ -1,9 +1,9 @@
 {
   "name": "@ghita/relay-server",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "WebSocket relay server for GHITA CODING AGENT mobile pairing",
+  "description": "WebSocket relay server for Ghita Agent mobile pairing",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

@@ -77,9 +77,9 @@ export class SampleClass {
     const result = await scanner.searchFile(sampleFilePath, 'this.point = {');
 
     expect(result.found).toBe(true);
-    
+
     expect(result.content).toContain('this.point = {');
-    
+
     const openBraces = (result.content.match(/{/g) || []).length;
     const closeBraces = (result.content.match(/}/g) || []).length;
     expect(openBraces).toBe(closeBraces);
@@ -104,7 +104,7 @@ console.log(x);`;
 
   it('should compress and decompress context properly using zlib', () => {
     const scanner = new HeadlessSearchScanner();
-    const text = 'GHITA CODING AGENT'.repeat(50);
+    const text = 'Ghita Agent'.repeat(50);
     const compressed = scanner.compressContext(text);
     expect(compressed.length).toBeLessThan(Buffer.byteLength(text));
 

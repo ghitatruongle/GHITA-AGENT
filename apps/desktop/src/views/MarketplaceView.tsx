@@ -18,7 +18,7 @@ const MARKETPLACE_PLUGINS: PluginManifest[] = [
     author: 'GHITA Dev Team',
     type: 'code',
     entrypoint: 'index.js',
-    website: 'https://github.com/ghitatruongle/ghita-coding-agent',
+    website: 'https://github.com/ghitatruongle/GHITA-AGENT',
     permissions: ['git', 'network'],
   },
   {

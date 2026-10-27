@@ -1,5 +1,5 @@
 # ==============================================================================
-# GHITA CODING AGENT — Sidecar Dockerfile
+# Ghita Agent — Sidecar Dockerfile
 # ==============================================================================
 # Multi-stage build for the Node.js sidecar server.
 #

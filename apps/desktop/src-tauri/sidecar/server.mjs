@@ -1,5 +1,5 @@
 ﻿// ==============================================================================
-// GHITA CODING AGENT — Communication Server Sidecar
+// Ghita Agent — Communication Server Sidecar
 // Standalone Socket.io server for Desktop ↔ Mobile communication
 // ==============================================================================
 

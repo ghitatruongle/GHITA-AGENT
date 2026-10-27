@@ -1,25 +1,25 @@
-# GHITA CODING AGENT
+# Ghita Agent
 
 <div align="center">
-  <img src="docs/logo_official.png" alt="GHITA CODING AGENT" width="200">
+  <img src="docs/logo_official.png" alt="Ghita Agent" width="200">
 </div>
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.1.5-purple.svg)
+![Version](https://img.shields.io/badge/version-0.0.0-preview-purple.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-green.svg)
 ![TypeScript](https://img.shields.io/badge/typescript-5.6-blue.svg)
 ![Tauri](https://img.shields.io/badge/tauri-2.x-orange.svg)
-[![CI](https://github.com/ghitatruongle/GHITA-CODING-AGENT/actions/workflows/ci.yml/badge.svg)](https://github.com/ghitatruongle/GHITA-CODING-AGENT/actions/workflows/ci.yml)
+[![CI](https://github.com/ghitatruongle/GHITA-AGENT/actions/workflows/ci.yml/badge.svg)](https://github.com/ghitatruongle/GHITA-AGENT/actions/workflows/ci.yml)
 ![Coverage](https://img.shields.io/badge/coverage-v8%2Fc8-informational.svg)
 ![Build](https://img.shields.io/badge/build-turborepo-blueviolet.svg)
-[![Docs](https://img.shields.io/badge/docs-api-blueviolet.svg)](https://ghitatruongle.github.io/GHITA-CODING-AGENT/)
+[![Docs](https://img.shields.io/badge/docs-api-blueviolet.svg)](https://ghitatruongle.github.io/GHITA-AGENT/)
 [![Roadmap](https://img.shields.io/badge/roadmap-public-yellow.svg)](ROADMAP.md)
 [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md)
 [![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Discord](https://img.shields.io/badge/chat-discord-5865F2.svg)](https://discord.gg/ghita)
-[![GitHub stars](https://img.shields.io/github/stars/ghitatruongle/GHITA-CODING-AGENT?style=social)](https://github.com/ghitatruongle/GHITA-CODING-AGENT)
+[![GitHub stars](https://img.shields.io/github/stars/ghitatruongle/GHITA-AGENT?style=social)](https://github.com/ghitatruongle/GHITA-AGENT)
 
 </div>
 
@@ -28,7 +28,7 @@
 <details open>
 <summary><b>🇺🇸 English Version</b></summary>
 
-**GHITA CODING AGENT** — A versatile AI desktop application with VS Code-style interface, supporting remote computer control via Android phone.
+**Ghita Agent** — A versatile AI desktop application with VS Code-style interface, supporting remote computer control via Android phone.
 
 ---
 
@@ -67,7 +67,7 @@
 ## Project Structure
 
 ```
-GHITA-CODING-AGENT/
+GHITA-AGENT/
 ├── apps/
 │   ├── desktop/         # Tauri + React (Windows/Linux)
 │   └── mobile/          # React Native (Android)
@@ -88,11 +88,11 @@ GHITA-CODING-AGENT/
 
 ### Core vs Incubating
 
-| Tier           | Packages                                                                                                                                                          |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Core**       | `ai-engine`, `agents`, `skills`, `memory`, `security`, `communication`, `code-graph` (native napi), `shared`, `desktop`                                             |
-| **Product**    | `computer-use`, `browser-control`, `vscode-extension`, `mobile`                                                                                                      |
-| **Incubating** | `marketplace`, `voice`, `monitoring`, `notification`, `quotas`, `gui`, `a11y`, `i18n`, `integration`, `migration`, `mobile-companion`, `relay-server`                |
+| Tier           | Packages                                                                                                                                              |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Core**       | `ai-engine`, `agents`, `skills`, `memory`, `security`, `communication`, `code-graph` (native napi), `shared`, `desktop`                               |
+| **Product**    | `computer-use`, `browser-control`, `vscode-extension`, `mobile`                                                                                       |
+| **Incubating** | `marketplace`, `voice`, `monitoring`, `notification`, `quotas`, `gui`, `a11y`, `i18n`, `integration`, `migration`, `mobile-companion`, `relay-server` |
 
 > **Honesty notes on Incubating packages:** `marketplace` installs/uninstalls
 > plugins for real, but its payment ledger is a simulation (`PaymentGateway`
@@ -118,8 +118,8 @@ GHITA-CODING-AGENT/
 ### Quick start (one command)
 
 ```bash
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 ```
 
 Then run the setup script for your platform — it checks prerequisites,
@@ -255,27 +255,27 @@ pnpm dev:android
 
 ## 🤝 Community & Support
 
-| Kênh                                                                                                                                                                       | Mục đích                              |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| [![Discord](https://img.shields.io/badge/chat-discord-5865F2.svg)](https://discord.gg/ghita)                                                                               | Community chat, Q&A, feature requests |
-| [![GitHub Issues](https://img.shields.io/badge/issues-bug_report-red.svg)](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues/new?labels=bug)                      | Bug reports                           |
-| [![GitHub Issues](https://img.shields.io/badge/issues-feature_request-brightgreen.svg)](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues/new?labels=enhancement) | Feature requests                      |
-| [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md)                                                                                         | Report vulnerabilities                |
-| [![Roadmap](https://img.shields.io/badge/roadmap-public-yellow.svg)](ROADMAP.md)                                                                                           | Planned features                      |
-| [![API Docs](https://img.shields.io/badge/docs-api-blueviolet.svg)](https://ghitatruongle.github.io/GHITA-CODING-AGENT/)                                                   | API reference                         |
+| Kênh                                                                                                                                                                | Mục đích                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| [![Discord](https://img.shields.io/badge/chat-discord-5865F2.svg)](https://discord.gg/ghita)                                                                        | Community chat, Q&A, feature requests |
+| [![GitHub Issues](https://img.shields.io/badge/issues-bug_report-red.svg)](https://github.com/ghitatruongle/GHITA-AGENT/issues/new?labels=bug)                      | Bug reports                           |
+| [![GitHub Issues](https://img.shields.io/badge/issues-feature_request-brightgreen.svg)](https://github.com/ghitatruongle/GHITA-AGENT/issues/new?labels=enhancement) | Feature requests                      |
+| [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md)                                                                                  | Report vulnerabilities                |
+| [![Roadmap](https://img.shields.io/badge/roadmap-public-yellow.svg)](ROADMAP.md)                                                                                    | Planned features                      |
+| [![API Docs](https://img.shields.io/badge/docs-api-blueviolet.svg)](https://ghitatruongle.github.io/GHITA-AGENT/)                                                   | API reference                         |
 
 ---
 
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 GHITA CODING AGENT
+[MIT](LICENSE) — Copyright (c) 2026 Ghita Agent
 
 </details>
 
 <details>
 <summary><b>🇻🇳 Phiên bản Tiếng Việt</b></summary>
 
-**GHITA CODING AGENT** — Ứng dụng AI trên máy tính đa năng với giao diện kiểu VS Code, hỗ trợ điều khiển máy tính từ xa qua điện thoại Android.
+**Ghita Agent** — Ứng dụng AI trên máy tính đa năng với giao diện kiểu VS Code, hỗ trợ điều khiển máy tính từ xa qua điện thoại Android.
 
 ---
 
@@ -314,7 +314,7 @@ pnpm dev:android
 ## Cấu trúc Dự án
 
 ```
-GHITA-CODING-AGENT/
+GHITA-AGENT/
 ├── apps/
 │   ├── desktop/         # Ứng dụng Tauri + React (Windows/Linux)
 │   └── mobile/          # Ứng dụng React Native (Android)
@@ -348,8 +348,8 @@ GHITA-CODING-AGENT/
 ### Cài nhanh (một lệnh)
 
 ```bash
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 ```
 
 Chạy script setup tương ứng hệ điều hành — script sẽ kiểm tra điều kiện,
@@ -490,20 +490,20 @@ pnpm dev:android
 | Kênh                                                                                         | Mục đích                                     |
 | -------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | [![Discord](https://img.shields.io/badge/chat-discord-5865F2.svg)](https://discord.gg/ghita) | Trò chuyện cộng đồng, Q&A, yêu cầu tính năng |
-| [GitHub Issues](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues)                  | Báo cáo lỗi, đóng góp ý tưởng                |
+| [GitHub Issues](https://github.com/ghitatruongle/GHITA-AGENT/issues)                         | Báo cáo lỗi, đóng góp ý tưởng                |
 | [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md)           | Báo cáo lỗ hổng bảo mật                      |
 | [![Roadmap](https://img.shields.io/badge/roadmap-public-yellow.svg)](ROADMAP.md)             | Lộ trình phát triển                          |
 
 ## Bản quyền
 
-Sử dụng giấy phép [MIT](LICENSE) — Bản quyền (c) 2026 thuộc về GHITA CODING AGENT
+Sử dụng giấy phép [MIT](LICENSE) — Bản quyền (c) 2026 thuộc về Ghita Agent
 
 </details>
 
 <details>
 <summary><b>🇨🇳 中文版本</b></summary>
 
-**GHITA CODING AGENT** — 一款功能强大的 AI 桌面应用程序,采用 VS Code 风格界面,支持通过安卓手机远程控制电脑。
+**Ghita Agent** — 一款功能强大的 AI 桌面应用程序,采用 VS Code 风格界面,支持通过安卓手机远程控制电脑。
 
 ---
 
@@ -542,7 +542,7 @@ Sử dụng giấy phép [MIT](LICENSE) — Bản quyền (c) 2026 thuộc về 
 ## 项目结构
 
 ```
-GHITA-CODING-AGENT/
+GHITA-AGENT/
 ├── apps/
 │   ├── desktop/         # Tauri + React 桌面应用 (Windows/Linux)
 │   └── mobile/          # React Native 移动应用 (Android)
@@ -577,8 +577,8 @@ GHITA-CODING-AGENT/
 ### 步骤 1:克隆项目
 
 ```bash
-git clone https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
-cd GHITA-CODING-AGENT
+git clone https://github.com/ghitatruongle/GHITA-AGENT.git
+cd GHITA-AGENT
 ```
 
 ### 步骤 2:安装依赖
@@ -718,12 +718,12 @@ pnpm dev:android
 | 渠道                                                                                         | 用途                     |
 | -------------------------------------------------------------------------------------------- | ------------------------ |
 | [![Discord](https://img.shields.io/badge/chat-discord-5865F2.svg)](https://discord.gg/ghita) | 社区聊天、问答、功能请求 |
-| [GitHub Issues](https://github.com/ghitatruongle/GHITA-CODING-AGENT/issues)                  | 报告错误、贡献想法       |
+| [GitHub Issues](https://github.com/ghitatruongle/GHITA-AGENT/issues)                         | 报告错误、贡献想法       |
 | [![Security](https://img.shields.io/badge/security-policy-green.svg)](SECURITY.md)           | 报告安全漏洞             |
 | [![Roadmap](https://img.shields.io/badge/roadmap-public-yellow.svg)](ROADMAP.md)             | 开发路线图               |
 
 ## 许可证
 
-基于 [MIT](LICENSE) 许可证 — 版权所有 (c) 2026 GHITA CODING AGENT
+基于 [MIT](LICENSE) 许可证 — 版权所有 (c) 2026 Ghita Agent
 
 </details>

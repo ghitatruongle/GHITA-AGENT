@@ -1,9 +1,9 @@
 {
   "name": "@ghita/a11y",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
   "sideEffects": false,
-  "description": "Accessibility utilities for GHITA CODING AGENT",
+  "description": "Accessibility utilities for Ghita Agent",
   "main": "./dist/index.js",
   "type": "module",
   "types": "./dist/index.d.ts",

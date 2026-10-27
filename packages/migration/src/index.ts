@@ -5,4 +5,4 @@ export { MigrationRegistry } from './registry.js';
 export { compareVersions, isValidVersion } from './version-detector.js';
 export type { Migration, MigrationState, MigrationRunnerConfig } from './types.js';
 
-export const MIGRATION_VERSION = '1.2.0-demo1';
+export const MIGRATION_VERSION = '0.0.0-preview';

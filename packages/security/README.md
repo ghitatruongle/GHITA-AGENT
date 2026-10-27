@@ -4,7 +4,7 @@
 ![Coverage](https://img.shields.io/badge/coverage-94%25_lines-brightgreen)
 ![Tier](https://img.shields.io/badge/tier-T0_critical-red)
 
-Security toolkit for GHITA Coding Agent: input sanitization, CORS auditing, API key rotation, and audit reporting.
+Security toolkit for Ghita Agent: input sanitization, CORS auditing, API key rotation, and audit reporting.
 
 ## Install
 

@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # `@ghita/security`
 
-Package `@ghita/security` cung cấp các công cụ bảo mật thiết yếu cho GHITA: input sanitization, XSS prevention, CORS policy và API key rotation. Xem tiến độ trong [ROADMAP](https://github.com/ghitatruongle/ghita-coding-agent/blob/main/ROADMAP.md).
+Package `@ghita/security` cung cấp các công cụ bảo mật thiết yếu cho GHITA: input sanitization, XSS prevention, CORS policy và API key rotation. Xem tiến độ trong [ROADMAP](https://github.com/ghitatruongle/GHITA-AGENT/blob/main/ROADMAP.md).
 
 ## Cài đặt
 

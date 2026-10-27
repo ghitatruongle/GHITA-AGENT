@@ -1,5 +1,5 @@
 //
-// The AI Engine is the central intelligence layer of GHITA CODING AGENT.
+// The AI Engine is the central intelligence layer of Ghita Agent.
 // It provides:
 //
 // - **Multi-Provider Support**: 10+ LLM providers (OpenAI, Anthropic, Google,

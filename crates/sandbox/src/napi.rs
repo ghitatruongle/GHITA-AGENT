@@ -1,4 +1,4 @@
-//! GHITA CODING AGENT — Sandbox NAPI addon
+//! Ghita Agent — Sandbox NAPI addon
 //! napi surface behind the `addon` feature — loaded by @ghita/native-bridge
 //! under the name `sandbox`. Mirrors the secscan/retrieval/codegraph addon
 //! pattern (dyn-symbols, no libnode.dll at link time).

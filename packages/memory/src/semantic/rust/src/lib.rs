@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT - Phase 19: Rust Cosine similarity Addon
+// Ghita Agent - Phase 19: Rust Cosine similarity Addon
 // ==============================================================================
 // Rust acceleration code for high-performance cosine similarity calculations
 // ==============================================================================

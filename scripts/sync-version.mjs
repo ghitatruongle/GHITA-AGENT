@@ -122,7 +122,9 @@ if (existsSync(tauriConfigPath)) {
 }
 
 const [major, minor, patch] = TARGET.split(/[.-]/).slice(0, 3).map(Number);
-const nativeBuildNumber = major * 1_000_000 + minor * 1_000 + patch;
+// Android versionCode / iOS CURRENT_PROJECT_VERSION must be >= 1 (0 is an
+// invalid build number), so 0.x.y-style versions still produce a valid one.
+const nativeBuildNumber = Math.max(1, major * 1_000_000 + minor * 1_000 + patch);
 
 updateTextVersion('crates/Cargo.toml', [
   {
@@ -145,6 +147,22 @@ updateTextVersion('apps/desktop/src-tauri/Cargo.lock', [
     label: 'workspace package version',
   },
 ]);
+
+const cratesWorkspaceToml = join(root, 'crates', 'Cargo.toml');
+if (existsSync(cratesWorkspaceToml)) {
+  const members = [
+    ...readFileSync(cratesWorkspaceToml, 'utf8').matchAll(/members\s*=\s*\[([^\]]+)\]/g),
+  ].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((n) => n[1]));
+  const cratesLockReplacements = members
+    .map((name) => ({
+      pattern: new RegExp(`(?<=\\[\\[package\\]\\]\\r?\\nname = "ghita-${name}"\\r?\\nversion = ")([^"]+)`),
+      replacement: TARGET,
+      label: `${name} version`,
+    }));
+  if (cratesLockReplacements.length > 0) {
+    updateTextVersion('crates/Cargo.lock', cratesLockReplacements);
+  }
+}
 updateTextVersion('apps/mobile/android/app/build.gradle', [
   {
     pattern: /versionCode\s+(\d+)/,

@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.1.0-blue)
 
-Relay server for GHITA Coding Agent -- WebSocket-based message relay that bridges desktop and mobile clients with authentication, connection pooling, and message queuing.
+Relay server for Ghita Agent -- WebSocket-based message relay that bridges desktop and mobile clients with authentication, connection pooling, and message queuing.
 
 ## Key Features
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-GHITA CODING AGENT uses Sentry for error tracking and performance monitoring via the `@ghita/monitoring` package. This document describes the production configuration and opt-in telemetry policy.
+Ghita Agent uses Sentry for error tracking and performance monitoring via the `@ghita/monitoring` package. This document describes the production configuration and opt-in telemetry policy.
 
 ## Sentry Configuration
 

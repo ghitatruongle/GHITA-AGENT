@@ -160,7 +160,7 @@ export function ChatHeader({
                   return `## ${who}${ts}\n\n${m.content}`;
                 })
                 .join('\n\n---\n\n');
-              const blob = new Blob([`# GHITA CODING AGENT — Chat Export\n\n${md}`], {
+              const blob = new Blob([`# Ghita Agent — Chat Export\n\n${md}`], {
                 type: 'text/markdown',
               });
               const url = URL.createObjectURL(blob);

@@ -1,10 +1,7 @@
 // Covers: WebSocket sync, Agent routing, Monaco diagnostics,
 //         Browser observe/act, PTY terminal, and 30-client load test
 
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import * as http from 'node:http';
-import * as os from 'node:os';
-import * as fs from 'node:fs';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import * as path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { SOCKET_EVENTS } from '../../packages/shared/src/constants.js';
@@ -215,7 +212,7 @@ interface A11yNode {
 class MockBrowserAgent extends EventEmitter {
   private _page: A11yNode = {
     role: 'document',
-    name: 'GHITA Coding Agent',
+    name: 'Ghita Agent',
     children: [
       {
         role: 'navigation',
@@ -335,7 +332,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 1. WebSocket File-Change Sync (simulates VS Code save event → WS)
-  
+
   describe('WebSocket: VS Code File-Change Sync', () => {
     it('should broadcast VSCODE_FILE_CHANGE event to all connected clients', async () => {
       const client1 = wss.addClient();
@@ -402,7 +399,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 2. Agent Router: File Type → Provider Resolution
-  
+
   describe('Agent Router: Provider Resolution', () => {
     const routingMatrix: Array<{ file: string; expectedProvider: string; expectedAction: string }> =
       [
@@ -437,7 +434,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 3. Monaco Editor Marker / Diagnostics Update
-  
+
   describe('Monaco Editor: Diagnostics & Marker Updates', () => {
     it('should set and retrieve error markers correctly', () => {
       const resource = 'file:///src/index.ts';
@@ -559,12 +556,12 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 4. Browser Agent: Observe & Act (with Self-Healing Selectors)
-  
+
   describe('Browser Agent: Observe & Act with Self-Healing', () => {
     it('should observe and return the full accessibility tree', () => {
       const tree = browser.observe();
       expect(tree.role).toBe('document');
-      expect(tree.name).toBe('GHITA Coding Agent');
+      expect(tree.name).toBe('Ghita Agent');
       expect(tree.children?.length).toBeGreaterThan(0);
     });
 
@@ -621,7 +618,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 5. PTY Terminal: Stream Command Execution
-  
+
   describe('PTY Terminal: Stream Command Execution', () => {
     let pty: MockPtyTerminal;
 
@@ -692,7 +689,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 6. Full Workflow Integration: VS Code Save → WS → Agent Router → Monaco
-  
+
   describe('Full Workflow: VS Code Save → WS Sync → Agent Router → Monaco Diagnostics', () => {
     it('should process a full file-save workflow end-to-end', async () => {
       const client = wss.addClient();
@@ -751,7 +748,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 7. Load Test: 30 Concurrent WebSocket Streams
-  
+
   describe('Load Test: 30 Concurrent Active WebSocket Streams', () => {
     const CLIENT_COUNT = 30;
     const EVENTS_PER_CLIENT = 5;
@@ -788,7 +785,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
       await new Promise((r) => setTimeout(r, 50));
 
       // Verify all 30 clients received all 5 events
-      for (const [clientId, count] of receivedCounts) {
+      for (const [_clientId, count] of receivedCounts) {
         expect(count).toBe(EVENTS_PER_CLIENT);
       }
 
@@ -851,7 +848,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 8. Socket Events: PING/PONG & Status Heartbeat
-  
+
   describe('Socket Events: PING/PONG Heartbeat', () => {
     it('should respond to PING with PONG event', async () => {
       const client = wss.addClient();
@@ -898,7 +895,7 @@ describe('10: E2E Integration & Load Test Suite', () => {
   });
 
   // 9. SOCKET_EVENTS constants completeness check
-  
+
   describe('SOCKET_EVENTS: Constants Integrity', () => {
     it('should export all required socket event names', () => {
       const requiredEvents: Array<keyof typeof SOCKET_EVENTS> = [

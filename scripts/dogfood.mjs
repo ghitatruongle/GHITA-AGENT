@@ -28,7 +28,7 @@ function run(name, command) {
   }
 }
 
-console.log('\n🐕 GHITA CODING AGENT — release dogfood (v0.3.6)\n');
+console.log('\n🐕 Ghita Agent — release dogfood (v0.3.6)\n');
 
 console.log('🔐 Integrity and supply chain:');
 run('version sync', 'node scripts/sync-version.mjs --check');

@@ -23,4 +23,4 @@ modules:
       - cp -r apps/desktop/src-tauri/target/release/bundle/flatpak/* /app/
     sources:
       - type: git
-        url: https://github.com/ghitatruongle/GHITA-CODING-AGENT.git
+        url: https://github.com/ghitatruongle/GHITA-AGENT.git

@@ -1,9 +1,9 @@
 name: ghita-coding-agent
 base: core22
-version: '1.2.0-demo1'
+version: '0.0.0-preview'
 summary: Desktop AI Coding Agent with multi-provider, skills, computer use
 description: |
-  GHITA CODING AGENT is a versatile AI desktop application with
+  Ghita Agent is a versatile AI desktop application with
   VS Code-style interface, supporting remote computer control via Android phone.
 
 grade: stable

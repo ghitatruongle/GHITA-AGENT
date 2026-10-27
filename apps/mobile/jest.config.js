@@ -1,5 +1,5 @@
 /**
- * GHITA CODING AGENT - Mobile Jest Configuration
+ * Ghita Agent - Mobile Jest Configuration
  *
  * Custom minimal config (no jest-expo preset) to avoid loading RN internals
  * that use Flow types in node_modules. All RN APIs are mocked via

@@ -219,10 +219,10 @@ jobs:
         run: |
           set -euo pipefail
           APP_DIR="apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos"
-          TARBALL="${APP_DIR}/GHITA CODING AGENT.app.tar.gz"
+          TARBALL="${APP_DIR}/Ghita Agent.app.tar.gz"
           if [ ! -f "${TARBALL}" ]; then
             mkdir -p "${APP_DIR}"
-            tar -C "${APP_DIR}" -czf "${TARBALL}" "GHITA CODING AGENT.app"
+            tar -C "${APP_DIR}" -czf "${TARBALL}" "Ghita Agent.app"
           fi
           if [ ! -f "${TARBALL}.sig" ]; then
             pnpm --filter @ghita/desktop tauri sign \

@@ -61,8 +61,8 @@ android {
         applicationId "com.ghitamobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1002000
-        versionName "1.2.0-demo1"
+        versionCode 1
+        versionName "0.0.0-preview"
     }
     signingConfigs {
         debug {

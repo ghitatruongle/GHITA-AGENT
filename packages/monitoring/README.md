@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.3--beta2-blue)
 
-Observability suite for GHITA Coding Agent -- Sentry error monitoring, performance tracing, alert rules, and error grouping for production-grade reliability.
+Observability suite for Ghita Agent -- Sentry error monitoring, performance tracing, alert rules, and error grouping for production-grade reliability.
 
 ## Key Features
 

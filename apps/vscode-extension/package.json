@@ -1,8 +1,8 @@
 {
   "name": "@ghita/vscode-extension",
-  "version": "1.2.0-demo1",
+  "version": "0.0.0-preview",
   "private": true,
-  "description": "VS Code Sidecar Extension for GHITA CODING AGENT",
+  "description": "VS Code Sidecar Extension for Ghita Agent",
   "publisher": "ghita",
   "engines": {
     "vscode": "^1.85.0"
@@ -19,26 +19,26 @@
       {
         "command": "ghita-sidecar.connect",
         "title": "GHITA: Connect Sidecar",
-        "category": "GHITA CODING AGENT"
+        "category": "Ghita Agent"
       },
       {
         "command": "ghita-sidecar.disconnect",
         "title": "GHITA: Disconnect Sidecar",
-        "category": "GHITA CODING AGENT"
+        "category": "Ghita Agent"
       },
       {
         "command": "ghita-sidecar.syncWorkspace",
         "title": "GHITA: Sync Workspace Files",
-        "category": "GHITA CODING AGENT"
+        "category": "Ghita Agent"
       },
       {
         "command": "ghita-sidecar.stats",
         "title": "GHITA: Show Sync Statistics",
-        "category": "GHITA CODING AGENT"
+        "category": "Ghita Agent"
       }
     ],
     "configuration": {
-      "title": "GHITA CODING AGENT",
+      "title": "Ghita Agent",
       "properties": {
         "ghita.corePort": {
           "type": "integer",

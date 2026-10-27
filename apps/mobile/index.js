@@ -1,5 +1,5 @@
 /**
- * GHITA CODING AGENT — Mobile App Entry Point
+ * Ghita Agent — Mobile App Entry Point
  * @format
  */
 

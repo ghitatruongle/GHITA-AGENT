@@ -1,10 +1,10 @@
 # Security Policy
 
-> **Version:** v1.1.5
-> **Maintainer:** GHITA Coding Agent Security Team (`security@ghita.dev`)
+> **Version:** v0.0.0-preview
+> **Maintainer:** Ghita Agent Security Team (`security@ghita.dev`)
 > **Last updated:** 2026-08-23
 
-GHITA CODING AGENT takes the security of its users, their devices, and their data seriously. This document describes how to report vulnerabilities, what we support, and the security guarantees built into the project.
+Ghita Agent takes the security of its users, their devices, and their data seriously. This document describes how to report vulnerabilities, what we support, and the security guarantees built into the project.
 
 ---
 
@@ -12,11 +12,11 @@ GHITA CODING AGENT takes the security of its users, their devices, and their dat
 
 We provide security updates for the following versions:
 
-| Version   | Supported        | Notes                        |
-| --------- | ---------------- | ---------------------------- |
-| `1.1.5`   | ✅ Active        | Current hardened line        |
-| `1.1.x`   | ⚠️ Critical only | Patch-only for critical CVEs |
-| `<1.1.0`  | ❌ End of life   | Upgrade required             |
+| Version  | Supported        | Notes                        |
+| -------- | ---------------- | ---------------------------- |
+| `1.1.5`  | ✅ Active        | Current hardened line        |
+| `1.1.x`  | ⚠️ Critical only | Patch-only for critical CVEs |
+| `<1.1.0` | ❌ End of life   | Upgrade required             |
 
 We follow [Semantic Versioning](https://semver.org/). Security fixes are released as soon as possible and may be back-ported to the previous minor version when feasible.
 
@@ -29,7 +29,7 @@ We follow [Semantic Versioning](https://semver.org/). Security fixes are release
 ### 2.1 Private disclosure channel
 
 - **Email:** `security@ghita.dev`
-- **GitHub Security Advisories:** https://github.com/ghitatruongle/ghita-coding-agent/security/advisories/new (preferred for CVE-eligible reports)
+- **GitHub Security Advisories:** https://github.com/ghitatruongle/GHITA-AGENT/security/advisories/new (preferred for CVE-eligible reports)
 - **GPG fingerprint:** `4F2A 9C81 0D7B 3E55 8A02 7C19 B6D4 5E83` _(on request)_
 
 ### 2.2 What to include
@@ -83,18 +83,18 @@ GHITA bridges a desktop AI agent (Tauri + React) and a mobile companion app (Rea
 
 ### 3.3 Key risks addressed
 
-| Risk                           | Mitigation                                                     |
-| ------------------------------ | -------------------------------------------------------------- |
-| Malicious skill code           | `SkillGuard` hash pin + AST-Lock + plugin manifest review; skills spawn via argv (no shell) with governance denylist |
-| Prompt-injection from web/UI   | Guardrail middleware + enterprise secret detector, both backed by the native `secscan` one-pass pre-filter |
-| Computer-use overreach         | Per-action approval on mobile + sandbox isolation              |
-| API-key leakage                | OS credential vault is the source of truth; the plaintext `api-config.json` mirror is deleted once the vault write succeeds |
+| Risk                           | Mitigation                                                                                                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Malicious skill code           | `SkillGuard` hash pin + AST-Lock + plugin manifest review; skills spawn via argv (no shell) with governance denylist                                                             |
+| Prompt-injection from web/UI   | Guardrail middleware + enterprise secret detector, both backed by the native `secscan` one-pass pre-filter                                                                       |
+| Computer-use overreach         | Per-action approval on mobile + sandbox isolation                                                                                                                                |
+| API-key leakage                | OS credential vault is the source of truth; the plaintext `api-config.json` mirror is deleted once the vault write succeeds                                                      |
 | Renderer compromise            | Production CSP forbids inline/eval script; FS mutations are scoped to folders the user granted via a native dialog; command approval dialogs show head AND tail of long commands |
-| LAN MitM during pairing        | Rotating 6-digit code **plus mandatory desktop-side confirmation**; the device token travels AES-256-GCM-sealed under a key derived from the pairing code |
-| Paired-device overreach        | Command/edit approvals are desktop-only — a paired phone can never approve its own agent's shell commands |
-| Local process escalation       | `/health` returns pairing/device data only to callers holding the desktop session token; bind host derives solely from the LAN toggle |
-| Outbound dependency compromise | `dependency-review.yml` workflow + `pnpm audit` in CI          |
-| Insecure deserialization       | `resolutions: serialize-javascript ^7.0.5` enforced            |
+| LAN MitM during pairing        | Rotating 6-digit code **plus mandatory desktop-side confirmation**; the device token travels AES-256-GCM-sealed under a key derived from the pairing code                        |
+| Paired-device overreach        | Command/edit approvals are desktop-only — a paired phone can never approve its own agent's shell commands                                                                        |
+| Local process escalation       | `/health` returns pairing/device data only to callers holding the desktop session token; bind host derives solely from the LAN toggle                                            |
+| Outbound dependency compromise | `dependency-review.yml` workflow + `pnpm audit` in CI                                                                                                                            |
+| Insecure deserialization       | `resolutions: serialize-javascript ^7.0.5` enforced                                                                                                                              |
 
 ---
 
@@ -142,4 +142,4 @@ We thank the following reporters and projects:
 - The OWASP Top-10 and ASVS projects, which inform our threat model.
 - The Tauri security advisories and the Rust ecosystem CVE feed.
 
-_GHITA CODING AGENT © 2026 — Security is a feature, not a follow-up._
+_Ghita Agent © 2026 — Security is a feature, not a follow-up._

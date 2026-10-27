@@ -3,8 +3,6 @@
 //
 // Usage: npx tsx tests/benchmark/feature-benchmark.ts [--json]
 
-import { execSync } from 'child_process';
-
 // ── Benchmark Harness ──────────────────────────────────────────────────────
 
 interface BenchmarkResult {
@@ -44,8 +42,14 @@ async function benchmark(
 
   return {
     name,
-    baseline: { avgMs: Math.round(avgBaseline * 100) / 100, accuracy: baselineAccuracy / iterations },
-    optimized: { avgMs: Math.round(avgOptimized * 100) / 100, accuracy: optimizedAccuracy / iterations },
+    baseline: {
+      avgMs: Math.round(avgBaseline * 100) / 100,
+      accuracy: baselineAccuracy / iterations,
+    },
+    optimized: {
+      avgMs: Math.round(avgOptimized * 100) / 100,
+      accuracy: optimizedAccuracy / iterations,
+    },
     iterations,
     speedup: avgBaseline / avgOptimized,
     accuracyDelta: (optimizedAccuracy - baselineAccuracy) / iterations,
@@ -160,7 +164,9 @@ function benchmarkSCTI(): Promise<BenchmarkResult> {
   };
 
   const getFunctionHash = (code: string, name: string): number => {
-    const pattern = new RegExp(`(?:export\\s+)?(?:function|class)\\s+${name}[\\s{][\\s\\S]*?(?=(?:export\\s+)?(?:function|class)\\s+|$)`);
+    const pattern = new RegExp(
+      `(?:export\\s+)?(?:function|class)\\s+${name}[\\s{][\\s\\S]*?(?=(?:export\\s+)?(?:function|class)\\s+|$)`,
+    );
     const body = code.match(pattern)?.[0] ?? '';
     let hash = 0;
     for (let i = 0; i < body.length; i++) hash = ((hash << 5) - hash + body.charCodeAt(i)) | 0;
@@ -168,7 +174,6 @@ function benchmarkSCTI(): Promise<BenchmarkResult> {
   };
 
   const baselineFns = getFunctions(originalCode);
-  const modifiedFns = getFunctions(modifiedCode);
 
   const optimizedFn = (): boolean => {
     const changes: string[] = [];
@@ -191,13 +196,10 @@ function benchmarkSCTI(): Promise<BenchmarkResult> {
  * Optimized: DebateEngine with adversarial review and consensus scoring
  */
 function benchmarkDebateEngine(): Promise<BenchmarkResult> {
-  interface Proposal { code: string; description: string }
-  interface Review { score: number; feedback: string }
-
-  const proposal: Proposal = {
-    code: 'function add(a, b) { return a + b; }',
-    description: 'Simple addition function',
-  };
+  interface Review {
+    score: number;
+    feedback: string;
+  }
 
   // Baseline: Single pass evaluation (no depth)
   const baselineFn = (): boolean => {
@@ -215,10 +217,13 @@ function benchmarkDebateEngine(): Promise<BenchmarkResult> {
     // Round 2: Critic finds issues
     reviews.push({ score: 2, feedback: 'Missing type annotations, no input validation' });
     // Round 3: Synthesis — consensus
-    reviews.push({ score: 3, feedback: 'Acceptable but needs TypeScript types and edge case handling' });
+    reviews.push({
+      score: 3,
+      feedback: 'Acceptable but needs TypeScript types and edge case handling',
+    });
 
     const avgScore = reviews.reduce((sum, r) => sum + r.score, 0) / reviews.length;
-    const hasConstructiveFeedback = reviews.some(r => r.score <= 2);
+    const hasConstructiveFeedback = reviews.some((r) => r.score <= 2);
     const consensusReached = reviews.length >= 3;
 
     return avgScore >= 2.5 && hasConstructiveFeedback && consensusReached;
@@ -232,12 +237,12 @@ function benchmarkDebateEngine(): Promise<BenchmarkResult> {
 async function main(): Promise<void> {
   const json = process.argv.includes('--json');
 
-  console.log('='.repeat(70));
-  console.log('GHITA CODING AGENT — Feature Benchmark Suite');
-  console.log('='.repeat(70));
-  console.log(`Date: ${new Date().toISOString()}`);
-  console.log(`Node: ${process.version}`);
-  console.log('');
+  console.info('='.repeat(70));
+  console.info('Ghita Agent — Feature Benchmark Suite');
+  console.info('='.repeat(70));
+  console.info(`Date: ${new Date().toISOString()}`);
+  console.info(`Node: ${process.version}`);
+  console.info('');
 
   const results: BenchmarkResult[] = [];
 
@@ -247,27 +252,33 @@ async function main(): Promise<void> {
   results.push(await benchmarkDebateEngine());
 
   if (json) {
-    console.log(JSON.stringify(results, null, 2));
+    console.info(JSON.stringify(results, null, 2));
   } else {
     for (const r of results) {
-      console.log(`\n📊 ${r.name}`);
-      console.log(`   Baseline:  ${r.baseline.avgMs}ms (accuracy: ${(r.baseline.accuracy! * 100).toFixed(0)}%)`);
-      console.log(`   Optimized: ${r.optimized.avgMs}ms (accuracy: ${(r.optimized.accuracy! * 100).toFixed(0)}%)`);
-      console.log(`   Speedup:   ${r.speedup.toFixed(2)}x faster`);
+      console.info(`\n📊 ${r.name}`);
+      console.info(
+        `   Baseline:  ${r.baseline.avgMs}ms (accuracy: ${(r.baseline.accuracy! * 100).toFixed(0)}%)`,
+      );
+      console.info(
+        `   Optimized: ${r.optimized.avgMs}ms (accuracy: ${(r.optimized.accuracy! * 100).toFixed(0)}%)`,
+      );
+      console.info(`   Speedup:   ${r.speedup.toFixed(2)}x faster`);
       if (r.accuracyDelta !== undefined) {
-        console.log(`   Accuracy:  +${(r.accuracyDelta * 100).toFixed(0)} percentage points`);
+        console.info(`   Accuracy:  +${(r.accuracyDelta * 100).toFixed(0)} percentage points`);
       }
     }
 
-    console.log('\n' + '='.repeat(70));
-    console.log('SUMMARY');
-    console.log('='.repeat(70));
+    console.info(`\n${'='.repeat(70)}`);
+    console.info('SUMMARY');
+    console.info('='.repeat(70));
     const avgSpeedup = results.reduce((sum, r) => sum + r.speedup, 0) / results.length;
-    console.log(`Average speedup: ${avgSpeedup.toFixed(2)}x`);
+    console.info(`Average speedup: ${avgSpeedup.toFixed(2)}x`);
     const totalAccuracyGain = results.reduce((sum, r) => sum + (r.accuracyDelta ?? 0), 0);
-    console.log(`Total accuracy improvement: +${(totalAccuracyGain * 100 / results.length).toFixed(0)}pp`);
-    console.log('');
-    console.log('Results saved to tests/benchmark/results.json');
+    console.info(
+      `Total accuracy improvement: +${((totalAccuracyGain * 100) / results.length).toFixed(0)}pp`,
+    );
+    console.info('');
+    console.info('Results saved to tests/benchmark/results.json');
   }
 
   // Save results
@@ -279,7 +290,7 @@ async function main(): Promise<void> {
 
   // Append to history
   const historyPath = path.join(process.cwd(), 'tests', 'benchmark', 'history.jsonl');
-  const historyLine = JSON.stringify({ date: new Date().toISOString(), results }) + '\n';
+  const historyLine = `${JSON.stringify({ date: new Date().toISOString(), results })}\n`;
   fs.appendFileSync(historyPath, historyLine);
 
   // Save latest

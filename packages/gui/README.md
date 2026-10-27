@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.4-blue)
 
-Tauri window management and desktop UI infrastructure for GHITA Coding Agent -- persistence, tray icons, global shortcuts, theme switching, and dialog management.
+Tauri window management and desktop UI infrastructure for Ghita Agent -- persistence, tray icons, global shortcuts, theme switching, and dialog management.
 
 ## Key Features
 

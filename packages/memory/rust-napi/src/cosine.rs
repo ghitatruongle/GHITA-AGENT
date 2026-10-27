@@ -1,5 +1,5 @@
 // ==============================================================================
-// GHITA CODING AGENT — SIMD Cosine Similarity (Phase 3 Rust NAPI)
+// Ghita Agent — SIMD Cosine Similarity (Phase 3 Rust NAPI)
 // ==============================================================================
 //
 // High-performance cosine similarity using manual SIMD-like unrolled chunks

@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # `@ghita/monitoring`
 
-Package `@ghita/monitoring` cung cấp Sentry-compatible error capture, performance tracing, error grouping và alert engine. Xem tiến độ trong [ROADMAP](https://github.com/ghitatruongle/ghita-coding-agent/blob/main/ROADMAP.md).
+Package `@ghita/monitoring` cung cấp Sentry-compatible error capture, performance tracing, error grouping và alert engine. Xem tiến độ trong [ROADMAP](https://github.com/ghitatruongle/GHITA-AGENT/blob/main/ROADMAP.md).
 
 ## Cài đặt
 

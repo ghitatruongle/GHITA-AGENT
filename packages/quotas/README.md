@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.0.3--beta1-blue)
 
-Rate limiting and quota management for GHITA Coding Agent -- per-user token budgets, API call rate limits, overage billing, and usage dashboards.
+Rate limiting and quota management for Ghita Agent -- per-user token budgets, API call rate limits, overage billing, and usage dashboards.
 
 ## Key Features
 

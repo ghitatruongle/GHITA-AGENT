@@ -1,8 +1,8 @@
 import type { AIProviderType, SkillCategory } from './types.js';
 
 // --- App Info ---
-export const APP_NAME = 'GHITA CODING AGENT';
-export const APP_VERSION = '1.2.0-demo1';
+export const APP_NAME = 'Ghita Agent';
+export const APP_VERSION = '0.0.0-preview';
 export const APP_DESCRIPTION = 'Desktop AI Agent với multi-provider, skills, computer use';
 
 // --- Default Config ---
@@ -28,7 +28,7 @@ export const AI_PROVIDERS: Record<AIProviderType, { name: string; defaultModel: 
   mistral: { name: 'Mistral', defaultModel: 'mistral-large-latest' },
   hicap: { name: 'Hicap', defaultModel: '' },
   'github-models': { name: 'GitHub Models', defaultModel: 'gpt-4o' },
-  
+
   cerebras: { name: 'Cerebras', defaultModel: 'llama3.1-8b' },
   together: { name: 'Together AI', defaultModel: 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo' },
   fireworks: {
@@ -45,7 +45,7 @@ export const AI_PROVIDERS: Record<AIProviderType, { name: string; defaultModel: 
   novita: { name: 'Novita AI', defaultModel: 'meta-llama/llama-3.1-8b-instruct' },
   'opencode-zen': { name: 'OpenCode Zen', defaultModel: 'minimax-m3-free' },
   'nvidia-nim': { name: 'NVIDIA NIM', defaultModel: 'nvidia/nemotron-3-super-120b-a12b' },
-  
+
   kimi: { name: 'Kimi (Moonshot AI)', defaultModel: 'moonshot-v1-8k' },
   minimax: { name: 'MiniMax', defaultModel: 'minimax-v1' },
   // v0.2.5: Advanced OpenAI & Anthropic Compatible Providers
@@ -118,7 +118,7 @@ export const SOCKET_EVENTS = {
   PING: 'ping',
   PONG: 'pong',
   ERROR: 'error',
-  
+
   REQUIRE_APPROVAL: 'require_approval',
   APPROVE_COMMAND: 'approve_command',
   REJECT_COMMAND: 'reject_command',
@@ -129,10 +129,10 @@ export const SOCKET_EVENTS = {
   MOBILE_TOUCH: 'mobile_touch',
   MOBILE_TYPE: 'mobile_type',
   MOBILE_KEY: 'mobile_key',
-  
+
   FILE_APPROVAL: 'file_approval',
   REQUIRE_FILE_APPROVAL: 'require_file_approval',
-  
+
   CHAT_START: 'chat_start',
 } as const;
 
