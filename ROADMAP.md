@@ -1,6 +1,6 @@
 # 🗺️ Ghita Agent — Public Roadmap
 
-> **Current version:** v0.0.0-preview (đặt lại tên product: GHITA CODING AGENT → Ghita Agent, chuẩn bị chu kỳ phát hành mới)
+> **Current version:** v0.0.0 (đặt lại tên product: GHITA CODING AGENT → Ghita Agent, chuẩn bị chu kỳ phát hành mới)
 > **Last updated:** 2026-10-04
 
 ---

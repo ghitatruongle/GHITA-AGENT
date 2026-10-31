@@ -1,6 +1,6 @@
 {
   "name": "@ghita/integration",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Cross-package integration facade for Ghita Agent",

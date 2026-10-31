@@ -13,7 +13,7 @@ export {
 } from './scanner/headlessSearch.js';
 export { UITarsBoundingBoxDetector, type UITarget } from './uitars/bounding-box-detector.js';
 
-export const COMPUTER_USE_VERSION = '0.0.0-preview';
+export const COMPUTER_USE_VERSION = '0.0.0';
 
 export interface Point {
   x: number;

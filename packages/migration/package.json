@@ -1,6 +1,6 @@
 {
   "name": "@ghita/migration",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Data migration framework for Ghita Agent",

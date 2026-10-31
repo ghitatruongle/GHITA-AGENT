@@ -1,6 +1,6 @@
 {
   "name": "@ghita/marketplace",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Plugin marketplace: install, uninstall, update, dependency resolution, lockfile",

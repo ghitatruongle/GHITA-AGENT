@@ -310,7 +310,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-codegraph"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "napi",
  "napi-derive",
@@ -323,7 +323,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-docloader"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "napi",
  "napi-derive",
@@ -334,7 +334,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-retrieval"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "napi",
  "napi-derive",
@@ -342,7 +342,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-sandbox"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "libc",
  "napi",
@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-secscan"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "memchr",
  "napi",
@@ -362,7 +362,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-store"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "napi",
  "napi-derive",
@@ -371,7 +371,7 @@ dependencies = [
 
 [[package]]
 name = "ghita-tokenizer"
-version = "0.0.0-preview"
+version = "0.0.0"
 dependencies = [
  "napi",
  "napi-derive",

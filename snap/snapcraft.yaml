@@ -1,6 +1,6 @@
 name: ghita-coding-agent
 base: core22
-version: '0.0.0-preview'
+version: '0.0.0'
 summary: Desktop AI Coding Agent with multi-provider, skills, computer use
 description: |
   Ghita Agent is a versatile AI desktop application with

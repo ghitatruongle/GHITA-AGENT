@@ -6,4 +6,4 @@ export { ConnectionBroker } from './connection-broker.js';
 export { RateLimiter } from './rate-limiter.js';
 export type { RelayConfig, RelayRoom, RelayMessage } from './types.js';
 
-export const RELAY_VERSION = '0.0.0-preview';
+export const RELAY_VERSION = '0.0.0';

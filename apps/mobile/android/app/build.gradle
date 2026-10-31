@@ -62,7 +62,7 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "0.0.0-preview"
+        versionName "0.0.0"
     }
     signingConfigs {
         debug {

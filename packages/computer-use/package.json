@@ -1,6 +1,6 @@
 {
   "name": "@ghita/computer-use",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Desktop automation (Tauri-native Rust backend) cho Ghita Agent",

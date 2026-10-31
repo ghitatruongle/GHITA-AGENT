@@ -1,6 +1,6 @@
 {
   "name": "@ghita/voice",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Voice I/O pipeline: STT (Whisper), TTS abstraction, wake-word detection, audio streaming cho GHITA",

@@ -23,4 +23,4 @@ export type {
   QuotaConfig,
 } from './types.js';
 
-export const QUOTAS_VERSION = '0.0.0-preview';
+export const QUOTAS_VERSION = '0.0.0';

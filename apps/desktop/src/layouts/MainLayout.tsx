@@ -2,6 +2,7 @@ import { useCallback, useRef, useEffect, Component, lazy, Suspense } from 'react
 import type { ErrorInfo, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal as TerminalIcon, MessageSquare, Bot, Monitor } from 'lucide-react';
+import { TitleBarControls } from '../components/TitleBarControls';
 import { useAppStore } from '../stores/appStore';
 import { useTranslation } from '../i18n';
 import { ActivityBar } from '../components/ActivityBar';
@@ -244,22 +245,26 @@ export function MainLayout() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background text-text-primary min-w-[320px]">
-      {/* Top bar — App title + actions */}
+      {/* Top bar — App title + actions. Doubles as the window title bar:
+          the frameless main window drags from here (data-tauri-drag-region)
+          and the window buttons live on the right. */}
       <motion.div
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="flex items-center justify-between px-3 h-10 bg-bg-tertiary border-b border-border-subtle shrink-0 shadow-sm z-10 min-w-0 overflow-hidden"
+        data-tauri-drag-region="true"
+        className="flex items-center justify-between px-3 h-10 bg-bg-tertiary border-b border-border-subtle shrink-0 shadow-sm z-10 min-w-0 overflow-hidden select-none"
       >
         {/* Left spacer for Activity Bar alignment */}
-        <div className="w-[48px] shrink-0" />
-        <div className="flex items-center gap-2 min-w-0 overflow-hidden">
-          <Bot size={18} className="text-accent-primary shrink-0" />
+        <div data-tauri-drag-region="true" className="w-[48px] shrink-0 h-full" />
+        <div data-tauri-drag-region="true" className="flex items-center gap-2 min-w-0 overflow-hidden h-full">
+          <Bot size={18} className="text-accent-primary shrink-0 pointer-events-none" />
           <span
             style={{
               background: 'var(--accent-gradient)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              pointerEvents: 'none',
             }}
             className="text-sm font-bold tracking-wide shrink-0"
           >
@@ -267,20 +272,22 @@ export function MainLayout() {
           </span>
           {terminalCwd && (
             <>
-              <span className="text-text-muted text-[10px] select-none shrink-0">/</span>
+              <span className="text-text-muted text-[10px] select-none shrink-0 pointer-events-none">
+                /
+              </span>
               <span
-                className="text-xs text-text-muted font-medium truncate max-w-[160px]"
+                className="text-xs text-text-muted font-medium truncate max-w-[160px] pointer-events-none"
                 title={terminalCwd}
               >
                 {terminalCwd.split(/[/\\]/).pop()}
               </span>
             </>
           )}
-          <span className="text-[9px] px-1.5 py-0.5 bg-bg-active text-accent-primary border border-accent-primary/20 rounded-full font-semibold shrink-0">
+          <span className="text-[9px] px-1.5 py-0.5 bg-bg-active text-accent-primary border border-accent-primary/20 rounded-full font-semibold shrink-0 pointer-events-none">
             {t('app.version')}
           </span>
         </div>
-        <div className="flex gap-2 shrink-0 ml-auto pl-2">
+        <div className="flex gap-2 shrink-0 ml-auto pl-2 items-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -305,6 +312,7 @@ export function MainLayout() {
           >
             <MessageSquare size={14} /> {t('mainLayout.chat')}
           </motion.button>
+          <TitleBarControls />
         </div>
       </motion.div>
 

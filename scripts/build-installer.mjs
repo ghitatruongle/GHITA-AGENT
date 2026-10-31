@@ -71,6 +71,15 @@ if (!DEBUG) {
   }
 
   try {
+    // Build the frontend FIRST. `beforeBuildCommand` is intentionally empty
+    // in tauri.conf.json, so without this step the NSIS bundle would package
+    // whatever stale `dist/` happened to sit on disk (wrong version strings,
+    // stale UI). `build` = sidecar bundle + tsc -b + vite build.
+    run('pnpm', ['--filter', '@ghita/desktop', 'build'], {
+      cwd: ROOT,
+      timeout: 15 * 60 * 1000,
+    });
+
     // Build the frontend + Rust bundle. `--bundles nsis` keeps exactly one
     // installer format (no .msi, no bare .exe) so the output is a single file.
     run('pnpm', ['--filter', '@ghita/desktop', 'tauri', 'build', '--bundles', 'nsis'], {

@@ -1831,6 +1831,26 @@ pub fn run(headless: bool) {
             }
 
             // Get splash and main windows — gracefully handle if not found
+
+            // Clamp the frameless main window into the current monitor's work
+            // area. On screens smaller than the configured 1400×900 (e.g. 125%
+            // display scaling) the window is pinned at the top edge, which
+            // parks the in-app title bar behind a top-mounted taskbar: no
+            // visible drag region, no window buttons, immovable window.
+            if let Some(main) = app.get_webview_window("main") {
+                if let Ok(Some(monitor)) = main.current_monitor() {
+                    let work_area = monitor.work_area();
+                    let current = main.outer_size().unwrap_or_default();
+                    let clamped_w = current.width.min(work_area.size.width);
+                    let clamped_h = current.height.min(work_area.size.height);
+                    let _ = main.set_size(tauri::PhysicalSize::new(clamped_w, clamped_h));
+                    let _ = main.set_position(tauri::PhysicalPosition::new(
+                        work_area.position.x,
+                        work_area.position.y,
+                    ));
+                }
+            }
+
             let splash = match app.get_webview_window("splash") {
                 Some(w) => w,
                 None => {

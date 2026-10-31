@@ -1,6 +1,6 @@
 # Security Policy
 
-> **Version:** v0.0.0-preview
+> **Version:** v0.0.0
 > **Maintainer:** Ghita Agent Security Team (`security@ghita.dev`)
 > **Last updated:** 2026-08-23
 

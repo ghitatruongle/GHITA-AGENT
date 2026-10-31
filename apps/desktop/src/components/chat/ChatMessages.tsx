@@ -281,7 +281,7 @@ export function ChatMessages({ messages, lang }: ChatMessagesProps) {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Ghita Agent v0.0.0-preview
+            Ghita Agent v0.0.0
           </h3>
           <p
             style={{

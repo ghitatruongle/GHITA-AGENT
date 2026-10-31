@@ -11,4 +11,4 @@ export type {
   DeviceCapabilities,
 } from './types.js';
 
-export const MOBILE_COMPANION_VERSION = '0.0.0-preview';
+export const MOBILE_COMPANION_VERSION = '0.0.0';

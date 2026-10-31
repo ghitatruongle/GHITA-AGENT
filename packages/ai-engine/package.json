@@ -1,6 +1,6 @@
 {
   "name": "@ghita/ai-engine",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "AI multi-provider engine cho Ghita Agent",

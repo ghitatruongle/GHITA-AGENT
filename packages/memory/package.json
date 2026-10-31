@@ -1,6 +1,6 @@
 {
   "name": "@ghita/memory",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Agent memory system cho Ghita Agent",

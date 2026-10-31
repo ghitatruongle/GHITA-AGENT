@@ -1,6 +1,6 @@
 {
   "name": "@ghita/a11y",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Accessibility utilities for Ghita Agent",

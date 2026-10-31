@@ -1,6 +1,6 @@
 {
   "name": "@ghita/vscode-extension",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "description": "VS Code Sidecar Extension for Ghita Agent",
   "publisher": "ghita",

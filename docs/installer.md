@@ -14,8 +14,8 @@ Kết quả (thư mục `release/`):
 
 ```
 release/
-├── Ghita Agent-Setup-v0.0.0-preview.exe   ← file duy nhất cần phát hành
-└── Ghita Agent-Setup-v0.0.0-preview.exe.sha256
+├── Ghita-Agent-Setup-v0.0.0.exe   ← file duy nhất cần phát hành
+└── Ghita-Agent-Setup-v0.0.0.exe.sha256
 ```
 
 - Tên file **cố định theo version** — mỗi lần build ghi đè đúng 1 file.
@@ -27,7 +27,7 @@ release/
 ### Cách 1 — GitHub Releases (khuyến nghị)
 
 1. Tạo release tag `v1.0.0` trên GitHub.
-2. Upload `Ghita Agent-Setup-v0.0.0-preview.exe` + `.sha256`.
+2. Upload `Ghita-Agent-Setup-v0.0.0.exe` + `.sha256`.
 3. Người dùng tải 1 file, chạy, cài xong.
 
 ### Cách 2 — Gửi trực tiếp

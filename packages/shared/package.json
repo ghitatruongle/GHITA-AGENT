@@ -1,6 +1,6 @@
 {
   "name": "@ghita/shared",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Shared types, constants, utils cho Ghita Agent",

@@ -2,7 +2,7 @@ import type { AIProviderType, SkillCategory } from './types.js';
 
 // --- App Info ---
 export const APP_NAME = 'Ghita Agent';
-export const APP_VERSION = '0.0.0-preview';
+export const APP_VERSION = '0.0.0';
 export const APP_DESCRIPTION = 'Desktop AI Agent với multi-provider, skills, computer use';
 
 // --- Default Config ---

@@ -29,6 +29,14 @@ export default defineConfig({
       { find: /^@ghita\/browser-control$/, replacement: shimPath },
       { find: /^@ghita\/computer-use$/, replacement: shimPath },
       { find: /^ws$/, replacement: shimPath },
+      // Native/Node-only modules reached via dynamic imports in workspace
+      // packages (ai-engine grounding, communication telepresence, sidecar
+      // helpers). The browser bundle must never pull their Node graphs in —
+      // sharp 0.35.5 alone broke the build on node:os's availableParallelism.
+      // These code paths only ever run in the Node sidecar.
+      { find: /^sharp$/, replacement: shimPath },
+      { find: /^node-pty$/, replacement: shimPath },
+      { find: /^screenshot-desktop$/, replacement: shimPath },
     ],
   },
 

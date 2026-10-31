@@ -31,7 +31,7 @@ export const zh: TranslationKeys = {
   },
   app: {
     brand: 'Ghita Agent',
-    version: 'v0.0.0-preview',
+    version: 'v0.0.0',
     deviceReconnected: '已重新连接设备: {{name}}',
     devicePaired: '成功配对设备: {{name}}',
     commandReceived: '从设备收到命令: {{action}}',

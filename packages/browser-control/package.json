@@ -1,6 +1,6 @@
 {
   "name": "@ghita/browser-control",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Browser automation (Playwright + CloakBrowser) cho Ghita Agent",

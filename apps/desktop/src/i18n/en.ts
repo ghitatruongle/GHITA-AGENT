@@ -31,7 +31,7 @@ export const en: TranslationKeys = {
   },
   app: {
     brand: 'Ghita Agent',
-    version: 'v0.0.0-preview',
+    version: 'v0.0.0',
     deviceReconnected: 'Reconnected to device: {{name}}',
     devicePaired: 'Successfully paired device: {{name}}',
     commandReceived: 'Command received from device: {{action}}',

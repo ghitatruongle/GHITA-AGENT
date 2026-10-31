@@ -1,6 +1,6 @@
 {
   "name": "@ghita/i18n",
-  "version": "0.0.0-preview",
+  "version": "0.0.0",
   "private": true,
   "sideEffects": false,
   "description": "Internationalization engine for Ghita Agent",
