@@ -16,7 +16,7 @@
     "postinstall": "node scripts/patch-jcenter.js"
   },
   "dependencies": {
-    "@babel/runtime": "^7.29.2",
+    "@babel/runtime": "^7.29.10",
     "@ghita/shared": "workspace:*",
     "@noble/ciphers": "^2.3.0",
     "@noble/hashes": "^2.3.0",
@@ -32,7 +32,7 @@
     "react-native-safe-area-context": "^5.4.1",
     "react-native-screens": "^3.35.0",
     "react-native-vector-icons": "^10.3.0",
-    "socket.io-client": "^4.8.0"
+    "socket.io-client": "^4.8.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
