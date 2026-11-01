@@ -27,18 +27,18 @@
     "@ghita/agents": "workspace:*",
     "@ghita/native-bridge": "workspace:*",
     "@ghita/shared": "workspace:*",
-    "@grpc/grpc-js": "^1.14.4",
+    "@grpc/grpc-js": "^1.14.7",
     "@grpc/proto-loader": "^0.8.1",
     "better-sqlite3": "^12.10.0",
     "ws": "^8.21.0",
-    "zod": "^3.23.8"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/ws": "^8.5.12",
     "cross-env": "^10.1.0",
-    "typescript": "^5.6.0",
     "fast-check": "^4.10.2",
+    "typescript": "^5.6.0",
     "vitest": "^3.2.7",
     "yaml": "^2.9.1"
   }

@@ -100,5 +100,21 @@
     "allowedPaths": [
       "docs>"
     ]
+  },
+  "GHSA-5gmw-xhrv-c9v3": {
+    "expires": "2026-12-31",
+    "severity": "critical",
+    "reason": "Build-time / CI-only tinypool 1.x reached via Docusaurus (docs site tooling). The patched line (>=2.1.1) is a breaking major for the Docusaurus 3.x dependency range, so it cannot be override-forced safely. Not shipped to end users at runtime. Revisit when Docusaurus adopts tinypool 2.x.",
+    "allowedPaths": [
+      "docs>"
+    ]
+  },
+  "GHSA-85c8-ppgw-ccpr": {
+    "expires": "2026-12-31",
+    "severity": "critical",
+    "reason": "Build-time / CI-only tinypool 1.x reached via Docusaurus (docs site quality tooling). The patched line (>=2.1.2) is a breaking major for the Docusaurus 3.x dependency range, so it cannot be override-forced safely. Not shipped to end users at runtime. Revisit when Docusaurus adopts tinypool 2.x.",
+    "allowedPaths": [
+      "docs>"
+    ]
   }
 }

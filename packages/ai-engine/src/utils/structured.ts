@@ -6,9 +6,15 @@ import type { AIProviderType } from '@ghita/shared';
 
 /**
  * Converts a Zod schema to a clean JSON Schema.
+ * Works with both the zod v3 classic `_def` shape and the zod v4 one
+ * (ZodEffects was removed in v4 — refinements attach to the type itself,
+ * and `.transform()` produces a ZodPipe).
  */
 export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
-  const def = schema._def;
+  const def = ((schema as unknown as { _def?: Record<string, unknown> })._def ?? {}) as Record<
+    string,
+    unknown
+  >;
 
   if (schema instanceof z.ZodObject) {
     const properties: Record<string, unknown> = {};
@@ -31,7 +37,7 @@ export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
   if (schema instanceof z.ZodArray) {
     return {
       type: 'array',
-      items: zodToJsonSchema(schema.element),
+      items: zodToJsonSchema(schema.element as unknown as z.ZodTypeAny),
     };
   }
 
@@ -48,23 +54,30 @@ export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
   }
 
   if (schema instanceof z.ZodEnum) {
+    const values = Array.isArray(def.values)
+      ? (def.values as string[])
+      : Object.values((def.entries ?? {}) as Record<string, string>);
     return {
       type: 'string',
-      enum: def.values,
+      enum: values,
     };
   }
 
   if (schema instanceof z.ZodOptional || schema instanceof z.ZodNullable) {
-    return zodToJsonSchema(def.innerType);
+    const inner = def.innerType as z.ZodTypeAny | undefined;
+    if (inner) return zodToJsonSchema(inner);
   }
 
-  if (schema instanceof z.ZodEffects) {
-    return zodToJsonSchema(def.schema);
+  if (schema instanceof z.ZodPipe) {
+    // v4 represents `.transform()` as a pipe; export the input side.
+    const inner = (def.in ?? def.innerType) as z.ZodTypeAny | undefined;
+    if (inner) return zodToJsonSchema(inner);
   }
 
   if (schema instanceof z.ZodUnion) {
+    const options = (def.options ?? []) as z.ZodTypeAny[];
     return {
-      anyOf: def.options.map((opt: z.ZodTypeAny) => zodToJsonSchema(opt)),
+      anyOf: options.map((opt) => zodToJsonSchema(opt)),
     };
   }
 
@@ -175,7 +188,7 @@ ${schemaStr}
     throw new AIValidationError(
       schemaStr,
       rawResponse,
-      result.error.errors,
+      result.error.issues,
       'Response JSON did not match the requested schema schema',
     );
   }

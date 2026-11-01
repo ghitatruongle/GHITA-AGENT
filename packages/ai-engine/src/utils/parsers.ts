@@ -96,7 +96,7 @@ export class StructuredOutputParser<T> implements BaseOutputParser<T> {
       throw new AIValidationError(
         'Zod Schema',
         text,
-        result.error.errors,
+        result.error.issues,
         'Structured output validation failed',
       );
     }

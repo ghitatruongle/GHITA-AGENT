@@ -20,6 +20,7 @@ const commonAliases = {
   '@ghita/relay-server': path.resolve(__dirname, 'packages/relay-server/src/index.ts'),
   '@ghita/browser-control': path.resolve(__dirname, 'packages/browser-control/src/index.ts'),
   '@ghita/computer-use': path.resolve(__dirname, 'packages/computer-use/src/index.ts'),
+  '@ghita/quotas': path.resolve(__dirname, 'packages/quotas/src/index.ts'),
   'react-native-bluetooth-classic': path.resolve(
     __dirname,
     './tests/unit/react-native-bluetooth-classic-mock.ts',

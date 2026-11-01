@@ -30,7 +30,7 @@ const PluginPermissionSchema = z.enum([
 const PluginToolSchema = z.object({
   name: z.string().min(1),
   description: z.string().min(1),
-  inputSchema: z.record(z.unknown()).optional(),
+  inputSchema: z.record(z.string(), z.unknown()).optional(),
 });
 
 /** Full Zod schema for PluginManifest */
@@ -44,18 +44,18 @@ export const PluginManifestSchema = z.object({
   description: z.string().min(1).max(1024),
   version: z.string().regex(/^\d+\.\d+\.\d+(-[\w.]+)?$/),
   author: z.string().min(1).max(256),
-  authorUrl: z.string().url().optional(),
+  authorUrl: z.url().optional(),
   license: z.string().max(64).optional(),
-  homepage: z.string().url().optional(),
-  repository: z.string().url().optional(),
+  homepage: z.url().optional(),
+  repository: z.url().optional(),
   category: PluginCategorySchema,
   tags: z.array(z.string().max(64)).max(20),
   icon: z.string().max(512).optional(),
   entrypoint: z.string().min(1).max(512),
   tools: z.array(PluginToolSchema).optional(),
-  dependencies: z.record(z.string()).optional(),
-  devDependencies: z.record(z.string()).optional(),
-  peerDependencies: z.record(z.string()).optional(),
+  dependencies: z.record(z.string(), z.string()).optional(),
+  devDependencies: z.record(z.string(), z.string()).optional(),
+  peerDependencies: z.record(z.string(), z.string()).optional(),
   permissions: z.array(PluginPermissionSchema),
   minAgentVersion: z
     .string()
@@ -92,8 +92,9 @@ export function safeValidateManifest(data: unknown): {
   }
   return {
     success: false,
-    errors: result.error.errors.map(
-      (e: { path: (string | number)[]; message: string }) => `${e.path.join('.')}: ${e.message}`,
+    errors: result.error.issues.map(
+      (e: { path: PropertyKey[]; message: string }) =>
+        `${e.path.map(String).join('.')}: ${e.message}`,
     ),
   };
 }

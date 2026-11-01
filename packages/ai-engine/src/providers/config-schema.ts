@@ -49,13 +49,13 @@ export const ProviderYAMLConfigSchema = z.object({
   apiKey: z.string().optional(),
   apiKeys: z.array(z.string()).optional(),
   rotationStrategy: z.enum(['round-robin', 'failover', 'random']).optional(),
-  baseUrl: z.string().url().optional(),
+  baseUrl: z.url().optional(),
   defaultModel: z.string().optional(),
   maxTokens: z.number().int().min(1).max(1_000_000).optional(),
   temperature: z.number().min(0).max(2).optional(),
   topP: z.number().min(0).max(1).optional(),
   stop: z.array(z.string()).optional(),
-  headers: z.record(z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   timeoutMs: z.number().int().min(100).optional(),
   retry: z
     .object({

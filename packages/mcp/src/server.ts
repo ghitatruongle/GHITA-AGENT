@@ -10,11 +10,13 @@ const SHAPE_FUNCTIONS: Record<string, () => z.ZodTypeAny> = {
   integer: () => z.number().int(),
   boolean: () => z.boolean(),
   array: () => z.array(z.any()),
-  object: () => z.record(z.any()),
+  object: () => z.record(z.string(), z.any()),
 };
 
 function schemaToZod(input: ToolDefinition['inputSchema']): ZodRawShape {
-  const shape: ZodRawShape = {};
+  // zod v4 types ZodRawShape as readonly; build a fresh mutable record and
+  // hand the SDK the finished shape.
+  const shape: Record<string, z.ZodTypeAny> = {};
   const required = input.required ?? [];
   for (const [key, raw] of Object.entries(input.properties ?? {})) {
     const type = (raw as { type?: string })?.type;

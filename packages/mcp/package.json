@@ -23,12 +23,12 @@
     "clean": "node -e \"const fs=require('fs'); fs.rmSync('dist',{recursive:true,force:true}); fs.readdirSync('.').filter(f=>f.endsWith('.tsbuildinfo')).forEach(f=>fs.rmSync(f,{force:true}))\""
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.24.0"
+    "@modelcontextprotocol/sdk": "^1.32.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.43",
     "typescript": "^5.6.0",
     "vitest": "^3.2.7",
-    "zod": "^3.25.0"
+    "zod": "^4.6.6"
   }
 }
