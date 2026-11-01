@@ -70,7 +70,7 @@
     "png-to-ico": "^3.0.2",
     "prettier": "^3.9.10",
     "react": "^18.3.1",
-    "screenshot-desktop": "^1.15.4",
+    "screenshot-desktop": "^1.15.7",
     "sharp": "^0.35.5",
     "tsx": "^4.23.15",
     "turbo": "^2.11.10",
