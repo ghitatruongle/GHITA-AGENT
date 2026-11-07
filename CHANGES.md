@@ -1,0 +1,1 @@
+### <!-- 7 -->⚙️ Miscellaneous Tasks - Rebrand to Ghita Agent, reset version for new cycle (release) ### <!-- 1 -->🐛 Bug Fixes - Green all workflows + dogfood 17/17 (ci) - Resolve all failing workflows (ci) ### <!-- 10 -->💼 Other - GHITA CODING AGENT ### <!-- 7 -->⚙️ Miscellaneous Tasks - Ignore and untrack root scripts folder - Fix remaining lint issues across packages

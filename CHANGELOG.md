@@ -1,3 +1,5 @@
+### <!-- 7 -->⚙️ Miscellaneous Tasks - Rebrand to Ghita Agent, reset version for new cycle (release) ### <!-- 1 -->🐛 Bug Fixes - Green all workflows + dogfood 17/17 (ci) - Resolve all failing workflows (ci) ### <!-- 10 -->💼 Other - GHITA CODING AGENT ### <!-- 7 -->⚙️ Miscellaneous Tasks - Ignore and untrack root scripts folder - Fix remaining lint issues across packages
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -12,12 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > grok-build, oh-my-pi, OpenHands). Kế hoạch: `docs/plans/2026-11-03-v0.0.1-beta.md`.
 
 ### Track 1 — Engine Crew tự giới hạn (CrewAI MIT)
+
 - **Timeout mỗi task** (`maxExecutionTime`, task-level + crew default): task treo tự hủy, event `task_timeout`, deadline chia sẻ cho cả retry + guardrail revision.
 - **Retry lỗi LLM tạm thời** với trần kép 3/task · 10/run (rate limit, network): backoff 250ms→2s, event `task_llm_retry`.
 - **Validate kickoff**: chặn manager trùng member, hierarchical thiếu crewmate, context trỏ task tương lai/không tồn tại — trước khi burn token.
 - **Usage metrics** theo task + crew (prompt/completion/cached tokens), tổng crew báo ra UI (chip Tokens trong CrewRunner).
 
 ### Track 2 — Block-graph chắc tay (AutoGPT — ý tưởng only)
+
 - **Pipeline validate input**: merge default + coerce kiểu (string→number/boolean), lỗi mismatch hành động được; chuỗi rỗng không âm thầm thành 0.
 - **Validate output mỗi emission**: giá trị lệch schema chặn ở node (BlockOutputError), không poison downstream.
 - **Pin `schema` cho `llm_structured`**: JSON Schema bắt buộc cho JSON parse ra, phát bản đã coerce.
@@ -25,12 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Persist graph + version** (`GraphLibraryStore`): thư viện graph + lịch sử run sống qua restart; save tăng version; file hỏng bị quarantine.
 
 ### Track 3 — Edit không hỏng file (oh-my-pi MIT + grok-build Apache-2.0)
+
 - **Tag hash `[path#TAG]`**: tool read in header tag 4-hex; edit kèm tag lệch bị chặn; CRLF/LF chuẩn hóa một nền.
 - **Stale-tag recovery**: khối tìm vẫn khớp thì áp kèm cảnh báo, không khớp thì lỗi nêu expected/actual.
 - **Checkpoint manifest** `.ghita/checkpoints/<runId>/` + rollback (kể cả file mới tạo); prune giữ 20 run; snapshot API cho UI Undo.
 - **Ghi nguyên tử** (tmp + rename) cho mọi đường ghi file + PathPolicy chặn URI scheme/path verbatim `\?\`/bidi.
 
 ### Track 4 — Chạy bền (OpenHands MIT)
+
 - **RunEventLog** JSONL per run: event có id+seq, dedup, chịu dòng hỏng; tail + afterSeq là handshake resume.
 - **GapTolerantSeqCursor**: event lệch thứ tự không mất không lặp; gap >1024 nhảy qua, release vùng liên tục trước.
 - **StreamingDeltaBatcher**: token stream gom slot, commit ≤1 lần/frame, flush-first.
@@ -38,18 +44,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **ConfirmationGate idempotent**: bấm đôi không gửi 2 lần; event replay không tạo confirmation zombie.
 
 ### Track 5 — Crew nâng cao
+
 - RPM limiter (request/phút, clock injectable) · memory thành tool (`crew_memorize`/`crew_recall`) · event bus nhiều listener cô lập lỗi · guardrail dạng mô tả chấm bằng LLM (`config.llmJudge`).
 
 ### Track 6 — Block-graph nâng cao
+
 - Node lỗi không giết cả run (node đã queued vẫn chạy xong) · retry per-node an toàn (không retry sau timeout/sau khi đã phát dữ liệu) · secret redaction `<secret>` trên event · AbortController riêng per node-run.
 
 ### Track 7 — Edit nâng cao
+
 - PathPolicy (đã nối vào cả 3 đường ghi) · DiagnosticsWritethrough (provider seam, nối vào writeFile/replaceFileContent) · snapshot/undo API · DoomLoopGate (run-length tool call lặp).
 
 ### Track 8 — Chạy bền nâng cao
+
 - RunStopController tách bạch interrupt vs pause-after-step · CompactionVerifier 3 outcome (compacted/no_change/timeout).
 
 ### Track 9 — Chất lượng
+
 - Review 3 vòng: vòng 1–2 tĩnh (7 P1 + ~16 P2), vòng 3 DEBUG CHẠY THẬT từng vùng
   (1 P1 timer RPM mồ côi + 5 P2: member delegate mất memory tools, judge ngoài
   deadline, kickoff đồng thời nhiễm chéo state, member bypass RPM, remember
@@ -78,13 +89,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   qua `GraphLibraryStore` tại `<workspace>/.ghita/graph-library`; test
   integration 8/8 (`crew-handlers.test.mjs`, engine thật).
 - **H3 — Smoke bắt buộc**: `scripts/smoke-sidecar.mjs` spawn sidecar bundle
-  + socket handshake auth (`GHITA_SESSION_TOKEN`) → emit `crew_run` →
-  assert có phản hồi; chạy được sau mỗi lần build.
+  - socket handshake auth (`GHITA_SESSION_TOKEN`) → emit `crew_run` →
+    assert có phản hồi; chạy được sau mỗi lần build.
 - **H4 — Gates**: typecheck 44/44 (cần `NODE_OPTIONS=--max-old-space-size=4096`
-  + `--concurrency=2`, máy owner RAM yếu) · lint 43/43 · turbo test 44/44 ·
-  root `check-version-sync` 5/5. **KHÔNG rebuild installer** — chờ owner xác
-  minh rồi ra lệnh.
-
+  - `--concurrency=2`, máy owner RAM yếu) · lint 43/43 · turbo test 44/44 ·
+    root `check-version-sync` 5/5. **KHÔNG rebuild installer** — chờ owner xác
+    minh rồi ra lệnh.
 
 ## [1.2.0-demo1] - 2026-10-04 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
 
