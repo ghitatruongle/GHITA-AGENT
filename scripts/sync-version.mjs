@@ -196,22 +196,54 @@ updateTextVersion('snap/snapcraft.yaml', [
     label: 'snap version',
   },
 ]);
-updateTextVersion('apps/desktop/public/splash.html', [
-  {
-    pattern: /<div class="version">v([^<]+)<\/div>/,
-    replacement: TARGET,
-    label: 'splash html version',
-  },
-]);
+// ── Nhãn hiển thị (splash/i18n) ─────────────────────────────────────────────
+// H1.1 chuyển UI sang nguồn duy nhất `APP_VERSION` (có thể mang hậu tố chu kỳ
+// như `0.0.1-beta`). Nhãn hiển thị ĐÚNG khi:
+//   - có dạng import `version: APP_VERSION_LABEL` (giá trị do constants quyết),
+//   - hoặc chuỗi literal `v<VERSION>`/`v<VERSION>-<hậu tố>` (vd v0.0.1-beta).
+// Sync mode chỉ can thiệp khi nhãn LẠC HẬU (không bắt đầu bằng VERSION, như
+// v0.0.0) — không bao giờ cắt hậu tố chu kỳ của nhãn đúng.
+const DISPLAY_LABEL_NOTE = [];
+function checkDisplayLabel(relativePath, pattern, label) {
+  const full = join(root, relativePath);
+  if (!existsSync(full)) return;
+  const source = readFileSync(full, 'utf8');
+  const matches = [...source.matchAll(pattern)];
+  if (matches.length === 0) {
+    drifts.push(`${relativePath}: missing ${label}`);
+    return;
+  }
+  for (const match of matches) {
+    const current = match[1];
+    const ok = current === TARGET || current.startsWith(`${TARGET}-`);
+    if (!ok) {
+      drifts.push(`${relativePath} ${label}: ${current} != ${TARGET} (+/- hậu tố chu kỳ)`);
+      if (!checkOnly) {
+        const next = source.replace(match[0], match[0].replace(current, TARGET));
+        writeFileSync(full, next, 'utf8');
+      }
+    }
+  }
+}
+
+// splash.html: `<div class="version">v…</div>` — hoặc đã import-free (literal),
+// hoặc chỉ là tĩnh; giá trị phải là VERSION hoặc VERSION-hậu_tố.
+checkDisplayLabel(
+  'apps/desktop/public/splash.html',
+  /<div class="version">v([^<]+)<\/div>/g,
+  'splash html version',
+);
 
 for (const lang of ['en', 'vi', 'zh', 'ja', 'ko', 'ru']) {
-  updateTextVersion(`apps/desktop/src/i18n/${lang}.ts`, [
-    {
-      pattern: /version:\s*'v([^']+)'/,
-      replacement: TARGET,
-      label: `${lang} i18n version`,
-    },
-  ]);
+  const i18nPath = `apps/desktop/src/i18n/${lang}.ts`;
+  const full = join(root, i18nPath);
+  if (!existsSync(full)) {
+    drifts.push(`${i18nPath}: missing file`);
+    continue;
+  }
+  const source = readFileSync(full, 'utf8');
+  if (/version:\s*APP_VERSION_LABEL/.test(source)) continue; // dạng import H1.1 — hợp lệ
+  checkDisplayLabel(i18nPath, /version:\s*'v([^']+)'/, `${lang} i18n version`);
 }
 
 const versionConstantFiles = [];

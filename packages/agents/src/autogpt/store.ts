@@ -91,7 +91,11 @@ export class GraphLibraryStore {
   }
 
   private async writeGraphs(map: Map<string, GraphLibraryRecord>): Promise<void> {
-    const tmp = `${this.graphsPath()}.tmp`;
+    // CI D3 (2 store instance cùng thư mục): tmp tên CỐ ĐỊNH trùng nhau giữa
+    // các process → instance A rename mất tmp của B → ENOENT. Tên tmp duy nhất
+    // mỗi lần ghi chấm dứt đua; bản ghi dở của instance chết bị bỏ lại là rác
+    // vô hại (không ai đọc đuôi .tmp-*).
+    const tmp = `${this.graphsPath()}.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const payload = JSON.stringify(Object.fromEntries(map), null, 2);
     await fs.writeFile(tmp, payload, 'utf8');
     await fs.rename(tmp, this.graphsPath());
@@ -159,7 +163,8 @@ export class GraphLibraryStore {
       const index = runs.findIndex((r) => r.executionId === record.executionId);
       if (index === -1) runs.push(record);
       else runs[index] = record;
-      const tmp = `${this.runsPath()}.tmp`;
+      // Tên tmp duy nhất mỗi lần ghi — cùng lý do writeGraphs (CI D3).
+      const tmp = `${this.runsPath()}.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       await fs.writeFile(tmp, `${runs.map((r) => JSON.stringify(r)).join('\n')}\n`, 'utf8');
       await fs.rename(tmp, this.runsPath());
     });
