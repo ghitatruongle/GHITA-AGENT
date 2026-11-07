@@ -142,6 +142,12 @@ export function CrewRunner() {
         {crewState.delegations > 0 ? (
           <span className="text-indigo-300">🔗 Delegations: {crewState.delegations}</span>
         ) : null}
+        {crewState.usage && crewState.usage.requests > 0 ? (
+          <span className="text-emerald-300">
+            🔢 Tokens: {crewState.usage.promptTokens.toLocaleString()} in / {crewState.usage.completionTokens.toLocaleString()} out
+            ({crewState.usage.requests} calls)
+          </span>
+        ) : null}
       </div>
 
       <input

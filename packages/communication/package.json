@@ -1,6 +1,6 @@
 {
   "name": "@ghita/communication",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "sideEffects": false,
   "description": "Desktop <-> Mobile communication (Socket.io) cho Ghita Agent",

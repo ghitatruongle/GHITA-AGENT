@@ -10,11 +10,22 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const IS_WIN = process.platform === 'win32';
 const DEBUG = process.argv.includes('--debug');
 
-// --- 1. Version (single source of truth: apps/desktop/src-tauri/tauri.conf.json)
+// --- 1. Version (single source of truth: apps/desktop/src/constants/version.ts)
+// Tên installer phải theo ĐẦY ĐỦ chu kỳ (vd `v0.0.1-beta`) — dùng APP_VERSION
+// từ constants (cùng nguồn với UI) thay vì tauri.conf (chỉ phần số `0.0.1`,
+// mất hậu tố beta khiến tên file như thể bản chính thức đã phát hành).
+const versionTs = require('fs').readFileSync(
+  join(ROOT, 'apps/desktop/src/constants/version.ts'),
+  'utf8',
+);
+const VERSION = (versionTs.match(/export const APP_VERSION = '([^']+)';/) ?? [])[1];
+if (!VERSION) {
+  console.error('❌ Không đọc được APP_VERSION từ apps/desktop/src/constants/version.ts');
+  process.exit(1);
+}
 const tauriConf = JSON.parse(
   require('fs').readFileSync(join(ROOT, 'apps/desktop/src-tauri/tauri.conf.json'), 'utf8'),
 );
-const VERSION = tauriConf.version;
 const PRODUCT = (tauriConf.productName || 'Ghita Agent')
   .replace(/\s+/g, '-')
   .replace(/[^A-Za-z0-9-]/g, '');
@@ -52,6 +63,11 @@ function sha256(filePath) {
 // --- 2. Build (unless --debug)
 if (!DEBUG) {
   console.log('=== GHITA installer build v' + VERSION + ' ===');
+
+  // (H1.3) Pre-build check: version hiển thị phải khớp nguồn TRƯỚC khi build.
+  // Lệch (kiểu v0.0.0 sót trong splash/i18n/chat) => hủy build ngay, không
+  // đốt 10-15 phút rồi mới phát hiện.
+  run('node', ['scripts/check-version-sync.mjs'], { cwd: ROOT, timeout: 60_000 });
 
   // `createUpdaterArtifacts: true` requires TAURI_SIGNING_PRIVATE_KEY. When it
   // is not set (typical local build), temporarily disable the updater artifact

@@ -486,7 +486,9 @@ describe('GraphExecutor', () => {
     const result = await executor.execute(graph, { inputs: { in: 'go' } });
 
     expect(result.status).toBe('failed');
-    expect(result.error).toMatch(/non-object args/);
+    // Track 2.1: the input-validation pipeline intercepts non-object args
+    // BEFORE the block runs, with an actionable mismatch message.
+    expect(result.error).toMatch(/input pin "args" expected object/);
   });
 });
 

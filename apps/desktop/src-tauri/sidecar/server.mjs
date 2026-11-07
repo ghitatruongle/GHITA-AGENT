@@ -21,6 +21,7 @@ import {
   normalizeProviderToolCalls,
 } from './runtime-security.mjs';
 import { AgentRunJournal, createRunId } from './run-journal.mjs';
+import { createCrewWorkflowHandlers } from './crew-handlers.mjs';
 import { containsSensitiveMemory, WorkspaceMemoryJournal } from './memory-journal.mjs';
 
 // --- Lazy-loaded heavy modules (loaded on first use, not at startup) ---
@@ -1515,7 +1516,27 @@ function registerSocketEvents(socket, isCloud = false) {
     return null;
   };
 
-  socket.on('sync_api_config', (data) => {
+  // (H2) Crew / Workflow engine handlers — cầu nối UI (CrewRunner/
+  // WorkflowView) tới engine mới trong @ghita/agents. Trước H2 các event
+  // crew_run/workflow_run rơi vào khoảng trống => nút Chạy chết trong app cài.
+  createCrewWorkflowHandlers({
+    loadEngine: loadAgents,
+    orchestratorChat: async (chatMessages, opts = {}) => {
+      if (!grpcServerInstance || !grpcServerInstance.orchestrator) {
+        throw new Error('AI provider not initialized — configure a provider in Settings first.');
+      }
+      return await grpcServerInstance.orchestrator.chat(chatMessages, {
+        provider: opts.provider,
+        model: opts.model,
+        tools: opts.tools ?? [],
+        toolChoice: 'auto',
+      });
+    },
+    getAuthorizedClient,
+    getWorkspaceRoot: () => globalThis.ghitaWorkspaceRoot,
+    log,
+  })(socket);
+    socket.on('sync_api_config', (data) => {
     if (!getAuthorizedClient({ allowDesktop: true, allowDevice: false })) return;
     const config = data?.config;
     if (!config || typeof config !== 'object' || Array.isArray(config)) {

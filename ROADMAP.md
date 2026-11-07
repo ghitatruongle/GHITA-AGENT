@@ -1,7 +1,21 @@
 # 🗺️ Ghita Agent — Public Roadmap
 
-> **Current version:** v0.0.0 (đặt lại tên product: GHITA CODING AGENT → Ghita Agent, chuẩn bị chu kỳ phát hành mới)
-> **Last updated:** 2026-10-04
+> **Current version:** v0.0.1 beta (chu kỳ mới: engine Crew + block-graph chạy thật, tin được, sửa không hỏng)
+> **Last updated:** 2026-11-05 — hotfix H1–H4 xong (version một nguồn + nối socket→engine + smoke), **chờ owner verify rồi mới rebuild installer**
+
+---
+
+## ✅ Done — v0.0.1 Beta (2026-11-04)
+
+| Khu vực | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 🧲 Engine Crew | Timeout/task, retry trần kép, validate kickoff, usage metrics → UI | ✅ |
+| 🧱 Block-graph | Validate input/output, UI hints, persist graph+version, no-fail-fast, retry per-node, secret redaction | ✅ |
+| ✏️ Edit guard | Tag hash `[path#TAG]`, stale recovery, checkpoint+rollback, ghi nguyên tử, PathPolicy | ✅ |
+| 🔁 Chạy bền | Event log id+seq, gap-tolerant cursor, delta theo frame, reconnect grace, confirmation idempotent | ✅ |
+| ➕ Nâng cao | RPM, memory-tools, event bus, LLM guardrail, doom-loop gate, stop controller, compaction verify | ✅ |
+| 🧪 Chất lượng | Review 3 vòng (tĩnh 7 P1 + ~16 P2; vòng 3 debug runtime: 1 P1 + 5 P2 sửa hết) + ~20 scenario e2e; typecheck 44/44, lint 43/43, test 44/44 + root 702/702, cargo 0 lỗi, audit:policy pass | ✅ |
+| 📦 Installer | `Ghita-Agent-Setup-v0.0.1.exe` + SHA-256 | ✅ |
 
 ---
 

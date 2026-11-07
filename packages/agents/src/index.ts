@@ -598,6 +598,33 @@ export {
 } from './checker/autoRepairGate.js';
 export { SwarmSpawner, type SwarmTask, type SwarmTaskResult } from './subagent/swarmSpawner.js';
 export { DAGDecomposer, type DAGTaskNode } from './autogpt/dag-decomposer.js';
+
+// 0.0.1-beta (H2): engine Crew + block-graph vào public API để sidecar wire
+// socket -> engine (crew_run / workflow_run). Xem docs/plans/2026-11-05-hotfix-0.0.1-beta.md.
+export {
+  Crew,
+  CrewTaskTimeoutError,
+  isTransientLlmError,
+} from './crew/crew.js';
+export { createReActCrewTaskExecutor, extractCrewUsageSample } from './crew/executor.js';
+export { CrewPlanner, llmCallToPlanner } from './crew/planner.js';
+export { createAgentMemoryBridge } from './crew/memory.js';
+export {
+  createDefaultBlockRegistry,
+} from './blocks/builtins.js';
+export { BlockRegistry } from './blocks/registry.js';
+export { GraphExecutor } from './autogpt/executor.js';
+export { GraphLibraryStore } from './autogpt/store.js';
+export { validateGraph, INPUT_BLOCK_NAME, OUTPUT_BLOCK_NAME } from './autogpt/graph.js';
+export {
+  RunEventLog,
+  GapTolerantSeqCursor,
+  StreamingDeltaBatcher,
+  ReconnectPolicy,
+  ConfirmationGate,
+  DoomLoopGate,
+  RunStopController,
+} from './runtime/index.js';
 export {
   CrewAIOrchestrator,
   type CrewMember,

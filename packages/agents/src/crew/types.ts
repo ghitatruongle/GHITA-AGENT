@@ -44,9 +44,20 @@ export interface CrewTask {
    * Output guardrail: return `true` to accept, `false` to retry with a
    * generic reason, or a non-empty string to retry with that reason.
    */
-  guardrail?: (output: string) => boolean | string | Promise<boolean | string>;
+  /**
+   * Output guardrail: hàm tự viết, HOẶC một MÔ TẢ string — khi đó Crew
+   * config.llmJudge (5.4) sẽ chấm output theo mô tả (CrewAI llm_guardrail).
+   */
+  guardrail?: string | ((output: string) => boolean | string | Promise<boolean | string>);
   /** Guardrail retry budget (default: 2). */
   maxRetries?: number;
+  /**
+   * Wall-clock deadline for this task in milliseconds (CrewAI
+   * `max_execution_time`). Covers the whole task including LLM retries and
+   * guardrail revisions; the executor's signal aborts when it fires. When
+   * unset, the crew-level `maxExecutionTime` applies.
+   */
+  maxExecutionTime?: number;
 }
 
 export type CrewProcess = 'sequential' | 'hierarchical';
@@ -63,10 +74,51 @@ export type CrewEvent =
   | { type: 'plan_created'; steps: CrewPlanStep[]; timestamp: number }
   | { type: 'task_start'; taskId: string; agentId?: string; timestamp: number }
   | { type: 'task_guardrail_retry'; taskId: string; attempt: number; reason: string; timestamp: number }
+  | {
+      type: 'task_llm_retry';
+      taskId: string;
+      agentId?: string;
+      /** 1-based retry index within the task. */
+      attempt: number;
+      reason: string;
+      timestamp: number;
+    }
+  | {
+      type: 'task_timeout';
+      taskId: string;
+      agentId?: string;
+      /** Wall-clock deadline that fired. */
+      timeoutMs: number;
+      timestamp: number;
+    }
   | { type: 'task_complete'; taskId: string; agentId?: string; output: string; duration: number; timestamp: number }
   | { type: 'task_failed'; taskId: string; agentId?: string; error: string; timestamp: number }
   | { type: 'delegation'; fromAgentId?: string; toAgentId: string; kind: 'work' | 'question'; timestamp: number }
-  | { type: 'crew_complete'; crewId: string; status: 'completed' | 'failed'; output: string; duration: number; timestamp: number };
+  | {
+      type: 'crew_complete';
+      crewId: string;
+      status: 'completed' | 'failed';
+      output: string;
+      duration: number;
+      /** Aggregate token usage across every LLM call of the run. */
+      usage?: CrewUsage;
+      timestamp: number;
+    };
+
+/**
+ * Aggregate token usage of one task or a whole run. Counters are cumulative;
+ * `cachedTokens` is only present when at least one sample reported it.
+ */
+export interface CrewUsage {
+  /** Total prompt (input) tokens across sampled LLM calls. */
+  promptTokens: number;
+  /** Total completion (output) tokens across sampled LLM calls. */
+  completionTokens: number;
+  /** Prompt tokens served from cache, when the provider reports it. */
+  cachedTokens?: number;
+  /** Number of LLM calls included in these counters. */
+  requests: number;
+}
 
 /** Output of a single executed task. */
 export interface CrewTaskOutput {
@@ -75,6 +127,10 @@ export interface CrewTaskOutput {
   output: string;
   duration: number;
   retries: number;
+  /** LLM retries consumed by this task (transient-error retry loop). */
+  llmRetries?: number;
+  /** Aggregate token usage of this task's LLM calls, when reported. */
+  usage?: CrewUsage;
   /** Delegations accepted while producing this output (hierarchical mode). */
   delegations?: number;
 }
@@ -87,6 +143,8 @@ export interface CrewResult {
   output: string;
   taskOutputs: CrewTaskOutput[];
   duration: number;
+  /** Aggregate token usage of the whole run, when reported. */
+  usage?: CrewUsage;
   error?: string;
 }
 
@@ -99,6 +157,20 @@ export interface CrewExecutionRequest {
   prompt: string;
   tools: ReActTool[];
   signal?: AbortSignal;
+  /**
+   * Called once per LLM call with that call's token usage (crew metrics
+   * aggregation). Executors that never call it simply leave usage unset.
+   */
+  onUsage?: (sample: CrewUsageSample) => void;
+}
+
+/** Token usage of a single LLM call. */
+export interface CrewUsageSample {
+  promptTokens: number;
+  completionTokens: number;
+  cachedTokens?: number;
+  /** Always 1 for a per-call sample. */
+  requests: 1;
 }
 
 /**

@@ -78,6 +78,30 @@ export class BlockRegistry {
   }
 
   /**
+   * (6.3) BlockInfo snapshot cho UI builder: mô tả tự đầy đủ schema + static
+   * output flag, không cần gửi nguyên BlockDefinition (kèm hàm run) ra UI.
+   */
+  describe(): Array<{
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    inputSchema: Record<string, unknown>;
+    outputSchemas: Record<string, Record<string, unknown>>;
+    staticOutput: boolean;
+  }> {
+    return this.list().map((d) => ({
+      id: d.id,
+      name: d.name,
+      description: d.description,
+      category: d.category,
+      inputSchema: d.inputSchema,
+      outputSchemas: d.outputSchemas,
+      staticOutput: d.staticOutput ?? false,
+    }));
+  }
+
+  /**
    * Run every self-describing fixture (AutoGPT self-testing blocks). Returns
    * one result per fixture; blocks without a fixture are skipped. A failing
    * fixture does not throw — callers decide how to report it.

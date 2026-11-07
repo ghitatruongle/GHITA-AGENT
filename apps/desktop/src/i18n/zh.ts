@@ -1,3 +1,4 @@
+import { APP_VERSION_LABEL } from '../constants/version';
 import type { TranslationKeys } from './types';
 
 export const zh: TranslationKeys = {
@@ -31,7 +32,7 @@ export const zh: TranslationKeys = {
   },
   app: {
     brand: 'Ghita Agent',
-    version: 'v0.0.0',
+    version: APP_VERSION_LABEL,
     deviceReconnected: '已重新连接设备: {{name}}',
     devicePaired: '成功配对设备: {{name}}',
     commandReceived: '从设备收到命令: {{action}}',

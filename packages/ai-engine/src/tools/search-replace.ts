@@ -13,8 +13,15 @@
 //   2. Nguyên tử: soạn hết rồi mới ghi. Hỏng khối nào thì file giữ nguyên.
 //   3. Lỗi phải HÀNH ĐỘNG ĐƯỢC: nói khối nào hỏng, kèm dòng gần nhất trong file.
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { ensureInSandbox } from './workspace-tools.js';
+import {
+  FileEditCheckpointer,
+  assertEditablePath,
+  atomicWriteFileSync,
+  checkTagGuard,
+  pruneCheckpoints,
+} from './edit-guard.js';
 
 export type MatchStrategy = 'exact' | 'strip-whitespace' | 'strip-blank-first-line' | 'ellipsis';
 
@@ -48,6 +55,10 @@ export interface EditResult {
   blocks: BlockOutcome[];
   /** Thông điệp lỗi đã sẵn sàng đưa thẳng cho model đọc. */
   error?: string;
+  /** Cảnh báo không chặn: tag stale nhưng khối tìm vẫn khớp — edit đã áp. */
+  warning?: string;
+  /** True khi edit vẫn được áp dù tag lệch (stale-tag recovery). */
+  tagRecovered?: boolean;
 }
 
 /** Nội dung dùng dấu "..." để lược bỏ phần không nhớ chính xác. */
@@ -320,9 +331,18 @@ export async function searchReplaceBatch(args: {
   edits: EditBlock[];
   /** Ghi file dù chỉ một phần khối áp dụng được. Mặc định false. */
   allowPartial?: boolean;
+  /**
+   * Tag nội dung file lấy từ header [path#TAG] của tool read (Track 3.1).
+   * Lệch tag = file đã đổi ngoài tầm nhìn: chặn trừ khi khối tìm vẫn khớp
+   * (recovery kèm cảnh báo, Track 3.2).
+   */
+  expectedTag?: string;
+  /** Checkpoint trước khi ghi (Track 3.3); tự tạo run auto-ts nếu bỏ trống. */
+  checkpointer?: FileEditCheckpointer;
 }): Promise<EditResult> {
   let fullPath: string;
   try {
+    assertEditablePath(args.filePath);
     fullPath = ensureInSandbox(args.filePath);
   } catch (err) {
     // ensureInSandbox ném khi chưa chọn workspace hoặc đường dẫn nằm ngoài.
@@ -359,6 +379,23 @@ export async function searchReplaceBatch(args: {
 
   const result = applyEditBlocks(normalized, args.edits);
 
+  // Track 3.1/3.2 — tag guard: tag lệch là file đã đổi ngoài tầm nhìn. Chặn
+  // trừ khi khối tìm kiếm vẫn khớp file hiện tại (all-applied) — khi đó vẫn
+  // ghi kèm cảnh báo (stale-tag recovery). Partial cùng lúc tag lệch thì
+  // cũng chặn: thay một phần trên file đã xê dịch là mũi nhọn hai đầu.
+  if (args.expectedTag !== undefined) {
+    const guard = checkTagGuard(normalized, args.expectedTag);
+    if (!guard.ok && result.outcome !== 'all-applied') {
+      return {
+        ...result,
+        outcome: 'none-applied',
+        error:
+          guard.error ??
+          (`Tag stale: expected ${  String(guard.expectedTag)  }, actual ${  String(guard.actualTag)  }.`),
+      };
+    }
+  }
+
   if (result.outcome === 'all-applied' || (result.outcome === 'partial' && args.allowPartial)) {
     if (globalThis.agentPermissionMode === 'custom' && globalThis.approveFileWriteHandler) {
       const approved = await globalThis.approveFileWriteHandler('modify', args.filePath);
@@ -370,9 +407,18 @@ export async function searchReplaceBatch(args: {
         };
       }
     }
+    // Track 3.3/3.4 — chụp ảnh TRƯỚC rồi ghi NGUYÊN TỬ: gián đoạn nguồn
+    // giữa chừng không để lại file nửa chừng; rollback qua checkpoints.
+    const checkpointer = args.checkpointer ?? new FileEditCheckpointer(`auto-${  Date.now().toString(36)}`);
+    checkpointer.captureBefore(fullPath);
     const out = hadCrlf ? result.content.replace(/\r?\n/g, '\r\n') : result.content;
-    writeFileSync(fullPath, out, 'utf8');
+    atomicWriteFileSync(fullPath, out);
+    pruneCheckpoints();
   }
 
+  const guard = args.expectedTag !== undefined ? checkTagGuard(normalized, args.expectedTag) : undefined;
+  if (guard && !guard.ok) {
+    return { ...result, tagRecovered: true, warning: guard.error };
+  }
   return result;
 }

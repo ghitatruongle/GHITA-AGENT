@@ -68,11 +68,16 @@ describe('7: Sandboxed Workspace Tools & Agentic Execution', () => {
       expect(writeResult).toContain('File written successfully');
 
       const readAll = await readFile({ filePath: filename });
-      expect(readAll).toBe(content);
+      // Track 3.1: read_file có header [path#TAG] trên dòng đầu.
+      const readAllLines = readAll.split('\n');
+      expect(readAllLines[0].startsWith('[hello.txt#')).toBe(true);
+      expect(readAllLines.slice(1).join('\n')).toBe(content);
 
-      // Test line range reading
+      // Line range reading — tag hash TOÀN file, body là dải dòng yêu cầu.
       const readLines = await readFile({ filePath: filename, startLine: 2, endLine: 3 });
-      expect(readLines).toBe('Line 2: Anti-gravity is awesome!\nLine 3: Coding agent works!');
+      const readLinesParts = readLines.split('\n');
+      expect(readLinesParts[0]).toMatch(/^\[/);
+      expect(readLinesParts.slice(1).join('\n')).toBe('Line 2: Anti-gravity is awesome!\nLine 3: Coding agent works!');
     });
 
     it('should support list_dir tool with directory recursive/non-recursive search', async () => {
@@ -108,7 +113,8 @@ describe('7: Sandboxed Workspace Tools & Agentic Execution', () => {
       expect(patchResult).toContain('Successfully replaced content');
 
       const updated = await readFile({ filePath: filename });
-      expect(updated).toBe('import { a } from "a";\n\nexport function run() {\n  return 2;\n}');
+      const updatedBody = updated.split('\n').slice(1).join('\n');
+      expect(updatedBody).toBe('import { a } from "a";\n\nexport function run() {\n  return 2;\n}');
     });
 
     it('should support grep_search tool to scan matching files', async () => {

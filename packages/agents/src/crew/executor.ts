@@ -7,7 +7,7 @@ import type {
   PolicyGuard,
   ReActAgentCallbacks,
 } from '../react/types.js';
-import type { CrewAgentSpec, CrewExecutionRequest, CrewTaskExecutor } from './types.js';
+import type { CrewAgentSpec, CrewExecutionRequest, CrewTaskExecutor, CrewUsageSample } from './types.js';
 
 /** Compile role/goal/backstory into the member's system prompt. */
 export function crewAgentSystemPrompt(agent: CrewAgentSpec): string {
@@ -56,10 +56,21 @@ export function createReActCrewTaskExecutor(options: ReActCrewExecutorOptions): 
     };
     throwIfAborted();
 
+    // Usage metrics (CrewAI UsageMetrics pattern): report every LLM call's
+    // token counts to the crew through `onUsage`. Providers may attach usage
+    // under different metadata shapes; read the known fields defensively and
+    // never fail a run over metrics.
+    const usageLlmCall: typeof options.llmCall = async (messages, config) => {
+      const response = await options.llmCall(messages, config);
+      const sample = extractCrewUsageSample(response);
+      if (sample) request.onUsage?.(sample);
+      return response;
+    };
+
     const abortableLlmCall: typeof options.llmCall = async (messages, config) => {
       throwIfAborted();
       try {
-        const response = await options.llmCall(messages, config);
+        const response = await usageLlmCall(messages, config);
         // The signal may have aborted during the call itself — a completed
         // response must not be handed back to a cancelled run.
         throwIfAborted();
@@ -84,5 +95,31 @@ export function createReActCrewTaskExecutor(options: ReActCrewExecutorOptions): 
     });
     const result = await agent.run(request.prompt, options.callbacks?.(request));
     return result.output;
+  };
+}
+
+/** A resolved LLM response message type (for defensive usage extraction). */
+type CrewLlmResponse = Awaited<ReturnType<CreateReActAgentInput['llmCall']>>;
+
+/**
+ * Pull token counts off a resolved LLM message (defensive: providers attach
+ * usage in different shapes under `metadata`). Returns undefined when the
+ * message carries no recognizable usage fields so the crew can skip sampling.
+ */
+export function extractCrewUsageSample(message: CrewLlmResponse): CrewUsageSample | undefined {
+  const metadata = message.metadata as Record<string, unknown> | undefined;
+  if (!metadata) return undefined;
+  const promptTokens = typeof metadata.promptTokens === 'number' ? metadata.promptTokens : undefined;
+  const completionTokens = typeof metadata.completionTokens === 'number' ? metadata.completionTokens : undefined;
+  const tokenCount = typeof metadata.tokenCount === 'number' ? metadata.tokenCount : undefined;
+  const cachedTokens = typeof metadata.cachedTokens === 'number' ? metadata.cachedTokens : undefined;
+  if (promptTokens === undefined && completionTokens === undefined && tokenCount === undefined && cachedTokens === undefined) {
+    return undefined;
+  }
+  return {
+    promptTokens: promptTokens ?? 0,
+    completionTokens: completionTokens ?? 0,
+    ...(cachedTokens !== undefined ? { cachedTokens } : {}),
+    requests: 1,
   };
 }

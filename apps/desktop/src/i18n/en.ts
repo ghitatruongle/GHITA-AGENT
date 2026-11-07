@@ -1,3 +1,4 @@
+import { APP_VERSION_LABEL } from '../constants/version';
 import type { TranslationKeys } from './types';
 
 export const en: TranslationKeys = {
@@ -31,7 +32,7 @@ export const en: TranslationKeys = {
   },
   app: {
     brand: 'Ghita Agent',
-    version: 'v0.0.0',
+    version: APP_VERSION_LABEL,
     deviceReconnected: 'Reconnected to device: {{name}}',
     devicePaired: 'Successfully paired device: {{name}}',
     commandReceived: 'Command received from device: {{action}}',

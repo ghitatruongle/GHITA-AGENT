@@ -1,5 +1,6 @@
 // Message list with auto-scroll, streaming indicator, and embedded cards.
 
+import { APP_VERSION_LABEL } from '../../constants/version';
 import { memo, useRef, useCallback, useEffect, useState } from 'react';
 import { ComputerUsePreviewComponent, MarkdownMessage } from '../ChatMessageContent';
 import type { ChatMessage } from '../../hooks/useChatSessions';
@@ -281,7 +282,7 @@ export function ChatMessages({ messages, lang }: ChatMessagesProps) {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Ghita Agent v0.0.0
+            {`Ghita Agent ${APP_VERSION_LABEL}`}
           </h3>
           <p
             style={{

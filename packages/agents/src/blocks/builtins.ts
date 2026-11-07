@@ -4,8 +4,9 @@
 
 import { HumanMessage, SystemMessage } from '../messages/message.js';
 import type { BaseMessage } from '../messages/message.js';
-import type { BlockContext, BlockDefinition } from './types.js';
+import type { BlockContext, BlockDefinition, JsonSchema } from './types.js';
 import { BlockRegistry } from './registry.js';
+import { coerceValueAgainstSchema } from './validation.js';
 
 const STRING_SCHEMA = { type: 'string' } as const;
 const ERROR_SCHEMA = { type: 'string' } as const;
@@ -34,6 +35,7 @@ const inputBlock: BlockDefinition = {
   name: 'input',
   description: 'Graph entry point: passes a value into the workflow.',
   category: 'io',
+  staticOutput: true,
   inputSchema: { type: 'object', properties: { value: {} } },
   outputSchemas: { output: {}, error: ERROR_SCHEMA },
   fixture: { input: { value: 42 }, expectOutputPin: 'output' },
@@ -47,6 +49,7 @@ const outputBlock: BlockDefinition = {
   name: 'output',
   description: 'Graph exit point: collects a value as a run output.',
   category: 'io',
+  staticOutput: true,
   inputSchema: {
     type: 'object',
     properties: { value: {} },
@@ -107,13 +110,23 @@ const llmStructuredBlock: BlockDefinition = {
   inputSchema: {
     type: 'object',
     properties: {
-      prompt: { type: 'string' },
-      system: { type: 'string' },
-      context: { type: 'string' },
+      prompt: { type: 'string', placeholder: 'What to generate…' },
+      system: { type: 'string', advanced: true, placeholder: 'Optional system prompt' },
+      context: { type: 'string', advanced: true, placeholder: 'Optional grounding context' },
+      // JSON Schema the parsed JSON must satisfy — validated before the
+      // `output` pin emits (2.2), so a wrong-shape object fails the node
+      // instead of poisoning downstream nodes.
+      schema: {
+        type: 'object',
+        advanced: true,
+        title: 'Output schema',
+        description: 'JSON Schema the parsed JSON must satisfy (validated before emission).',
+      },
     },
     required: ['prompt'],
   },
-  outputSchemas: { output: { type: 'object' }, error: ERROR_SCHEMA },
+  // P2 fix: schema trống = chấp nhận mọi JSON (array/scalar) — extractJson chủ động hỗ trợ array nên pin không được chặn lệch.
+  outputSchemas: { output: {}, error: ERROR_SCHEMA },
   async *run(input, ctx) {
     const llmCall = ctx.llmCall;
     if (!llmCall) {
@@ -122,10 +135,16 @@ const llmStructuredBlock: BlockDefinition = {
     }
     const promptValue = String(input['prompt'] ?? '');
     const contextValue = typeof input['context'] === 'string' ? input['context'] : undefined;
+    const schemaInput =
+      typeof input['schema'] === 'object' && input['schema'] !== null
+        ? (input['schema'] as JsonSchema)
+        : undefined;
     const fullPrompt = [
       promptValue,
       contextValue ? `\n\n# Context\n${contextValue}` : '',
-      '\n\nRespond with a single JSON value and nothing else.',
+      schemaInput
+        ? `\n\nRespond with a single JSON value matching this JSON Schema:\n${JSON.stringify(schemaInput)}`
+        : '\n\nRespond with a single JSON value and nothing else.',
     ].join('');
     try {
       const messages: BaseMessage[] = [];
@@ -139,7 +158,14 @@ const llmStructuredBlock: BlockDefinition = {
         yield ['error', 'LLM response did not contain parsable JSON.'];
         return;
       }
-      yield ['output', parsed];
+      if (schemaInput) {
+        // P2 fix: phát bản ĐÃ coerce — LLM trả "42" cho schema number thì
+        // downstream phải nhận số 42, không phải chuỗi.
+        const coerced = coerceValueAgainstSchema(schemaInput, parsed, 'llm_structured output');
+        yield ['output', coerced];
+      } else {
+        yield ['output', parsed];
+      }
     } catch (err) {
       yield ['error', err instanceof Error ? err.message : String(err)];
     }
@@ -327,7 +353,8 @@ const subGraphBlock: BlockDefinition = {
     },
     required: ['graphId'],
   },
-  outputSchemas: { output: { type: 'object' }, error: ERROR_SCHEMA },
+  // P2 fix: schema trống = chấp nhận mọi JSON (array/scalar) — extractJson chủ động hỗ trợ array nên pin không được chặn lệch.
+  outputSchemas: { output: {}, error: ERROR_SCHEMA },
   async *run(input, ctx) {
     if (!ctx.executeGraph) {
       yield ['error', 'sub_graph requires BlockContext.executeGraph.'];

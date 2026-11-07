@@ -30,10 +30,20 @@ export type CrewEventPayload = {
     | { type: 'plan_created'; steps: Array<{ taskId: string; plan: string }>; timestamp: number }
     | { type: 'task_start'; taskId: string; agentId?: string; timestamp: number }
     | { type: 'task_guardrail_retry'; taskId: string; attempt: number; reason: string; timestamp: number }
+    | { type: 'task_llm_retry'; taskId: string; agentId?: string; attempt: number; reason: string; timestamp: number }
+    | { type: 'task_timeout'; taskId: string; agentId?: string; timeoutMs: number; timestamp: number }
     | { type: 'task_complete'; taskId: string; agentId?: string; output: string; duration: number; timestamp: number }
     | { type: 'task_failed'; taskId: string; agentId?: string; error: string; timestamp: number }
     | { type: 'delegation'; fromAgentId?: string; toAgentId: string; kind: 'work' | 'question'; timestamp: number }
-    | { type: 'crew_complete'; crewId: string; status: 'completed' | 'failed'; output: string; duration: number; timestamp: number };
+    | {
+        type: 'crew_complete';
+        crewId: string;
+        status: 'completed' | 'failed';
+        output: string;
+        duration: number;
+        usage?: { promptTokens: number; completionTokens: number; cachedTokens?: number; requests: number };
+        timestamp: number;
+      };
 };
 
 export type CrewTaskStatus = 'pending' | 'running' | 'completed' | 'failed';
@@ -45,6 +55,8 @@ export interface CrewRunState {
   sawStart: boolean;
   taskStatuses: Record<string, CrewTaskStatus>;
   delegations: number;
+  /** Aggregate token usage reported by crew_complete, when the engine provides it. */
+  usage: { promptTokens: number; completionTokens: number; cachedTokens?: number; requests: number } | null;
   output: string;
   error: string | null;
   events: CrewEventPayload['event'][];
@@ -56,6 +68,7 @@ const INITIAL_STATE: CrewRunState = {
   sawStart: false,
   taskStatuses: {},
   delegations: 0,
+  usage: null,
   output: '',
   error: null,
   events: [],
@@ -101,6 +114,7 @@ export function useCrewRun() {
               next.taskStatuses = { ...prev.taskStatuses, [event.taskId]: 'completed' };
               break;
             case 'task_failed':
+            case 'task_timeout': // P2 fix: timeout là terminal event — task phải hiện failed
               next.taskStatuses = { ...prev.taskStatuses, [event.taskId]: 'failed' };
               break;
             case 'delegation':
@@ -109,6 +123,7 @@ export function useCrewRun() {
             case 'crew_complete':
               next.status = event.status;
               next.output = event.output;
+              next.usage = event.usage ?? prev.usage;
               break;
             default:
               break;

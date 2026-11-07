@@ -215,6 +215,9 @@ turbo-*.log
 .ghita/audits/
 .ghita/evals/report.md
 .ghita/evals/*.db*
+# .ghita edit checkpoints (Track 3.3 — chứa nội dung file user, không commit)
+.ghita/checkpoints/
+**/.ghita/checkpoints/
 .ghita/e2e-smoke/
 .ghita/*.log
 **/.ghita/**/*.log
@@ -312,3 +315,6 @@ scripts/verify_doc.py
 *.sqlite-wal
 *.sqlite-shm
 test-ledger.sqlite
+
+# Mimosa security-scan tool state (agent-local, not project code)
+.mimosa/

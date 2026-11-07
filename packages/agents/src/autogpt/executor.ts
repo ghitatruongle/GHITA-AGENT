@@ -6,6 +6,7 @@
 import { randomUUID } from 'node:crypto';
 import type { BlockContext, BlockDefinition } from '../blocks/types.js';
 import type { BlockRegistry } from '../blocks/registry.js';
+import { redactSecretPins, validateBlockInput, validateEmission } from '../blocks/validation.js';
 import { INPUT_BLOCK_NAME, OUTPUT_BLOCK_NAME, validateGraph } from './graph.js';
 import type { GraphDefinition, GraphTrigger } from './graph.js';
 
@@ -25,6 +26,7 @@ export type NodeExecutionEvent =
   | { type: 'node_complete'; nodeId: string; duration: number; timestamp: number }
   | { type: 'node_failed'; nodeId: string; error: string; timestamp: number }
   | { type: 'node_skipped'; nodeId: string; reason: string; timestamp: number }
+  | { type: 'node_retry'; nodeId: string; attempt: number; reason: string; timestamp: number }
   | {
       type: 'execution_complete';
       executionId: string;
@@ -56,6 +58,8 @@ export interface GraphExecutorServices {
   nodeTimeoutMs?: number;
   /** Loop bound: max runs per node for cyclic/static-link graphs (default 5). */
   maxRunsPerNode?: number;
+  /** (6.4) Retry per-node khi block ném lỗi: attempts + backoff tăng dần. */
+  nodeRetry?: { attempts: number; backoffMs: number };
   /** Service seams forwarded into every BlockContext. */
   llmCall?: BlockContext['llmCall'];
   tools?: BlockContext['tools'];
@@ -123,10 +127,6 @@ export class GraphExecutor {
     };
 
     const externalSignal = options.signal;
-    const abortController = new AbortController();
-    const onExternalAbort = (): void => abortController.abort();
-    externalSignal?.addEventListener('abort', onExternalAbort, { once: true });
-    const signal = abortController.signal;
 
     const states = new Map<string, NodeState>();
     for (const node of graph.nodes) {
@@ -165,9 +165,12 @@ export class GraphExecutor {
       if (state) state.status = 'queued';
     }
 
+    const nodeRetries = new Map<string, number>();
     const nodeResults = new Map<string, NodeState>();
     const outputs: Record<string, unknown> = {};
-    let failure: { nodeId: string; error: string } | undefined;
+    // (6.1) Node lỗi KHÔNG giết cả run: các node đã queued vẫn chạy xong
+    // (AutoGPT _propagate_node_failure), run tổng thể vẫn kết luận failed.
+    const failures: Array<{ nodeId: string; error: string }> = [];
 
     const deliver = (sinkId: string, pin: string, value: unknown): void => {
       const state = states.get(sinkId);
@@ -179,7 +182,7 @@ export class GraphExecutor {
           : value;
     };
 
-    while (ready.length > 0 && !failure && !externalSignal?.aborted) {
+    while (ready.length > 0 && !externalSignal?.aborted) {
       const nodeId = ready.shift() as string;
       const node = graph.nodes.find((n) => n.id === nodeId);
       const state = states.get(nodeId);
@@ -201,14 +204,39 @@ export class GraphExecutor {
       state.runs += 1;
       state.status = 'running';
       const nodeStartedAt = now();
-      emit({ type: 'node_start', nodeId, input: { ...state.input }, timestamp: now() });
-
+      let attemptEmitted = { count: 0 };
       const block = this.registry.require(node.blockName);
+      // (P1 fix) Timeout abort một controller RIÊNG của lần chạy node này —
+      // không còn abort controller dùng chung làm chết signal của retry.
+      const nodeAbort = new AbortController();
+      const runSignal = externalSignal
+        ? AbortSignal.any([externalSignal, nodeAbort.signal])
+        : nodeAbort.signal;
+      // (6.2) Pin đánh dấu secret:true không bao giờ lộ giá trị ra event.
+      const redactedInput = redactSecretPins(block, state.input);
+      emit({ type: 'node_start', nodeId, input: { ...redactedInput }, timestamp: now() });
+
+      // Input validation pipeline (2.1): merge schema defaults and coerce
+      // types BEFORE the block runs, so garbage input fails the node with an
+      // actionable error instead of producing garbage downstream.
+      try {
+        state.input = validateBlockInput(block, state.input, nodeId);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        state.status = 'failed';
+        state.error = message;
+        state.duration += now() - nodeStartedAt;
+        nodeResults.set(nodeId, state);
+        failures.push({ nodeId, error: message });
+        emit({ type: 'node_failed', nodeId, error: message, timestamp: now() });
+        continue;
+      }
+
       const ctx: BlockContext = {
         nodeId,
         llmCall: this.services.llmCall,
         tools: this.services.tools,
-        signal,
+        signal: runSignal,
         logger: this.services.logger,
         requestHumanInput: this.services.requestHumanInput,
         runInSandbox: this.services.runInSandbox,
@@ -229,7 +257,7 @@ export class GraphExecutor {
           segmentStartedAt = now();
           timer = setTimeout(() => {
             timer = undefined;
-            abortController.abort();
+            nodeAbort.abort();
             rejectRun?.(timeoutError);
           }, Math.max(remainingMs, 1));
         };
@@ -260,6 +288,7 @@ export class GraphExecutor {
             }
           : ctx;
 
+        const emitted = { count: 0 };
         const runPromise = this.drainBlock(
           nodeId,
           block,
@@ -271,7 +300,9 @@ export class GraphExecutor {
           states,
           outputs,
           emit,
+          emitted,
         );
+        attemptEmitted = emitted;
         const race = Promise.race([runPromise, timeoutPromise]);
         // When the timeout wins, the losing block run still rejects later
         // (e.g. an abort-aware primitive). Swallow that late rejection — the
@@ -293,16 +324,36 @@ export class GraphExecutor {
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        state.duration += now() - nodeStartedAt;
+        // (6.4) Retry per-node: re-arm node, backoff tăng dần theo attempt.
+        // Vòng 2 fix: KHÔNG retry khi lỗi do timeout nội bộ — run cũ có thể
+        // vẫn còn chạy (block không tôn trọng signal), retry song song sẽ
+        // phát trùng dữ liệu xuống sink.
+        const isInternalTimeout = err instanceof Error && err.message.includes('timed out after');
+        const retryCfg = this.services.nodeRetry;
+        const attempt = (nodeRetries.get(nodeId) ?? 0) + 1;
+        if (
+          retryCfg !== undefined &&
+          !isInternalTimeout &&
+          attempt <= retryCfg.attempts &&
+          !externalSignal?.aborted &&
+          attemptEmitted.count === 0 && // đã phát gì đó thì retry sẽ nhân đôi dữ liệu sang sink
+          state.runs < (this.services.maxRunsPerNode ?? 5)
+        ) {
+          nodeRetries.set(nodeId, attempt);
+          state.status = 'waiting';
+          emit({ type: 'node_retry', nodeId, attempt, reason: message, timestamp: now() });
+          await new Promise((resolve) => setTimeout(resolve, retryCfg.backoffMs * attempt));
+          ready.unshift(nodeId);
+          continue;
+        }
         state.status = 'failed';
         state.error = message;
-        state.duration += now() - nodeStartedAt;
         nodeResults.set(nodeId, state);
-        failure = { nodeId, error: message };
+        failures.push({ nodeId, error: message });
         emit({ type: 'node_failed', nodeId, error: message, timestamp: now() });
       }
     }
-
-    externalSignal?.removeEventListener('abort', onExternalAbort);
 
     const allNodes: GraphExecutionResult['nodes'] = graph.nodes.map((n) => {
       const result = nodeResults.get(n.id) ?? states.get(n.id);
@@ -321,7 +372,7 @@ export class GraphExecutor {
     let status: GraphExecutionResult['status'];
     if (externalSignal?.aborted) {
       status = 'terminated';
-    } else if (failure) {
+    } else if (failures.length > 0) {
       status = 'failed';
     } else if (
       allNodes.every((n) => n.status === 'completed' || n.status === 'skipped') ||
@@ -345,7 +396,13 @@ export class GraphExecutor {
       status,
       outputs,
       nodes: allNodes,
-      ...(failure ? { error: failure.error } : {}),
+      ...(failures.length > 0
+        ? {
+            error:
+              (failures[0]?.error ?? 'unknown node failure') +
+              (failures.length > 1 ? ` (+${  String(failures.length - 1)  } node failure(s) more)` : ''),
+          }
+        : {}),
       duration: now() - startedAt,
     };
     emit({ type: 'execution_complete', executionId, status, timestamp: now() });
@@ -373,11 +430,17 @@ export class GraphExecutor {
     states: Map<string, NodeState>,
     outputs: Record<string, unknown>,
     emit: (event: NodeExecutionEvent) => void,
+    emitted: { count: number },
   ): Promise<void> {
     for await (const [pin, value] of block.run({ ...state.input }, ctx)) {
       if (pin === 'error') {
         throw new Error(String(value));
       }
+      emitted.count += 1;
+      // Output validation (2.2): every emission is checked against its pin
+      // schema AS it streams — a mismatch fails the node (BlockOutputError)
+      // instead of poisoning downstream nodes silently.
+      validateEmission(block, pin, value);
       emit({ type: 'node_output', nodeId, outputName: pin, value, timestamp: now() });
       if (block.name === OUTPUT_BLOCK_NAME && pin === 'done') {
         outputs[nodeId] = value;

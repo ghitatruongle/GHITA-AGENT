@@ -10,6 +10,45 @@ import type { ReActTool } from '../react/types.js';
 /** Minimal JSON Schema shape — intentionally loose for cross-package use. */
 export type JsonSchema = Record<string, unknown>;
 
+/**
+ * UI hints carried on input-schema property schemas (AutoGPT SchemaField
+ * pattern): the builder UI renders placeholder/secret/advanced affordances
+ * straight from the block definition, no per-block UI code needed.
+ */
+export interface BlockFieldHints {
+  /** Placeholder text for the field's input control. */
+  placeholder?: string;
+  /** Render as a password field; the value must never be logged. */
+  secret?: boolean;
+  /** Collapse into an "Advanced" section by default. */
+  advanced?: boolean;
+  /** Never render (computed or internal pins only). */
+  hidden?: boolean;
+  /** Display title overriding the pin name. */
+  title?: string;
+  /** Only visible when this other pin holds a truthy value. */
+  dependsOn?: string;
+}
+
+/** Read UI hints off a property schema (all hint keys are optional). */
+export function readFieldHints(propertySchema: JsonSchema): BlockFieldHints {
+  const pickString = (key: string): string | undefined => {
+    const value = propertySchema[key];
+    return typeof value === 'string' ? value : undefined;
+  };
+  const pickBool = (key: string): boolean | undefined => {
+    return propertySchema[key] === true ? true : undefined;
+  };
+  return {
+    placeholder: pickString('placeholder'),
+    secret: pickBool('secret'),
+    advanced: pickBool('advanced'),
+    hidden: pickBool('hidden'),
+    title: pickString('title'),
+    dependsOn: pickString('dependsOn'),
+  };
+}
+
 export type BlockCategory = 'io' | 'ai' | 'logic' | 'tool' | 'human' | 'code' | 'graph';
 
 /**
@@ -59,6 +98,11 @@ export interface BlockDefinition {
    * registry smoke-tests every registered block against it.
    */
   fixture?: { input: Record<string, unknown>; expectOutputPin: string };
+  /**
+   * (6.3) BlockInfo snapshot: pin phát MỘT LẦN mỗi lần chạy (input/output
+   * boundary) — UI vẽ node biết node nào không fan-out.
+   */
+  staticOutput?: boolean;
   run: (
     input: Record<string, unknown>,
     ctx: BlockContext,

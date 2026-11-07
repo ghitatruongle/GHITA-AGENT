@@ -1,5 +1,7 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
+import { FileEditCheckpointer, assertEditablePath, atomicWriteFileSync, withTagHeader } from './edit-guard.js';
+import { diagnosticsAfterWrite } from './diagnostics.js';
 import { spawn } from 'node:child_process';
 
 // Declaring global workspace root for typescript awareness
@@ -277,8 +279,12 @@ export async function readFile(args: {
   }
 
   const content = fs.readFileSync(fullPath, 'utf8');
+  // Track 3.1 — header [path#TAG] (oh-my-pi): model edit bằng tag này; tag
+  // hash TOÀN BỘ file kể cả khi read theo dải dòng, vì edit đụng cả file.
+  const relForTag = path.relative(ensureInSandbox('.'), fullPath);
+  const tagged = withTagHeader(relForTag, content);
   if (args.startLine === undefined && args.endLine === undefined) {
-    return content;
+    return tagged;
   }
 
   const lines = content.split('\n');
@@ -286,13 +292,14 @@ export async function readFile(args: {
   const end = Math.min(lines.length, args.endLine ?? lines.length);
 
   const extractedLines = lines.slice(start - 1, end);
-  return extractedLines.join('\n');
+  return `${tagged.split('\n')[0]  }\n${  extractedLines.join('\n')}`;
 }
 
 /**
  * 3. write_file tool implementation
  */
 export async function writeFile(args: { filePath: string; content: string }): Promise<string> {
+  assertEditablePath(args.filePath);
   const fullPath = ensureInSandbox(args.filePath);
   const relPath = path.relative(ensureInSandbox('.'), fullPath);
 
@@ -309,8 +316,12 @@ export async function writeFile(args: { filePath: string; content: string }): Pr
     fs.mkdirSync(parentDir, { recursive: true });
   }
 
-  fs.writeFileSync(fullPath, args.content, 'utf8');
-  return `File written successfully to ${relPath}`;
+  // Track 3.3/3.4 — checkpoint + ghi nguyên tử.
+  const checkpointer = new FileEditCheckpointer(`auto-${  Date.now().toString(36)}`);
+  checkpointer.captureBefore(fullPath);
+  atomicWriteFileSync(fullPath, args.content);
+  const diagnosticsNote = await diagnosticsAfterWrite(relPath);
+  return `File written successfully to ${relPath}${  diagnosticsNote ? ` — ${  diagnosticsNote}` : ''}`;
 }
 
 /**
@@ -321,6 +332,7 @@ export async function replaceFileContent(args: {
   targetContent: string;
   replacementContent: string;
 }): Promise<string> {
+  assertEditablePath(args.filePath);
   const fullPath = ensureInSandbox(args.filePath);
   const relPath = path.relative(ensureInSandbox('.'), fullPath);
 
@@ -356,9 +368,13 @@ export async function replaceFileContent(args: {
     content.substring(0, firstIndex) +
     args.replacementContent +
     content.substring(firstIndex + args.targetContent.length);
-  fs.writeFileSync(fullPath, newContent, 'utf8');
+  // Track 3.3/3.4 — checkpoint + ghi nguyên tử.
+  const checkpointer2 = new FileEditCheckpointer(`auto-${  Date.now().toString(36)}`);
+  checkpointer2.captureBefore(fullPath);
+  atomicWriteFileSync(fullPath, newContent);
 
-  return `Successfully replaced content in ${relPath}`;
+  const diagnosticsNote2 = await diagnosticsAfterWrite(relPath);
+  return `Successfully replaced content in ${relPath}${  diagnosticsNote2 ? ` — ${  diagnosticsNote2}` : ''}`;
 }
 
 /**
