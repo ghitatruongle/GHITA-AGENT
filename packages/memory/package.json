@@ -28,7 +28,7 @@
     "@ghita/shared": "workspace:*"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^3.10.9",
+    "@napi-rs/cli": "^3.10.12",
     "@types/node": "^20.19.43",
     "typescript": "^5.6.0",
     "vitest": "^3.2.7"
