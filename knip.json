@@ -6,6 +6,7 @@
     "**/build/**",
     "**/coverage/**",
     "**/dist/**",
+    "**/.husky/**",
     "apps/desktop/src-tauri/sidecar/server.bundle.mjs",
     "apps/desktop/src-tauri/target/**",
     "docs/.docusaurus/**"
@@ -38,7 +39,7 @@
     "@react-native/codegen",
     "lint-staged"
   ],
-  "ignoreBinaries": ["stryker", "cargo", "taskkill", "pod"],
+  "ignoreBinaries": ["stryker", "cargo", "taskkill", "pod", "lint-staged"],
   "rules": {
     "files": "off",
     "devDependencies": "warn",

@@ -1,5 +1,8 @@
 import type { SkillDefinition } from '@ghita/skills';
 import type { BrowserAction, BrowserResult } from '@ghita/shared';
+import { AIPageController } from './stagehand.js';
+import type { AIBrowserContext } from './ai-browser.js';
+import type { SchemaLike } from './stagehand.js';
 
 export const BROWSER_CONTROL_VERSION = '0.0.1';
 
@@ -21,6 +24,12 @@ export interface BrowserControlAdapter {
   fill?: (selector: string, value: string) => Promise<void>;
   extractText?: (selector?: string) => Promise<string>;
   screenshot?: () => Promise<{ mimeType: string; data: string }>;
+  /**
+   * Raw page handle for the AI page verbs (v0.0.1 T6.2) — a playwright-like
+   * object exposing `$$eval`. Optional: AI verb skills report a clear error
+   * when the adapter cannot expose a live page.
+   */
+  getPage?: () => unknown;
 }
 
 function ok(data?: string | Record<string, unknown>, screenshot?: string): BrowserResult {
@@ -43,6 +52,15 @@ export class BrowserController {
 
   getState(): BrowserSessionState {
     return { ...this.state };
+  }
+
+  /**
+   * Raw page handle for the AI page verbs (T6.2) — whatever the adapter
+   * exposes (playwright-like object with `$$eval`); undefined when the
+   * adapter has no page accessor or nothing is launched.
+   */
+  getPage(): unknown {
+    return this.adapter.getPage?.();
   }
 
   async launch(options?: { headless?: boolean }): Promise<BrowserResult> {
@@ -127,8 +145,64 @@ function toSkillResult(result: BrowserResult) {
   };
 }
 
+// ---- AI page verbs (v0.0.1 T6.2: stagehand observe/act/extract as skills) ----
+
+/** Error returned when no AI provider callable is reachable from the skill. */
+export const AI_PROVIDER_NOT_CONFIGURED_ERROR =
+  'AI provider not configured — pass input.llm or configure provider';
+
+/** Error returned when the session was never launched (or already closed). */
+export const BROWSER_SESSION_NOT_READY_ERROR =
+  'Browser session not ready — call browser.open first';
+
+/** Error returned when the adapter cannot expose a live page handle. */
+export const BROWSER_PAGE_UNAVAILABLE_ERROR =
+  'Browser adapter does not expose a page handle — AI verbs need adapter.getPage';
+
+/** Host-side injection point for the AI page verbs (llm, limits, telemetry). */
+export interface BrowserControlSkillsOptions {
+  /** AI context used when the skill input does not carry its own `llm`. */
+  aiContext?: AIBrowserContext;
+}
+
+type LlmFn = NonNullable<AIBrowserContext['llm']>;
+
+/**
+ * Resolve the LLM callable for an AI verb invocation: `input.llm` (callable,
+ * passed in-process by the caller) wins over the host `aiContext.llm`.
+ */
+function resolveAiContext(
+  input: Record<string, unknown> | undefined,
+  hostContext: AIBrowserContext | undefined,
+): AIBrowserContext | undefined {
+  const candidate = input?.llm;
+  const llm: LlmFn | undefined =
+    typeof candidate === 'function' ? (candidate as LlmFn) : hostContext?.llm;
+  if (!llm) return undefined;
+  return { ...(hostContext ?? {}), llm };
+}
+
+/** Skill result shape for the AI verbs: full payload in `data`, JSON in `output`. */
+function toAiVerbResult(payload: { success: boolean; error?: string } & Record<string, unknown>) {
+  return {
+    success: payload.success,
+    output: JSON.stringify(payload),
+    error: payload.error,
+    data: payload,
+  };
+}
+
+/** Map a thrown error to a fail result — AI verbs never crash the caller. */
+function toAiVerbError(error: unknown) {
+  return {
+    success: false as const,
+    error: error instanceof Error ? error.message : String(error),
+  };
+}
+
 export function createBrowserControlSkills(
   controller = new BrowserController(),
+  options: BrowserControlSkillsOptions = {},
 ): SkillDefinition[] {
   return [
     {
@@ -192,17 +266,172 @@ export function createBrowserControlSkills(
     {
       id: 'browser.extract',
       name: 'Extract Page Text',
-      description: 'Extract text from the page or a selector.',
+      description:
+        'Extract text from the page or a selector; when a query (and optional schema) is ' +
+        'provided, AI-extracts structured data matching it instead (AI provider required).',
       category: 'browser',
       enabled: false,
       version: BROWSER_CONTROL_VERSION,
       scopes: ['browser'],
       status: 'disabled',
       parameters: {
-        selector: { type: 'string', description: 'Optional CSS selector', required: false },
+        selector: {
+          type: 'string',
+          description: 'Optional CSS selector (plain text mode)',
+          required: false,
+        },
+        query: {
+          type: 'string',
+          description:
+            'Optional natural-language description of the data to extract — switches to AI structured extraction',
+          required: false,
+        },
+        schema: {
+          type: 'string',
+          description:
+            'Optional zod-compatible schema object exposing safeParse(data) to validate the AI extraction result',
+          required: false,
+        },
+        llm: {
+          type: 'string',
+          description:
+            'Optional AI provider callable passed by the host: input.llm(prompt, opts?) => Promise<string>',
+          required: false,
+        },
       },
-      run: async ({ input }) =>
-        toSkillResult(await controller.extract(readString(input, 'selector'))),
+      run: async ({ input }) => {
+        const query = readString(input, 'query');
+        const rawSchema = input?.schema;
+        if (query === undefined && rawSchema === undefined) {
+          // Legacy plain-text extraction path (unchanged behaviour).
+          return toSkillResult(await controller.extract(readString(input, 'selector')));
+        }
+        // AI structured extraction path (T6.2).
+        if (controller.getState().status !== 'ready')
+          return { success: false, error: BROWSER_SESSION_NOT_READY_ERROR };
+        const aiContext = resolveAiContext(input, options.aiContext);
+        if (!aiContext) return { success: false, error: AI_PROVIDER_NOT_CONFIGURED_ERROR };
+        let schema: SchemaLike<unknown> | undefined;
+        if (rawSchema !== undefined) {
+          if (
+            typeof rawSchema !== 'object' ||
+            rawSchema === null ||
+            typeof (rawSchema as { safeParse?: unknown }).safeParse !== 'function'
+          ) {
+            return {
+              success: false,
+              error: 'schema must be a zod-compatible object exposing safeParse(data)',
+            };
+          }
+          schema = rawSchema as SchemaLike<unknown>;
+        }
+        try {
+          const aiPage = new AIPageController(controller, controller.getPage(), aiContext);
+          const result = await aiPage.extract<unknown>(query ?? 'Extract the requested data.', schema);
+          if (!result.success) {
+            return {
+              success: false,
+              output: '{}',
+              error: result.error ?? 'AI extraction failed',
+              data: result,
+            };
+          }
+          return {
+            success: true,
+            output: JSON.stringify(result.data ?? {}),
+            data: result.data,
+          };
+        } catch (error) {
+          return toAiVerbError(error);
+        }
+      },
+    },
+    {
+      id: 'browser.observe',
+      name: 'Observe Browser Page (AI)',
+      description:
+        'Enumerate actionable page elements (clickable/fillable) via the AI page API, ' +
+        'optionally narrowing to the best match for a natural-language instruction (AI provider required).',
+      category: 'browser',
+      enabled: false,
+      version: BROWSER_CONTROL_VERSION,
+      scopes: ['browser'],
+      status: 'disabled',
+      parameters: {
+        instruction: {
+          type: 'string',
+          description: 'Optional natural-language element to look for (e.g. "the login button")',
+          required: false,
+        },
+        llm: {
+          type: 'string',
+          description:
+            'Optional AI provider callable passed by the host: input.llm(prompt, opts?) => Promise<string>',
+          required: false,
+        },
+      },
+      run: async ({ input }) => {
+        if (controller.getState().status !== 'ready')
+          return { success: false, error: BROWSER_SESSION_NOT_READY_ERROR };
+        const aiContext = resolveAiContext(input, options.aiContext);
+        if (!aiContext) return { success: false, error: AI_PROVIDER_NOT_CONFIGURED_ERROR };
+        try {
+          const page = controller.getPage();
+          if (page === undefined) return { success: false, error: BROWSER_PAGE_UNAVAILABLE_ERROR };
+          const aiPage = new AIPageController(controller, page, aiContext);
+          const results = await aiPage.observe(readString(input, 'instruction'));
+          return toAiVerbResult({ success: true, count: results.length, elements: results });
+        } catch (error) {
+          return toAiVerbError(error);
+        }
+      },
+    },
+    {
+      id: 'browser.act',
+      name: 'Act On Browser Page (AI)',
+      description:
+        'Perform a natural-language action on the page (click or fill) via the AI page API, ' +
+        'with selector self-heal retries (AI provider required).',
+      category: 'browser',
+      enabled: false,
+      version: BROWSER_CONTROL_VERSION,
+      scopes: ['browser'],
+      status: 'disabled',
+      parameters: {
+        instruction: {
+          type: 'string',
+          description: 'Natural-language action to perform (e.g. "click login", "type \\"hi\\" into search")',
+          required: true,
+        },
+        value: {
+          type: 'string',
+          description: 'Optional value to type when the action fills a field',
+          required: false,
+        },
+        llm: {
+          type: 'string',
+          description:
+            'Optional AI provider callable passed by the host: input.llm(prompt, opts?) => Promise<string>',
+          required: false,
+        },
+      },
+      run: async ({ input }) => {
+        const instruction = readString(input, 'instruction');
+        if (!instruction) return { success: false, error: 'Missing required input: instruction' };
+        if (controller.getState().status !== 'ready')
+          return { success: false, error: BROWSER_SESSION_NOT_READY_ERROR };
+        const aiContext = resolveAiContext(input, options.aiContext);
+        if (!aiContext) return { success: false, error: AI_PROVIDER_NOT_CONFIGURED_ERROR };
+        try {
+          const page = controller.getPage();
+          if (page === undefined) return { success: false, error: BROWSER_PAGE_UNAVAILABLE_ERROR };
+          const aiPage = new AIPageController(controller, page, aiContext);
+          const result = await aiPage.act(instruction, readString(input, 'value'));
+          return toAiVerbResult({ ...result });
+        } catch (error) {
+          return toAiVerbError(error);
+        }
+      },
     },
     {
       id: 'browser.screenshot',

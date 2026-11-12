@@ -27,7 +27,6 @@ const commonAliases = {
   ),
   'react-native': path.resolve(__dirname, './tests/unit/react-native-mock.ts'),
   'socket.io': path.resolve(__dirname, './tests/unit/socket-io-mock.ts'),
-  'screenshot-desktop': path.resolve(__dirname, './tests/unit/screenshot-desktop-mock.ts'),
 };
 
 export default defineWorkspace([

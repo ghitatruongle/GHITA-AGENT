@@ -36,7 +36,6 @@ export default defineConfig({
       // These code paths only ever run in the Node sidecar.
       { find: /^sharp$/, replacement: shimPath },
       { find: /^node-pty$/, replacement: shimPath },
-      { find: /^screenshot-desktop$/, replacement: shimPath },
     ],
   },
 
@@ -77,7 +76,6 @@ export default defineConfig({
       'playwright',
       'playwright-core',
       'sharp',
-      'screenshot-desktop',
       'socket.io',
     ],
     include: [

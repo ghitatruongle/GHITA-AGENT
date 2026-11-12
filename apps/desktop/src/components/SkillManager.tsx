@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import { type Socket } from 'socket.io-client';
 import { getSharedSocket } from '../utils/sharedSocket';
+import { McpToolsPanel } from './McpToolsPanel';
 import {
   createDefaultSkillRegistry,
   type SkillDefinition,
@@ -579,6 +580,10 @@ export function SkillManager() {
           </section>
         ))}
       </div>
+
+      {/* Track 6.3 — MCP Tools: registry sidecar (GhitaMCPServer) + test call.
+          Nằm trong scroll flow của Skills view nên không phá layout hiện có. */}
+      <McpToolsPanel />
     </div>
   );
 }

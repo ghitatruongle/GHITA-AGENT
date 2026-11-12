@@ -1,7 +1,23 @@
 # 🗺️ Ghita Agent — Public Roadmap
 
-> **Current version:** v0.0.1 beta (chu kỳ mới: engine Crew + block-graph chạy thật, tin được, sửa không hỏng)
-> **Last updated:** 2026-11-05 — hotfix H1–H4 xong (version một nguồn + nối socket→engine + smoke), **chờ owner verify rồi mới rebuild installer**
+> **Current version:** v0.0.1 (chu kỳ chốt: bảo mật + MCP + UI motion + fuzzy edit)
+> **Last updated:** 2026-11-08 — Track 1–6 kế hoạch v0.0.1 hoàn tất (bảo mật screenshot/RN 0.87, MCP vào sidecar, UI react-bits, fuzzy edit-guard); installer rebuild trong chu kỳ; tag/release chờ lệnh owner
+
+---
+
+## ✅ Done — v0.0.1 chu kỳ chốt (2026-11-08)
+
+| Khu vực | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 🔐 Bảo mật | Xóa `screenshot-desktop` khỏi dependency tree → GHSA-mh99 ra khỏi allowlist; capture native (C# helper + Tauri command) | ✅ |
+| 🔐 Bảo mật | React Native 0.76 → 0.87.1; mobile jest 35/35 | ✅ |
+| 🧱 Ổn định | smoke-sidecar vào CI (quality-gates.yml) + WebView2 crashpad noise tắt trong dev | ✅ |
+| 🧩 MCP | MCP server wire vào desktop sidecar (`mcp-handlers.mjs`, 15/15 tests, `McpToolsPanel` + `useMcp`) | ✅ |
+| 🧩 Tính năng | Hooks events parity claude-code (+4 events); AI Page verbs (observe/act/extract) vào browser skills | ✅ |
+| 🎨 UI | 4 fx components react-bits (framer-motion) + `lib/motion.ts` chuẩn hóa + reduced-motion toàn cục | ✅ |
+| 🦀 Rust hóa | Fuzzy-matching cascade cho search-replace (pattern oh-my-pi) + design doc crates/store napi | ✅ |
+| 🧹 Refer | Sync 10 clone; crewai nghiên cứu nốt → xóa (686MB) | ✅ |
+| 📦 Installer | Gates + rebuild installer v0.0.1 + SHA-256 → Desktop | ✅ |
 
 ---
 

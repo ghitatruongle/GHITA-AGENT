@@ -9,6 +9,7 @@ import { ActivityBar } from '../components/ActivityBar';
 import { isWindows, isLinux } from '@ghita/shared';
 import { TabBar } from '../components/TabBar';
 import { NotificationTray } from '../components/NotificationTray';
+import { pageTransition, springSoft } from '../lib/motion';
 
 import { Terminal } from '../components/Terminal';
 const ChatPanel = lazy(() =>
@@ -358,12 +359,13 @@ export function MainLayout() {
           {/* Active view */}
           <div className="flex-1 min-h-0 overflow-hidden relative">
             <AnimatePresence mode="wait">
+              {/* View transition — shared pageTransition variant (lib/motion). */}
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
+                variants={pageTransition}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
                 className="absolute inset-0 overflow-hidden"
               >
                 <ActiveView />
@@ -378,7 +380,7 @@ export function MainLayout() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: terminalHeight, opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
+                transition={springSoft}
                 className="flex flex-col shrink-0 border-t border-border-subtle bg-bg-secondary min-h-[80px]"
               >
                 {/* Drag handle */}
@@ -401,7 +403,7 @@ export function MainLayout() {
               initial={{ width: 0, opacity: 0, x: 20 }}
               animate={{ width: 'min(340px, 40vw)', opacity: 1, x: 0 }}
               exit={{ width: 0, opacity: 0, x: 20 }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+              transition={springSoft}
               className="border-l border-border-subtle shrink-0 bg-bg-secondary overflow-hidden shadow-lg z-20"
             >
               <Suspense fallback={<LoadingPanel />}>

@@ -15,6 +15,17 @@ hook events). Rules live in `.ghita/hooks.json` (project) or
 | `PostToolUseFailure` | after a tool throws                         | no (observe/log) |
 | `Stop`               | when the run finishes (any exit path)       | no               |
 | `PreCompact`         | before context compaction (Track 2 wiring)  | no               |
+| `SessionEnd`         | when the session ends                       | no (observe/log) |
+| `SubagentStop`       | when a subagent finishes                    | no (observe/log) |
+| `Notification`       | when the runtime raises a user notification | no (observe/log) |
+| `UserPromptSubmit`   | when the user submits a prompt              | no (observe/log) |
+
+The last four events mirror claude-code hooks (reference:
+anthropics/claude-code docs/plugins, v0.0.1 T6.1) and carry typed payload
+fields on the dispatch context: `SessionEnd` → `reason`
+(`logout \| prompt_input \| clear \| other`), `SubagentStop` → `subagentId` +
+optional `threadId`, `Notification` → `level` (`info \| warning \| error`) +
+`message`, `UserPromptSubmit` → `prompt`.
 
 ## Schema
 
@@ -50,7 +61,9 @@ hook events). Rules live in `.ghita/hooks.json` (project) or
 ```
 
 The child receives `HOOK_EVENT`, `HOOK_TOOL`, `HOOK_SESSION_ID`, `HOOK_INPUT`
-(JSON) in its environment. Verdict contract (matches Claude Code hooks):
+(JSON) and `HOOK_CONTEXT` (full dispatch context as JSON, including the typed
+claude-code-parity payloads) in its environment. Verdict contract (matches
+Claude Code hooks):
 
 - exit code `2` → **block** (stdout is the reason),
 - stdout containing `{"decision":"block","reason":"…"}` JSON → **block**/**ask**,

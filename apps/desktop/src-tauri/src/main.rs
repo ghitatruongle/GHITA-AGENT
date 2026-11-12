@@ -23,6 +23,19 @@ fn print_help() {
 }
 
 fn main() {
+    // T3.3 (v0.0.1): WebView2 crashpad bắn noise "CreateFile: The system cannot
+    // find the file specified" vào debug.log trên máy dev khi crashpad handler
+    // không đăng ký được (benign). Tắt crash reporter CHỈ trong dev build;
+    // release giữ nguyên crash reporting thật. Owner có thể override bằng env
+    // WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS riêng.
+    #[cfg(debug_assertions)]
+    if env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").is_err() {
+        env::set_var(
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "--disable-breakpad",
+        );
+    }
+
     // Parse CLI arguments for headless mode
     let args: Vec<String> = env::args().collect();
 

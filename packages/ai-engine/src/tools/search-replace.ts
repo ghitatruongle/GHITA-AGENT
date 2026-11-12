@@ -22,13 +22,27 @@ import {
   checkTagGuard,
   pruneCheckpoints,
 } from './edit-guard.js';
+import {
+  DEFAULT_FUZZY_THRESHOLD,
+  findFuzzyCandidates,
+  NEAREST_REPORT_THRESHOLD,
+  resolveFuzzy,
+  type FuzzyCandidate,
+} from './search-replace-fuzzy.js';
 
-export type MatchStrategy = 'exact' | 'strip-whitespace' | 'strip-blank-first-line' | 'ellipsis';
+export type MatchStrategy =
+  | 'exact'
+  | 'strip-whitespace'
+  | 'strip-blank-first-line'
+  | 'ellipsis'
+  | 'fuzzy';
 
 export interface SearchMatch {
   /** Đoạn thực sự nằm trong file. */
   text: string;
   strategy: MatchStrategy;
+  /** Điểm sim khi khớp nhờ tầng fuzzy (0.95–<1.0). */
+  sim?: number;
 }
 
 /** Một khối edit của model. */
@@ -44,6 +58,8 @@ export interface BlockOutcome {
   index: number;
   applied: boolean;
   strategy?: MatchStrategy;
+  /** Điểm sim khi khối áp dụng nhờ tầng fuzzy. */
+  sim?: number;
   error?: string;
 }
 
@@ -187,6 +203,14 @@ export function matchSearch(content: string, search: string): SearchMatch | null
   const noIndent = stripLeadingWhitespaceMatch(content, search);
   if (noIndent) return { text: noIndent, strategy: 'strip-whitespace' };
 
+  // 5. Fuzzy ≥0.95 (pattern pi-edit fuzzy.rs): đúng 1 ứng viên → áp (kèm
+  //    cảnh báo ở applyEditBlocks); ≥2 → KHÔNG đoán, coi như miss và để error
+  //    path liệt kê vị trí; 0 → null.
+  const fuzzy = resolveFuzzy(content, search, DEFAULT_FUZZY_THRESHOLD);
+  if (fuzzy.kind === 'unique') {
+    return { text: fuzzy.candidate.text, strategy: 'fuzzy', sim: fuzzy.candidate.sim };
+  }
+
   return null;
 }
 
@@ -271,10 +295,32 @@ export function applyEditBlocks(original: string, edits: EditBlock[]): EditResul
 
     if (!match) {
       failedIndexes.push(i + 1);
+      // Tầng fuzzy phân loại lỗi: ambiguous → liệt kê vị trí (không đoán);
+      // none → kèm did-you-mean (gần khớp nhất 0.8).
+      // Một scan duy nhất ở ngưỡng did-you-mean: ứng viên ≥0.95 dùng để phân
+      // loại ambiguous, cả danh sách làm "gần khớp nhất". Tránh quét lại lần
+      // thứ hai ở 0.95 (matchSearch vừa làm) + quét nearest riêng — gấp 3 chi
+      // phí cho mỗi khối hỏng.
+      const near = findFuzzyCandidates(content, block.search, NEAREST_REPORT_THRESHOLD);
+      const nearThreshold = near.filter((c) => c.sim >= DEFAULT_FUZZY_THRESHOLD);
+      let missError = 'Không tìm thấy nội dung cần thay trong file.';
+      if (nearThreshold.length >= 2) {
+        const positions = nearThreshold
+          .map((c: FuzzyCandidate) => `dòng ${c.lineIndex + 1} (sim ${c.sim.toFixed(3)})`)
+          .join(', ');
+        missError =
+          `Nội dung gần khớp ${nearThreshold.length} chỗ (fuzzy ≥${DEFAULT_FUZZY_THRESHOLD}) — ` +
+          `không đoán: ${positions}. Gửi lại khối tìm chi tiết hơn (thêm dòng lân cận).`;
+      } else if (nearThreshold.length === 0 && near.length > 0) {
+        const positions = near
+          .map((c: FuzzyCandidate) => `dòng ${c.lineIndex + 1} (sim ${c.sim.toFixed(3)})`)
+          .join(', ');
+        missError += ` Gần khớp nhất: ${positions}.`;
+      }
       blocks.push({
         index: i + 1,
         applied: false,
-        error: 'Không tìm thấy nội dung cần thay trong file.',
+        error: missError,
       });
       continue;
     }
@@ -293,7 +339,7 @@ export function applyEditBlocks(original: string, edits: EditBlock[]): EditResul
     // nội dung thay của model sẽ bị hiểu là mẫu thay và làm hỏng file.
     content = content.replace(match.text, () => block.replace);
     applied++;
-    blocks.push({ index: i + 1, applied: true, strategy: match.strategy });
+    blocks.push({ index: i + 1, applied: true, strategy: match.strategy, sim: match.sim });
   }
 
   const failed = edits.length - applied;
@@ -319,7 +365,16 @@ export function applyEditBlocks(original: string, edits: EditBlock[]): EditResul
       `Gần vị trí đó, file đang có:\n${excerpt}`;
   }
 
-  return { outcome, content, applied, failed, blocks, error };
+  // Fuzzy hits là phỏng đoán có kiểm soát (sim ≥0.95) — luôn kèm cảnh báo để
+  // tầng UI/review nhìn thấy, giống stale-tag recovery.
+  const fuzzyBlocks = blocks.filter((b) => b.applied && b.strategy === 'fuzzy');
+  const warning =
+    fuzzyBlocks.length > 0
+      ? `${fuzzyBlocks.map((b) => `#${b.index}`).join(', ')} áp dụng nhờ fuzzy match ` +
+        `(sim ${fuzzyBlocks.map((b) => b.sim?.toFixed(3)).join(', ')}) — kiểm tra lại diff.`
+      : undefined;
+
+  return { outcome, content, applied, failed, blocks, error, ...(warning ? { warning } : {}) };
 }
 
 /**
@@ -418,7 +473,14 @@ export async function searchReplaceBatch(args: {
 
   const guard = args.expectedTag !== undefined ? checkTagGuard(normalized, args.expectedTag) : undefined;
   if (guard && !guard.ok) {
-    return { ...result, tagRecovered: true, warning: guard.error };
+    // Gộp cảnh báo thay vì đè: edit áp dụng nhờ fuzzy + tag stale là HAI tín
+    // hiệu khác nhau, mất cái nào review cũng thiếu thông tin.
+    const mergedWarning = [result.warning, guard.error].filter(Boolean).join(' ');
+    return {
+      ...result,
+      tagRecovered: true,
+      ...(mergedWarning ? { warning: mergedWarning } : {}),
+    };
   }
   return result;
 }

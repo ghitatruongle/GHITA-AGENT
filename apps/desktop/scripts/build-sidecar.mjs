@@ -50,13 +50,9 @@ const result = await build({
 import { writeFileSync } from 'node:fs';
 writeFileSync(resolve(sidecarDir, 'meta.json'), JSON.stringify(result.metafile));
 
-const screenshotDesktopRoot = dirname(require.resolve('screenshot-desktop'));
-for (const asset of ['screenCapture_1.3.2.bat', 'app.manifest']) {
-  const source = resolve(screenshotDesktopRoot, 'lib', 'win32', asset);
-  if (existsSync(source)) {
-    copyFileSync(source, resolve(sidecarDir, asset));
-  }
-}
+// T3.1 (v0.0.1): screenshot-desktop asset copy removed — the native capture
+// helper (screenCapture_1.3.2.bat + app.manifest) is committed directly in
+// sidecar/ now that the npm package is out of the dependency tree (GHSA-mh99).
 
 if (process.platform === 'win32') {
   const bundledNode = resolve(sidecarDir, 'node.exe');

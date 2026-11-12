@@ -9,9 +9,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const desktopRoot = join(here, '..', '..');
 
 describe('APP_VERSION single source (H1)', () => {
-  it('giá trị là 0.0.1-beta', () => {
-    expect(APP_VERSION).toBe('0.0.1-beta');
-    expect(APP_VERSION_LABEL).toBe('v0.0.1-beta');
+  it('giá trị là 0.0.1 (trần — owner chốt 2026-11-08)', () => {
+    expect(APP_VERSION).toBe('0.0.1');
+    expect(APP_VERSION_LABEL).toBe('v0.0.1');
   });
 
   it('khớp tauri.conf.json (phần số)', () => {

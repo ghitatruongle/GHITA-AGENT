@@ -3,12 +3,16 @@
 import { APP_VERSION_LABEL } from '../../constants/version';
 import { memo, useRef, useCallback, useEffect, useState } from 'react';
 import { ComputerUsePreviewComponent, MarkdownMessage } from '../ChatMessageContent';
+import { AnimatedContent } from '../fx';
 import type { ChatMessage } from '../../hooks/useChatSessions';
 import { useAppStore } from '../../stores/appStore';
 
 // MessageBubble — memoized per message so a streaming update to one message
 // (or appending a new one) never forces every past message to re-render and
 // re-parse its markdown on each 50ms flush.
+// fx: AnimatedContent (react-bits, framer-motion adaptation) replaces the old
+// CSS `fadeInUp` keyframe so chat bubbles get the shared entrance language and
+// automatically respect prefers-reduced-motion.
 
 const MessageBubble = memo(function MessageBubble({
   msg,
@@ -18,12 +22,12 @@ const MessageBubble = memo(function MessageBubble({
   lang: string;
 }) {
   return (
+    <AnimatedContent distance={8} duration={0.25}>
     <div
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
-        animation: 'fadeInUp 0.3s ease',
       }}
     >
       <div
@@ -176,6 +180,7 @@ const MessageBubble = memo(function MessageBubble({
         <span style={{ opacity: 0.5 }}>~{Math.ceil(msg.content.length / 4)} tok</span>
       </span>
     </div>
+    </AnimatedContent>
   );
 });
 

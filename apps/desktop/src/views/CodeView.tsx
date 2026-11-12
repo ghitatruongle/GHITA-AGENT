@@ -6,6 +6,7 @@ import { EditProposalTray } from '../components/EditProposalTray';
 import { fsWriteText, fsReadText } from '../lib/native-fs';
 import { open } from '@tauri-apps/plugin-dialog';
 import { motion } from 'framer-motion';
+import { scaleIn } from '../lib/motion';
 import toast from 'react-hot-toast';
 import { useTranslation } from '../i18n';
 import { useAppStore, fileContentCache } from '../stores/appStore';
@@ -868,9 +869,9 @@ export function CodeView() {
           ) : (
             <div className="flex flex-col items-center justify-center h-full p-8 bg-bg-primary text-text-primary">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
+                variants={scaleIn}
+                initial="hidden"
+                animate="visible"
                 className="glass-card max-w-md w-full p-8 flex flex-col items-center text-center gap-6 border border-border-default/40 shadow-glow"
               >
                 {/* Visual Icon with Accent Glow */}

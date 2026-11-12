@@ -6,6 +6,12 @@
 //   - fail-open     : action errors never wedge the agent loop by default
 // Blocking semantics: shell exit code 2, or stdout/response JSON
 // `{"decision":"block"|"ask","reason":"…"}`.
+// Hook event parity with claude-code hooks (reference: anthropics/claude-code
+// docs/plugins): dispatch is event-agnostic, so SessionEnd, SubagentStop,
+// Notification and UserPromptSubmit flow through the same matcher/cooldown/
+// dedup pipeline as the original six events (v0.0.1 T6.1). Typed payloads
+// (reason/prompt/subagentId/level/message) reach shell listeners via the
+// HOOK_CONTEXT env var and http listeners in the POSTed context body.
 
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -252,6 +258,10 @@ export class HookManager {
           HOOK_TOOL: context.tool ?? '',
           HOOK_SESSION_ID: context.sessionId ?? '',
           HOOK_INPUT: JSON.stringify(context.input ?? {}),
+          // Full dispatch context incl. typed claude-code-parity payloads
+          // (SessionEnd.reason, UserPromptSubmit.prompt, SubagentStop,
+          // Notification) — T6.1.
+          HOOK_CONTEXT: JSON.stringify(context),
         },
         windowsHide: true,
       });

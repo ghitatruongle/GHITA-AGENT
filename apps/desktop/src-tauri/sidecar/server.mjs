@@ -22,7 +22,9 @@ import {
 } from './runtime-security.mjs';
 import { AgentRunJournal, createRunId } from './run-journal.mjs';
 import { createCrewWorkflowHandlers } from './crew-handlers.mjs';
+import { createMcpHandlers, createMcpSubsystem } from './mcp-handlers.mjs';
 import { containsSensitiveMemory, WorkspaceMemoryJournal } from './memory-journal.mjs';
+import { captureScreenJpeg } from './native-screenshot.mjs';
 
 // --- Lazy-loaded heavy modules (loaded on first use, not at startup) ---
 // This reduces startup time by 2-5 seconds by deferring Playwright, agents, etc.
@@ -84,6 +86,35 @@ let _security = null;
 async function loadSecurity() {
   if (!_security) _security = await import('@ghita/security');
   return _security;
+}
+
+// (Track 6.3) MCP subsystem — lazy-loaded @ghita/mcp (GhitaMCPServer registry
+// + MCPClient qua in-memory pair). Import path là RELATIVE một cách chủ ý:
+// apps/desktop không khai báo @ghita/mcp làm dependency (danh sách deps bị
+// đóng băng trong 6.3, không thêm dep) nên bare specifier '@ghita/mcp' sẽ
+// fail cả ở esbuild lẫn `node server.mjs` chạy trực tiếp. dist/index.js là
+// ESM thuần và SDK/zod resolve từ packages/mcp/node_modules.
+let _mcp = null;
+async function loadMcp() {
+  if (!_mcp) _mcp = await import('../../../../packages/mcp/dist/index.js');
+  return _mcp;
+}
+
+// Singleton subsystem dùng chung mọi socket — một registry, một in-memory pair
+// cho cả process. Promise bị reset khi dựng lỗi để lần gọi sau thử lại.
+let _mcpSubsystemPromise = null;
+function getMcpSubsystem() {
+  if (!_mcpSubsystemPromise) {
+    _mcpSubsystemPromise = createMcpSubsystem({
+      loadMcp,
+      getHostTools: getMcpHostTools,
+      log,
+    }).catch((err) => {
+      _mcpSubsystemPromise = null;
+      throw err;
+    });
+  }
+  return _mcpSubsystemPromise;
 }
 
 // --- Config ---
@@ -1323,6 +1354,25 @@ function createCodeGraphTools() {
   ];
 }
 
+// (Track 6.3) Host tools đưa vào MCP server registry. createCodeGraphTools()
+// rẻ để dựng và chỉ index workspace lazily ở lần execute() đầu — đăng ký ở
+// đây không tốn công nào lúc khởi động. Host tool trả về string thuần, còn
+// ToolDefinition.handler phải trả MCP text content blocks, nên cần adapter.
+function getMcpHostTools() {
+  return createCodeGraphTools().map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    inputSchema: {
+      type: 'object',
+      properties: tool.parameters?.properties ?? {},
+      required: Array.isArray(tool.parameters?.required) ? tool.parameters.required : [],
+    },
+    handler: async (args) => ({
+      content: [{ type: 'text', text: String(await tool.execute(args ?? {})) }],
+    }),
+  }));
+}
+
 async function getOrCreateWorkspaceMemory() {
   const workspaceRoot = fs.realpathSync(getEffectiveWorkspaceRoot());
   if (workspaceMemoryState?.workspaceRoot === workspaceRoot) {
@@ -1534,6 +1584,15 @@ function registerSocketEvents(socket, isCloud = false) {
     },
     getAuthorizedClient,
     getWorkspaceRoot: () => globalThis.ghitaWorkspaceRoot,
+    log,
+  })(socket);
+  // (Track 6.3) MCP handlers — cầu nối UI (useMcp) tới MCP subsystem trong
+  // sidecar: GhitaMCPServer registry + MCPClient qua in-memory pair. Trước
+  // 6.3 các event mcp_* rơi vào khoảng trống (UI gọi không ai nghe). Cùng
+  // pattern deps-injected với crew-handlers ngay phía trên.
+  createMcpHandlers({
+    getMcpSubsystem,
+    getAuthorizedClient,
     log,
   })(socket);
     socket.on('sync_api_config', (data) => {
@@ -2719,9 +2778,9 @@ ${result.output}`,
     }
     log(`Screenshot requested by ${socket.id}`);
     try {
-      const screenshotModule = await import('screenshot-desktop');
-      const screenshot = screenshotModule.default ?? screenshotModule;
-      const imgBuffer = await screenshot({ format: 'jpg' });
+      // T3.1 (v0.0.1): native Windows capture helper (bundled C# bat) —
+      // screenshot-desktop npm package removed (GHSA-mh99).
+      const imgBuffer = await captureScreenJpeg();
       const base64 = imgBuffer.toString('base64');
       socket.emit(EVENTS.SCREEN_STREAM, {
         image: base64,

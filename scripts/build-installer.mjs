@@ -91,10 +91,25 @@ if (!DEBUG) {
     // in tauri.conf.json, so without this step the NSIS bundle would package
     // whatever stale `dist/` happened to sit on disk (wrong version strings,
     // stale UI). `build` = sidecar bundle + tsc -b + vite build.
-    run('pnpm', ['--filter', '@ghita/desktop', 'build'], {
-      cwd: ROOT,
-      timeout: 15 * 60 * 1000,
-    });
+    // Low-RAM escape hatch (máy owner ~21.8GB commit): GHITA_SKIP_FRONTEND_BUILD=1
+    // tái dùng dist/ vừa được build riêng với heap lớn hơn — có guard chống
+    // dist cũ/mất: bắt buộc apps/desktop/dist/index.html tồn tại, ngược lại
+    // hủy build thay vì đóng gói UI stale.
+    if (process.env.GHITA_SKIP_FRONTEND_BUILD === '1') {
+      if (!existsSync(join(ROOT, 'apps', 'desktop', 'dist', 'index.html'))) {
+        console.error(
+          '❌ GHITA_SKIP_FRONTEND_BUILD=1 nhưng apps/desktop/dist/index.html không tồn tại ' +
+            '— build frontend trước hoặc bỏ flag để tự build.',
+        );
+        process.exit(1);
+      }
+      console.log('ℹ  GHITA_SKIP_FRONTEND_BUILD=1 — tái dùng dist/ vừa build riêng.');
+    } else {
+      run('pnpm', ['--filter', '@ghita/desktop', 'build'], {
+        cwd: ROOT,
+        timeout: 15 * 60 * 1000,
+      });
+    }
 
     // Build the frontend + Rust bundle. `--bundles nsis` keeps exactly one
     // installer format (no .msi, no bare .exe) so the output is a single file.

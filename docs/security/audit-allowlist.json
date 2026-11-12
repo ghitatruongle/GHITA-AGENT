@@ -1,14 +1,4 @@
 {
-  "GHSA-mh99-v99m-4gvg": {
-    "expires": "2026-12-31",
-    "severity": "high",
-    "reason": "Build-time glob traversal inherited from screenshot-desktop and React Native 0.76 tooling. Inputs are repository-controlled; not shipped to end users at runtime. Extension per owner decision 2026-09-10: migrate screenshot-desktop usage and/or upgrade React Native (dependabot PR open -> 0.87) no later than v1.2.0-beta5; re-evaluate at that milestone.",
-    "allowedPaths": [
-      "apps__desktop>screenshot-desktop>",
-      "apps__mobile>",
-      "packages__communication>screenshot-desktop>"
-    ]
-  },
   "GHSA-5p4m-2wfm-xmqj": {
     "expires": "2026-12-31",
     "severity": "high",

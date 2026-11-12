@@ -16,7 +16,6 @@ export default defineConfig({
     testTimeout: 10000,
     alias: {
       'socket.io': resolve(__dirname, '../../tests/unit/socket-io-mock.ts'),
-      'screenshot-desktop': resolve(__dirname, '../../tests/unit/screenshot-desktop-mock.ts'),
     },
     coverage: {
       provider: 'v8',

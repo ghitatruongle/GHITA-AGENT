@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "@ghita/shared": ["../../packages/shared/src"],
-      "@ghita/shared/*": ["../../packages/shared/src/*"]
+      "@ghita/shared/*": ["../../packages/shared/src/*"],
+      "react-native": ["node_modules/react-native/types_generated/index.d.ts"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],

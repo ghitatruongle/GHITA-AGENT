@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { HookManager, parseHookFile } from '../src/hooks/manager.js';
+import { HOOK_EVENT_NAMES } from '../src/hooks/types.js';
 import type { HookRule } from '../src/hooks/types.js';
 import { createReActAgent } from '../src/react/agent.js';
 import { AIMessage, HumanMessage } from '../src/messages/message.js';
@@ -270,6 +271,170 @@ describe('HookManager', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('HookManager claude-code parity events (T6.1)', () => {
+  it('exposes all ten events in HOOK_EVENT_NAMES', () => {
+    expect(HOOK_EVENT_NAMES).toEqual([
+      'SessionStart',
+      'PreToolUse',
+      'PostToolUse',
+      'PostToolUseFailure',
+      'Stop',
+      'PreCompact',
+      'SessionEnd',
+      'SubagentStop',
+      'Notification',
+      'UserPromptSubmit',
+    ]);
+  });
+
+  it('dispatches SessionEnd / SubagentStop / Notification / UserPromptSubmit to matching rules', async () => {
+    const manager = new HookManager([
+      { id: 'end', events: ['SessionEnd'], action: { type: 'block', reason: 'session ended' } },
+      {
+        id: 'subagent',
+        events: ['SubagentStop'],
+        action: { type: 'block', reason: 'subagent done' },
+      },
+      { id: 'notify', events: ['Notification'], action: { type: 'block', reason: 'noticed' } },
+      {
+        id: 'prompt',
+        events: ['UserPromptSubmit'],
+        action: { type: 'block', reason: 'prompt seen' },
+      },
+    ]);
+    expect((await manager.dispatch({ event: 'SessionEnd', reason: 'clear' })).decision).toBe(
+      'block',
+    );
+    expect(
+      (await manager.dispatch({ event: 'SubagentStop', subagentId: 'sub-1' })).decision,
+    ).toBe('block');
+    expect(
+      (await manager.dispatch({ event: 'Notification', level: 'info', message: 'hi' })).decision,
+    ).toBe('block');
+    expect((await manager.dispatch({ event: 'UserPromptSubmit', prompt: 'hello' })).decision).toBe(
+      'block',
+    );
+    // Events the rules do not subscribe to stay unaffected.
+    expect((await manager.dispatch({ event: 'PreToolUse', tool: 't' })).decision).toBe('allow');
+    expect((await manager.dispatch({ event: 'Stop', tool: 't' })).decision).toBe('allow');
+  });
+
+  it('parses hooks.json rules subscribing to the new events', async () => {
+    const file = parseHookFile(
+      JSON.stringify({
+        version: 1,
+        rules: [
+          {
+            id: 'parity',
+            events: ['SessionEnd', 'SubagentStop', 'Notification', 'UserPromptSubmit'],
+            action: { type: 'block', reason: 'r' },
+          },
+        ],
+      }),
+    );
+    expect(file.rules[0]?.events).toEqual([
+      'SessionEnd',
+      'SubagentStop',
+      'Notification',
+      'UserPromptSubmit',
+    ]);
+    const manager = new HookManager(file.rules);
+    expect((await manager.dispatch({ event: 'UserPromptSubmit', prompt: 'p' })).decision).toBe(
+      'block',
+    );
+  });
+
+  it('delivers the typed payload to shell listeners via HOOK_CONTEXT', async () => {
+    const manager = new HookManager([
+      {
+        id: 'echo-payload',
+        events: ['UserPromptSubmit'],
+        action: {
+          type: 'shell',
+          command:
+            'const ctx = JSON.parse(process.env.HOOK_CONTEXT ?? "{}");' +
+            'process.stdout.write(JSON.stringify(' +
+            '{decision: ctx.prompt === "hello world" ? "block" : "allow", reason: "prompt:" + ctx.prompt}));',
+        },
+      },
+    ]);
+    const outcome = await manager.dispatch({ event: 'UserPromptSubmit', prompt: 'hello world' });
+    expect(outcome.decision).toBe('block');
+    expect(outcome.reason).toBe('prompt:hello world');
+  });
+
+  it('delivers SessionEnd / SubagentStop / Notification payloads to http listeners', async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const server = createServer((req, res) => {
+      let body = '';
+      req.on('data', (chunk: Buffer) => {
+        body += chunk.toString('utf8');
+      });
+      req.on('end', () => {
+        bodies.push(JSON.parse(body) as Record<string, unknown>);
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ decision: 'allow' }));
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const port = (server.address() as AddressInfo).port;
+    const manager = new HookManager([
+      { id: 'http-all', events: '*', action: { type: 'http', url: `http://127.0.0.1:${port}/hook` } },
+    ]);
+    try {
+      await manager.dispatch({ event: 'SessionEnd', reason: 'logout' });
+      await manager.dispatch({ event: 'SubagentStop', subagentId: 'sub-7', threadId: 'thread-1' });
+      await manager.dispatch({ event: 'Notification', level: 'warning', message: 'context low' });
+      expect(bodies).toHaveLength(3);
+      expect(bodies[0]).toMatchObject({ event: 'SessionEnd', reason: 'logout' });
+      expect(bodies[1]).toMatchObject({
+        event: 'SubagentStop',
+        subagentId: 'sub-7',
+        threadId: 'thread-1',
+      });
+      expect(bodies[2]).toMatchObject({
+        event: 'Notification',
+        level: 'warning',
+        message: 'context low',
+      });
+    } finally {
+      server.close();
+    }
+  });
+
+  it('a failing listener does not kill the dispatcher (fail-open)', async () => {
+    const manager = new HookManager([
+      {
+        id: 'boom-shell',
+        events: ['UserPromptSubmit'],
+        action: { type: 'shell', command: 'process.exit(3)' },
+      },
+      {
+        id: 'boom-http',
+        events: ['Notification'],
+        action: { type: 'http', url: 'http://127.0.0.1:1/unreachable' },
+      },
+      {
+        id: 'after-boom',
+        events: ['Notification'],
+        action: { type: 'block', reason: 'still evaluated' },
+      },
+    ]);
+    const promptOutcome = await manager.dispatch({ event: 'UserPromptSubmit', prompt: 'x' });
+    expect(promptOutcome.decision).toBe('allow');
+    expect(promptOutcome.results[0]?.ok).toBe(false);
+    expect(promptOutcome.results[0]?.error).toContain('exit code 3');
+
+    const notifyOutcome = await manager.dispatch({
+      event: 'Notification',
+      level: 'error',
+      message: 'boom',
+    });
+    expect(notifyOutcome.decision).toBe('block');
+    expect(notifyOutcome.results.some((r) => r.ruleId === 'after-boom')).toBe(true);
   });
 });
 

@@ -3,6 +3,8 @@
 import { useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FolderOpen, Clock, Settings, Terminal } from 'lucide-react';
+import { BlurText, ShinyText } from '../components/fx';
+import { fadeIn, fadeUp, listContainer, listItem } from '../lib/motion';
 import { useTranslation } from '../i18n';
 import { useAppStore } from '../stores/appStore';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -58,9 +60,9 @@ export function WelcomeView() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      variants={listContainer}
+      initial="hidden"
+      animate="visible"
       className="flex flex-col items-center justify-center h-full px-8 py-12 overflow-auto"
     >
       {/* Hero */}
@@ -73,63 +75,61 @@ export function WelcomeView() {
         >
           <span className="text-4xl">⚡</span>
         </motion.div>
-        <h1
+        {/* fx: BlurText (react-bits) — word-by-word blur reveal; each word
+            carries its own accent gradient so background-clip:text works
+            while the spans animate. */}
+        <BlurText
+          as="h1"
+          text={t('welcome.title')}
+          animateBy="words"
+          delay={80}
+          startOnMount
           className="text-3xl font-bold mb-3"
-          style={{
+          style={{ justifyContent: 'center' }}
+          spanStyle={{
             background: 'var(--accent-gradient)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}
-        >
-          {t('welcome.title')}
-        </h1>
-        <p className="text-text-secondary text-sm max-w-md mx-auto leading-relaxed">
-          {t('welcome.subtitle')}
+        />
+        <p className="text-sm max-w-md mx-auto leading-relaxed">
+          {/* fx: ShinyText (react-bits) — slow theme-aware shine sweep. */}
+          <ShinyText text={t('welcome.subtitle')} speed={5} delay={3} />
         </p>
       </div>
 
       {/* Primary actions */}
-      <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-        <motion.button
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
+      <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-3 mb-8">
+        <button
           onClick={handleOpenFolder}
           disabled={isOpening}
           className="flex items-center gap-2.5 px-6 py-3 bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 rounded-lg hover:bg-indigo-500/25 transition-colors font-semibold text-sm shadow-md"
         >
           <FolderOpen size={18} />
           {isOpening ? t('common.loading') : t('welcome.openFolder')}
-        </motion.button>
+        </button>
 
-        <motion.button
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
+        <button
           onClick={handleOpenSettings}
           className="flex items-center gap-2.5 px-6 py-3 bg-bg-surface border border-border-default text-text-primary rounded-lg hover:bg-bg-hover transition-colors font-semibold text-sm"
         >
           <Settings size={18} className="text-accent-primary" />
           {t('settings.title')}
-        </motion.button>
-      </div>
+        </button>
+      </motion.div>
 
       {/* Recent workspaces */}
       {recentWorkspaces.length > 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="w-full max-w-lg mb-8"
-        >
+        <motion.div variants={fadeUp} className="w-full max-w-lg mb-8">
           <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
             <Clock size={12} />
             {t('welcome.recentWorkspaces')}
           </h3>
-          <div className="flex flex-col gap-1">
+          <motion.div variants={listContainer} className="flex flex-col gap-1">
             {recentWorkspaces.map((path) => (
-              <button
+              <motion.button
                 key={path}
+                variants={listItem}
                 onClick={() => handleOpenRecent(path)}
                 className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-bg-hover transition-colors text-left group"
               >
@@ -141,17 +141,12 @@ export function WelcomeView() {
                 <span className="text-[10px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">
                   Open →
                 </span>
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </motion.div>
       ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-          className="w-full max-w-lg mb-8"
-        >
+        <motion.div variants={fadeUp} className="w-full max-w-lg mb-8">
           <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
             <Clock size={12} />
             {t('welcome.recentWorkspaces')}
@@ -164,12 +159,7 @@ export function WelcomeView() {
       )}
 
       {/* Quick tips */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-        className="w-full max-w-lg"
-      >
+      <motion.div variants={fadeUp} className="w-full max-w-lg">
         <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 flex items-center gap-2">
           <Terminal size={12} />
           {t('welcome.shortcuts')}
@@ -199,12 +189,7 @@ export function WelcomeView() {
       </motion.div>
 
       {/* Settings link */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-        className="mt-8"
-      >
+      <motion.div variants={fadeIn} className="mt-8">
         <button
           onClick={handleOpenSettings}
           className="flex items-center gap-2 text-xs text-text-muted hover:text-accent-primary transition-colors"

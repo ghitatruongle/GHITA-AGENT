@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { overlayFade, popIn } from '../lib/motion';
 import { useTranslation } from '../i18n';
 import { useAppStore } from '../stores/appStore';
 import { fsReadText } from '../lib/native-fs';
@@ -153,19 +154,16 @@ export function QuickFileOpen({ open, onClose }: QuickFileOpenProps) {
     <AnimatePresence>
       {open && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.1 }}
+          variants={overlayFade}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           className="fixed inset-0 z-[60] flex items-start justify-center pt-[18vh]"
           style={{ background: 'rgba(0,0,0,0.6)' }}
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.96, y: -12 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.96, y: -12 }}
-            transition={{ duration: 0.12 }}
+            variants={popIn}
             className="w-[min(560px,90vw)] overflow-hidden rounded-lg border border-border-default shadow-glow"
             style={{ background: 'var(--bg-primary)' }}
             onClick={(e) => e.stopPropagation()}

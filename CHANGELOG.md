@@ -85,6 +85,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   root `check-version-sync` 5/5. **KHÔNG rebuild installer** — chờ owner xác
   minh rồi ra lệnh.
 
+### Chu kỳ 0.0.1 (chốt) — 2026-11-08: Track 1–6 hoàn tất (kế hoạch `docs/plans/2026-11-08-v0.0.1.md`)
+
+> Nhãn version owner chốt **0.0.1 trần**. Tự động hóa hoàn toàn theo lệnh owner
+> ("không phụ thuộc owner", "tối đa 3 subagent", "cẩn RAM tránh OOM").
+
+- **T1 Chốt nền**: smoke sidecar tự động PASS (thay owner verify — cả
+  source lẫn bundle đã build); nhãn version **0.0.1 trần** đồng bộ toàn bộ
+  (version.ts/splash/i18n/chat/tauri.conf); gates xanh; rebuild installer
+  **`Ghita-Agent-Setup-v0.0.1.exe`** (SHA-256
+  `0572a2358631dbf2e44b76f184e4671a1a10950bff1ed61ff029216ff5e7ec67`,
+  build 2026-11-12 SAU review) ra `release/` + Desktop. Build dưới RAM
+  thấp: tách frontend build khỏi installer (flag
+  `GHITA_SKIP_FRONTEND_BUILD=1` + guard chống dist cũ).
+
+### Review + debug toàn bộ code (2026-11-09 → 12)
+
+> Review 61 file thay đổi của Track 1–6, 3 vùng. Kết quả chi tiết:
+> `docs/code-review-findings-0.0.1.md`.
+
+- **[P1] Fuzzy O(L²) treo agent ở file lớn** (đo thật: 2k dòng ≈ 7s/scan,
+  20k dòng >600s) → khai tử bằng **banded Levenshtein** (`|i−j| ≤ maxDist`)
+  + early-exit row-min + line-match prefilter + cell-budget bail. Đo lại:
+  2k=40ms, 20k=1ms, miss 8ms; banded khớp full DP tuyệt đối tại biên ngưỡng.
+- **[P2] `mcp_call_tool` không có timeout server-side** → tool treo giữ
+  promise vĩnh viễn → thêm `withTimeout` 120s (injectable) + `markFailure`;
+  2 test hồi quy mới (sidecar 17/17).
+- **[P3] `respond()` ack-throw không emit fallback** → sửa + test.
+- **[P2×2 từ agent reviewer] fuzzy warning bị tag-guard đè + miss path quét
+  3 lần** → merge warnings + 1 scan duy nhất @0.8.
+- Debug thực địa: native screenshot chụp thật 332KB JPEG/945ms; EPERM flake
+  của `block-advanced.test.ts` (Windows Defender rename race) xác minh bằng
+  re-run 430/430 agents PASS.
+- Gates sau review: typecheck 44/44 · lint 43/43 · root 707/707 · agents
+  430/430 · sidecar 17/17 · smoke bundle PASS.
+- **T2 Refer hygiene**: sync 10 clone (claude-code, tauri, playwright,
+  stagehand, oh-my-pi, react-bits, xtermjs, monaco, node-pty giữ pin beta,
+  browser-use); chụp ghi chú crewai → `docs/research/crewai-engine-notes-2026-11-08.md`
+  rồi **xóa crewai (frees 686MB)**.
+- **T3 Bảo mật/ổn định**:
+  - Xóa `screenshot-desktop` khỏi dependency tree (desktop, communication,
+    root) — advisory **GHSA-mh99 ra khỏi allowlist** vì không còn path nào;
+    capture chuyển sang native: sidecar dùng C# helper bat đã bundle
+    (`sidecar/native-screenshot.mjs`), `ScreenCapture` (communication) chuyển
+    injectable, Tauri `computer_screenshot` vẫn phục vụ UI.
+  - React Native 0.76.0 → **0.87.1** (theo dependabot PR #58) — mobile jest
+    35/35 PASS.
+  - WebView2 crashpad noise tắt trong dev (`main.rs` dev-only
+    `--disable-breakpad`); smoke-sidecar vào CI (quality-gates.yml).
+- **T4 Rust hóa**: fuzzy-matching cascade cho search-replace (pattern
+  oh-my-pi pi-edit fuzzy.rs, rewritten TS — unique ≥0.95 áp kèm warning,
+  ambiguous không đoán kèm vị trí, miss có did-you-mean; 25/25 tests) +
+  design doc `crates/store` napi (`docs/rust-store-napi-design.md`) +
+  bench-native đo lại 8 addon (`docs/perf-rust.md` §13 — BM25 3.0x,
+  PageRank 2.0x, AST 13.9x; scanner hôm nay 0.9x, ghi thẳng thắn chờ đo
+  lại có kiểm soát ở 0.0.2).
+- **T5 UI**: 4 fx components framer-motion (BlurText, ShinyText, FadeContent,
+  AnimatedContent — adapt từ react-bits MIT) + `lib/motion.ts` chuẩn hóa +
+  `MotionConfig reducedMotion="user"` toàn cục.
+- **T6 Tính năng**: MCP wire vào sidecar (`mcp-handlers.mjs` 15/15 tests,
+  `McpToolsPanel` + `useMcp`); hooks events parity claude-code (+SessionEnd,
+  SubagentStop, Notification, UserPromptSubmit); AI Page verbs (observe/act/
+  extract) wire vào browser skills; audit wiring demo2
+  (`docs/demo2-modules-wiring-audit.md`).
+
 
 ## [1.2.0-demo1] - 2026-10-04 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
 

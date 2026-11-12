@@ -1,5 +1,6 @@
 import { useEffect, useRef, lazy, Suspense, useState, useCallback } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { MotionConfig } from 'framer-motion';
 import { ErrorFallback } from './components/ErrorFallback';
 import { isLocaleCode } from './i18n/types';
 
@@ -446,7 +447,13 @@ export function App() {
   return (
     <I18nProvider>
       <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <AppContent />
+        {/* reducedMotion="user" makes every framer-motion animation in the
+            desktop UI respect the OS `prefers-reduced-motion` setting:
+            transform/layout animations are skipped and reduced to simple
+            opacity fades. fx components additionally use useReducedMotion. */}
+        <MotionConfig reducedMotion="user">
+          <AppContent />
+        </MotionConfig>
       </ErrorBoundary>
     </I18nProvider>
   );

@@ -173,7 +173,9 @@ export function PairingScreen({ navigation }: PairingScreenProps): React.JSX.Ele
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      {/* RN 0.87: StatusBar.backgroundColor đã bị bỏ khỏi types — màu nền
+          nằm ở SafeAreaView (styles.container) nên visual giữ nguyên. */}
+      <StatusBar barStyle="light-content" />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

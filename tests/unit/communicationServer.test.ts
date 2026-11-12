@@ -43,8 +43,14 @@ vi.mock('node:http', () => ({
 
 // Helpers
 
-function createServer(config?: Record<string, unknown>): CommunicationServer {
-  return new CommunicationServer(config as ConstructorParameters<typeof CommunicationServer>[0]);
+function createServer(
+  config?: Record<string, unknown>,
+  options?: { capture?: () => Promise<Buffer | Uint8Array> },
+): CommunicationServer {
+  return new CommunicationServer(
+    config as ConstructorParameters<typeof CommunicationServer>[0],
+    options,
+  );
 }
 
 function simulateConnection(socketOverrides?: Partial<typeof mockSocket>): typeof mockSocket {
@@ -351,7 +357,8 @@ describe('broadcastScreenshot()', () => {
   });
 
   it('should broadcast screenshot to connected devices', async () => {
-    const server = createServer();
+    // Inject a capture provider (screenshot-desktop removed in T3.1)
+    const server = createServer({}, { capture: async () => Buffer.from('ghita-fake-jpeg') });
 
     const startPromise = server.start();
     const cb0 = mockIoListenCallback;
@@ -659,10 +666,10 @@ describe('APPROVE / REJECT events', () => {
 
 describe('SCREENSHOT event', () => {
   it('should respond with screenshot to paired devices', async () => {
-    // Use real timers for this async test (dynamic import + await chain)
+    // Use real timers for this async test (injectable capture chain)
     vi.useRealTimers();
 
-    const server = createServer();
+    const server = createServer({}, { capture: async () => Buffer.from('ghita-fake-jpeg') });
 
     const startPromise = server.start();
     const cb0 = mockIoListenCallback;
@@ -691,7 +698,15 @@ describe('SCREENSHOT event', () => {
     // Use real timers for this async test
     vi.useRealTimers();
 
-    const server = createServer();
+    // Inject a capture provider that rejects (screenshot-desktop removed in T3.1)
+    const server = createServer(
+      {},
+      {
+        capture: async () => {
+          throw new Error('Capture denied');
+        },
+      },
+    );
 
     const startPromise = server.start();
     const cb0 = mockIoListenCallback;
@@ -701,11 +716,6 @@ describe('SCREENSHOT event', () => {
     const pairCode = server.pairing.getCode();
     triggerSocketEvent(SOCKET_EVENTS.PAIR, { code: pairCode });
     mockSocketEmit.mockClear(); // Clear pair_confirm emit
-
-    // Re-mock screenshot-desktop to throw
-    const dynamicModule = await import('screenshot-desktop');
-    const mockFn = dynamicModule.default as ReturnType<typeof vi.fn>;
-    mockFn.mockRejectedValueOnce(new Error('Capture denied'));
 
     // Trigger screenshot request
     triggerSocketEvent(SOCKET_EVENTS.SCREENSHOT);

@@ -2,6 +2,9 @@
 // claude-code hooks + grok-build hook events). Rules live in
 // `.ghita/hooks.json` (project) or `~/.ghita/hooks.json` (global); every tool
 // boundary in the agent runtime dispatches events through a HookDispatcher.
+// Hook event parity with claude-code hooks (reference: anthropics/claude-code
+// docs/plugins): SessionEnd, SubagentStop, Notification and UserPromptSubmit
+// were added alongside the original six lifecycle events (v0.0.1 T6.1).
 
 /** Lifecycle events a hook rule can subscribe to. */
 export type HookEventName =
@@ -10,7 +13,11 @@ export type HookEventName =
   | 'PostToolUse'
   | 'PostToolUseFailure'
   | 'Stop'
-  | 'PreCompact';
+  | 'PreCompact'
+  | 'SessionEnd'
+  | 'SubagentStop'
+  | 'Notification'
+  | 'UserPromptSubmit';
 
 export const HOOK_EVENT_NAMES: readonly HookEventName[] = [
   'SessionStart',
@@ -19,7 +26,45 @@ export const HOOK_EVENT_NAMES: readonly HookEventName[] = [
   'PostToolUseFailure',
   'Stop',
   'PreCompact',
+  'SessionEnd',
+  'SubagentStop',
+  'Notification',
+  'UserPromptSubmit',
 ] as const;
+
+/**
+ * Why a session ended (claude-code `SessionEnd` reason, T6.1): `logout` the
+ * user signed out, `prompt_input` the user left the prompt (/exit, ctrl+c,
+ * ctrl+d), `clear` a /clear started a fresh session, `other` anything else
+ * (a `-p` run finished, SIGINT/SIGTERM/SIGHUP).
+ */
+export type SessionEndReason = 'logout' | 'prompt_input' | 'clear' | 'other';
+
+/** Severity of a `Notification` hook event (claude-code parity, T6.1). */
+export type HookNotificationLevel = 'info' | 'warning' | 'error';
+
+/** `SessionEnd` payload (claude-code parity, T6.1). */
+export interface SessionEndPayload {
+  reason: SessionEndReason;
+}
+
+/** `SubagentStop` payload (claude-code parity, T6.1). */
+export interface SubagentStopPayload {
+  subagentId: string;
+  /** Conversation thread the subagent ran in, when known. */
+  threadId?: string;
+}
+
+/** `Notification` payload (claude-code parity, T6.1). */
+export interface NotificationPayload {
+  level: HookNotificationLevel;
+  message: string;
+}
+
+/** `UserPromptSubmit` payload (claude-code parity, T6.1). */
+export interface UserPromptSubmitPayload {
+  prompt: string;
+}
 
 /** Input payload handed to matching rules when an event fires. */
 export interface HookDispatchContext {
@@ -35,6 +80,19 @@ export interface HookDispatchContext {
   agentId?: string;
   /** Working directory shell actions run in (defaults to process cwd). */
   cwd?: string;
+  // --- claude-code parity payloads (T6.1) ---
+  /** SessionEnd: why the session ended. */
+  reason?: SessionEndReason;
+  /** SubagentStop: id of the subagent that finished. */
+  subagentId?: string;
+  /** SubagentStop: conversation thread the subagent ran in, when known. */
+  threadId?: string;
+  /** Notification: severity level. */
+  level?: HookNotificationLevel;
+  /** Notification: human-readable message. */
+  message?: string;
+  /** UserPromptSubmit: the prompt text the user submitted. */
+  prompt?: string;
 }
 
 /** What a hook action decided about the boundary it guards. */

@@ -1,9 +1,2 @@
-declare module 'screenshot-desktop' {
-  interface ScreenshotOptions {
-    format?: 'jpg' | 'png';
-    screen?: number;
-  }
-
-  function screenshot(options?: ScreenshotOptions): Promise<Buffer>;
-  export default screenshot;
-}
+// screenshot-desktop removed (T3.1, GHSA-mh99) — capture providers are
+// injected natively; no ambient module declaration needed anymore.

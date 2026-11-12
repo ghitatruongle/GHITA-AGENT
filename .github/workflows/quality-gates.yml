@@ -106,6 +106,9 @@ jobs:
       - name: G3 — Desktop E2E smoke (startup <2s, chat stream, edit review gate, terminal)
         run: node --import tsx scripts/desktop-smoke.mjs
 
+      - name: G3 — Sidecar socket→engine smoke (crew_run registered + auth deny path)
+        run: node scripts/smoke-sidecar.mjs
+
       - name: Upload desktop smoke report
         if: always()
         uses: actions/upload-artifact@v4

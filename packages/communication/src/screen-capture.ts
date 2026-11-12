@@ -1,4 +1,8 @@
 // Captures desktop screen and streams as base64 JPEG over Socket.io
+// v0.0.1 (T3.1): screenshot-desktop npm package removed from the dependency
+// tree (GHSA-mh99 build-time glob traversal advisory). Capture is now
+// injectable: callers pass a native provider (desktop sidecar wires the
+// bundled Windows C# helper bat; Tauri exposes computer_screenshot for the UI).
 
 import type { ScreenStreamConfig } from './types.js';
 
@@ -8,14 +12,21 @@ const DEFAULT_CONFIG: ScreenStreamConfig = {
   maxWidth: 1280,
 };
 
+export interface ScreenCaptureOptions {
+  /** Injected capture provider returning JPEG bytes for one screen frame. */
+  capture?: () => Promise<Buffer | Uint8Array>;
+}
+
 export class ScreenCapture {
   private config: ScreenStreamConfig;
+  private captureFn?: () => Promise<Buffer | Uint8Array>;
   private streamTimer: ReturnType<typeof setInterval> | null = null;
   private isStreaming = false;
   private onFrame?: (imageBase64: string) => void;
 
-  constructor(config: Partial<ScreenStreamConfig> = {}) {
+  constructor(config: Partial<ScreenStreamConfig> = {}, options: ScreenCaptureOptions = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
+    this.captureFn = options.capture;
   }
 
   /**
@@ -23,11 +34,14 @@ export class ScreenCapture {
    */
   async captureScreen(): Promise<string> {
     try {
-      const screenshotModule = await import('screenshot-desktop');
-      const screenshot = screenshotModule.default ?? screenshotModule;
-
-      const imgBuffer: Buffer | Uint8Array = await screenshot({ format: 'jpg' });
-
+      let imgBuffer: Buffer | Uint8Array;
+      if (this.captureFn) {
+        imgBuffer = await this.captureFn();
+      } else {
+        throw new Error(
+          'No capture provider injected — pass { capture } to the ScreenCapture constructor',
+        );
+      }
       // Cross-environment base64 encoding (works in both Node.js and browser)
       if (typeof Buffer !== 'undefined' && Buffer.isBuffer(imgBuffer)) {
         return imgBuffer.toString('base64');
@@ -49,19 +63,14 @@ export class ScreenCapture {
 
   /**
    * Start continuous screen streaming
-   * @param onFrame - Callback with base64 image data for each frame
    */
   startStream(onFrame: (imageBase64: string) => void): void {
     if (this.isStreaming) {
       this.stopStream();
     }
-
     this.onFrame = onFrame;
     this.isStreaming = true;
-
-    // Capture immediately, then on interval
     void this.emitFrame();
-
     this.streamTimer = setInterval(() => {
       void this.emitFrame();
     }, this.config.interval);
@@ -82,13 +91,8 @@ export class ScreenCapture {
     this.onFrame = undefined;
   }
 
-  /**
-   * Update stream configuration
-   */
   updateConfig(config: Partial<ScreenStreamConfig>): void {
-    this.config = { ...this.config, ...config };
-
-    // Restart stream with new config if currently streaming
+    this.config = { ...DEFAULT_CONFIG, ...config };
     if (this.isStreaming && this.onFrame) {
       const currentCallback = this.onFrame;
       this.stopStream();
@@ -96,23 +100,14 @@ export class ScreenCapture {
     }
   }
 
-  /**
-   * Get current configuration
-   */
   getConfig(): ScreenStreamConfig {
     return { ...this.config };
   }
 
-  /**
-   * Check if currently streaming
-   */
   get streaming(): boolean {
     return this.isStreaming;
   }
 
-  /**
-   * Cleanup resources
-   */
   dispose(): void {
     this.stopStream();
   }
@@ -121,7 +116,6 @@ export class ScreenCapture {
 
   private async emitFrame(): Promise<void> {
     if (!this.isStreaming || !this.onFrame) return;
-
     try {
       const base64 = await this.captureScreen();
       this.onFrame(base64);

@@ -105,8 +105,9 @@ describe('applyEditBlocks — nhiều khối', () => {
   it('lỗi phải hành động được: nói rõ khối nào cần gửi lại + gợi ý dòng gần nhất', () => {
     const r = applyEditBlocks(SOURCE, [
       { search: '  return a + b;', replace: '  return a - b;' },
-      // Sai MỘT dòng giữa khối — dòng đầu vẫn đúng nên phải tìm ra vị trí.
-      { search: 'export function mul(a, b) {\n  return a + b;\n}', replace: 'x' },
+      // Sai nhiều hơn ngưỡng fuzzy (0.95) — phải hỏng và có did-you-mean.
+      // (Từ T4.2, khối lệch 1 ký tự được fuzzy tier áp dụng kèm warning.)
+      { search: 'export function mul(a, b) {\n  return zz + b;\n}', replace: 'x' },
     ]);
     expect(r.outcome).toBe('partial');
     expect(r.applied).toBe(1);

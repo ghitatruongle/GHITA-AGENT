@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { overlayFade, popIn } from '../lib/motion';
 import { useTranslation } from '../i18n';
 import { useAppStore, type TabId } from '../stores/appStore';
 
@@ -138,20 +139,17 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
+        variants={overlayFade}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh] px-4"
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) setIsOpen(false);
         }}
       >
         <motion.div
-          initial={{ scale: 0.96, y: 8 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.96, y: 8 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          variants={popIn}
           className="w-full max-w-[640px] bg-bg-elevated border border-border-subtle rounded-xl shadow-2xl overflow-hidden"
           role="dialog"
           aria-modal="true"

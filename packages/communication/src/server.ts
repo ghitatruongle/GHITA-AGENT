@@ -9,7 +9,7 @@ import * as path from 'node:path';
 import { SOCKET_EVENTS, generateId } from '@ghita/shared';
 import type { DeviceInfo } from '@ghita/shared';
 import { PairingManager } from './pairing.js';
-import { ScreenCapture } from './screen-capture.js';
+import { ScreenCapture, type ScreenCaptureOptions } from './screen-capture.js';
 import type { ServerConfig, ServerEvents, PairedDevice, CommandPayload } from './types.js';
 import { ChannelPluginRegistry } from './channel-plugin-contract.js';
 
@@ -139,7 +139,7 @@ export class CommunicationServer {
   readonly pairing: PairingManager;
   readonly screenCapture: ScreenCapture;
 
-  constructor(config: Partial<ServerConfig> = {}) {
+  constructor(config: Partial<ServerConfig> = {}, options?: ScreenCaptureOptions) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.pairedDevicesFile =
       this.config.pairedDevicesFile ||
@@ -147,7 +147,7 @@ export class CommunicationServer {
         ? path.resolve(tmpdir(), `.ghita-paired-devices-test-${generateId()}.json`)
         : DEFAULT_PAIRED_DEVICES_FILE);
     this.pairing = new PairingManager();
-    this.screenCapture = new ScreenCapture();
+    this.screenCapture = new ScreenCapture({}, options);
   }
 
   // Lifecycle
