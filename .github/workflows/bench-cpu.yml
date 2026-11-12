@@ -42,7 +42,7 @@ jobs:
         run: node scripts/bench-cpu.mjs --baseline
 
       - name: Rust cores (cargo test)
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
       - run: cargo test --workspace
         working-directory: crates
         env:

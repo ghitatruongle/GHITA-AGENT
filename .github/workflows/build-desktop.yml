@@ -21,7 +21,7 @@ jobs:
           cache: pnpm
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
 
       - run: pnpm install --frozen-lockfile
 
@@ -59,7 +59,7 @@ jobs:
           cache: pnpm
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
 
       - name: Install system deps
         run: |
@@ -102,7 +102,7 @@ jobs:
           cache: pnpm
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
 
       - run: pnpm install --frozen-lockfile
 

@@ -54,7 +54,7 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
 
       - name: Install pnpm deps
         run: pnpm install --frozen-lockfile
