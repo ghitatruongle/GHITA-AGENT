@@ -98,6 +98,10 @@ export class InputSanitizer {
         // eslint-disable-next-line no-control-regex -- control characters are matched intentionally so they get stripped
         .replace(/[<>:"|?*\x00-\x1f]/g, '')
         .replace(/^\.+/, '')
+        // Fuzz hardening (CI 2026-11-13, counterexample " .."): dot-run ≥2
+        // gộp thành "_" — property "never contain .." phải đúng với MỌI chuỗi
+        // (trước đó chỉ strip dots đầu dòng nên " .." lọt qua).
+        .replace(/\.+/g, (m) => (m.length >= 2 ? '_' : m))
     );
   }
 

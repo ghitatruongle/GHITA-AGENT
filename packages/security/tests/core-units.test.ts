@@ -79,6 +79,17 @@ describe('InputSanitizer', () => {
     expect(sanitizer.sanitizeFilename('../a/b\\c:d')).not.toMatch(/[/\\:]/);
   });
 
+  it('sanitizeFilename neutralizes dot-runs anywhere (CI fuzz counterexample " ..")', () => {
+    // Counterexample từ fast-check trên CI (2026-11-13): " .." lọt qua vì
+    // chỉ strip dots ĐẦU dòng. Dot-run ≥2 phải gộp "_" ở mọi vị trí.
+    expect(sanitizer.sanitizeFilename(' ..')).toBe(' _');
+    expect(sanitizer.sanitizeFilename(' ..')).not.toContain('..');
+    expect(sanitizer.sanitizeFilename('a..b')).toBe('a_b');
+    // "..." bị strip dots đầu dòng trước → chuỗi rỗng (an toàn hơn cả "_").
+    expect(sanitizer.sanitizeFilename('...')).toBe('');
+    expect(sanitizer.sanitizeFilename('file.v2.tar.gz')).toBe('file.v2.tar.gz');
+  });
+
   it('isSafeUrl rejects non-https by default and private IPs', () => {
     expect(sanitizer.isSafeUrl('http://1.1.1.1/')).toBe(false);
     expect(sanitizer.isSafeUrl('https://127.0.0.1/')).toBe(false);
