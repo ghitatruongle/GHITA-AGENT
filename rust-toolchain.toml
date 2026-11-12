@@ -1,0 +1,7 @@
+# Pin toolchain Rust cho toàn workspace — CI rust-quality đỏ 2026-11-12 do
+# runner image GitHub nâng rustc (type-inference mới #148922 làm
+# screenshots 0.8.10 wayland không biên dịch được trên Linux). Pin về 1.99.0
+# — bản local đang xanh toàn bộ (fmt/clippy/test/cargo test src-tauri 7/7).
+# Nâng lên khi bump screenshots crate (việc 0.0.2).
+[toolchain]
+channel = "1.99.0"
