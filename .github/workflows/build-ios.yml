@@ -37,6 +37,8 @@ jobs:
 
       - name: Install Rust (for native deps if needed)
         uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.0"
 
       - run: pnpm install --frozen-lockfile
 

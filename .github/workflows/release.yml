@@ -26,6 +26,7 @@ jobs:
           cache: pnpm
       - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: "1.99.0"
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
         with:
@@ -105,6 +106,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.0"
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:packages
       - name: Build signed desktop artifacts
@@ -145,6 +148,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.0"
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -198,6 +203,7 @@ jobs:
           cache: pnpm
       - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: "1.99.0"
           targets: ${{ matrix.target }}
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:packages

@@ -43,6 +43,8 @@ jobs:
 
       - name: Rust cores (cargo test)
         uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.0"
       - run: cargo test --workspace
         working-directory: crates
         env:
