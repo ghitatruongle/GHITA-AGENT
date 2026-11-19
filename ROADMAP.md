@@ -1,9 +1,19 @@
 # 🗺️ Ghita Agent — Public Roadmap
 
-> **Current version:** v0.0.1 (chu kỳ chốt: bảo mật + MCP + UI motion + fuzzy edit)
-> **Last updated:** 2026-11-08 — Track 1–6 kế hoạch v0.0.1 hoàn tất (bảo mật screenshot/RN 0.87, MCP vào sidecar, UI react-bits, fuzzy edit-guard); installer rebuild trong chu kỳ; tag/release chờ lệnh owner
+> **Current version:** v0.0.2-preview (chu kỳ đang chạy: tích hợp sâu codex/rig/sqlite-vec — T1–T6)
+> **Last updated:** 2026-11-15 — T1–T6 plan v0.0.2-preview hoàn tất (patch engine vendored + MCP apply_patch tool, sandbox plumbing + smoke honest, sqlite-vec hybrid search, rig engine opt-in); KHÔNG commit/tag/release — chờ lệnh owner
 
 ---
+
+## ✅ Done — v0.0.2-preview T1–T6 (2026-11-15)
+
+| Khu vực | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 🦀 T2 Patch | Crate `ghita-patch`: engine diff V4A vendored từ codex @ rust-v0.169.0 (26 tests), napi addon, tool MCP `apply_patch` (GHITA_PATCH) | ✅ |
+| 🦀 T3 Sandbox | Enforcement::RestrictedToken + detect napi + TS bridge + smoke 4 case honest (supervised giữ mặc định — backlog R2 cho ACL thật) | ✅ |
+| 🦀 T4 Memory | sqlite-vec 0.1.9 vào ghita-store (vec0, 6 tests) + hybrid search native-first trong packages/memory (271 tests) + embeddings opt-in | ✅ |
+| 🦀 T5 Engine | Crate `ghita-engine` (rig-core 0.46.0, opt-in GHITA_ENGINE=native): ModelClient + RigAdapter + napi JSON + gateway fast-path (947 tests) | ✅ |
+| 🧹 Nền tảng | Baseline gates + disk-guard build-native + tree-sitter 0.27.2 + docs flags/3 chuyên đề | ✅ |
 
 ## ✅ Done — v0.0.1 chu kỳ chốt (2026-11-08)
 

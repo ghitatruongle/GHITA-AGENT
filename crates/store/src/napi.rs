@@ -72,4 +72,109 @@ impl NativeStore {
             .map(|c| c as u32)
             .map_err(|e| Error::from_reason(format!("{}", e)))
     }
+    // ---- T4 (v0.0.2-preview): vector store (sqlite-vec) --------------------
+
+    /// Ensure vec0 schema exists (dim = embedding dimensions).
+    #[napi]
+    pub fn vec_ensure_schema(&mut self, dim: u32) -> Result<()> {
+        #[cfg(feature = "vec")]
+        {
+            self.inner
+                .vec_ensure_schema(dim as usize)
+                .map_err(|e| Error::from_reason(format!("{}", e)))
+        }
+        #[cfg(not(feature = "vec"))]
+        {
+            Err(Error::from_reason("vec feature not enabled in this build"))
+        }
+    }
+
+    /// Upsert one embedding + doc.
+    #[napi]
+    pub fn vec_store(
+        &mut self,
+        id: String,
+        text: String,
+        vec: Float32Array,
+        metadata: String,
+    ) -> Result<()> {
+        #[cfg(feature = "vec")]
+        {
+            self.inner
+                .vec_store(&id, &text, &vec, &metadata)
+                .map_err(|e| Error::from_reason(format!("{}", e)))
+        }
+        #[cfg(not(feature = "vec"))]
+        {
+            Err(Error::from_reason("vec feature not enabled in this build"))
+        }
+    }
+
+    /// KNN search — k nearest hits, score = 1/(1+distance).
+    #[napi]
+    pub fn vec_search(&self, query: Float32Array, k: u32) -> Result<Vec<VecHit>> {
+        #[cfg(feature = "vec")]
+        {
+            self.inner
+                .vec_search(&query, k as usize)
+                .map(|hits| {
+                    hits.into_iter()
+                        .map(|h| VecHit {
+                            id: h.id,
+                            text: h.text,
+                            metadata: h.metadata,
+                            score: h.score,
+                        })
+                        .collect()
+                })
+                .map_err(|e| Error::from_reason(format!("{}", e)))
+        }
+        #[cfg(not(feature = "vec"))]
+        {
+            Err(Error::from_reason("vec feature not enabled in this build"))
+        }
+    }
+
+    /// Delete one doc by id.
+    #[napi]
+    pub fn vec_delete(&self, id: String) -> Result<bool> {
+        #[cfg(feature = "vec")]
+        {
+            self.inner
+                .vec_delete(&id)
+                .map_err(|e| Error::from_reason(format!("{}", e)))?;
+            Ok(true)
+        }
+        #[cfg(not(feature = "vec"))]
+        {
+            Err(Error::from_reason("vec feature not enabled in this build"))
+        }
+    }
+
+    /// Number of stored docs.
+    #[napi]
+    pub fn vec_count(&self) -> Result<u32> {
+        #[cfg(feature = "vec")]
+        {
+            Ok(self
+                .inner
+                .vec_count()
+                .map_err(|e| Error::from_reason(format!("{}", e)))? as u32)
+        }
+        #[cfg(not(feature = "vec"))]
+        {
+            Err(Error::from_reason("vec feature not enabled in this build"))
+        }
+    }
+}
+
+// ---- T4 (v0.0.2-preview): vector store napi types -----------------------
+
+#[cfg(feature = "vec")]
+#[napi(object)]
+pub struct VecHit {
+    pub id: String,
+    pub text: String,
+    pub metadata: String,
+    pub score: f64,
 }

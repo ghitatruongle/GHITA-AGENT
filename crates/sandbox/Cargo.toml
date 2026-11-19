@@ -14,6 +14,7 @@ default = []
 # dyn-symbols: napi-sys resolves Node API symbols dynamically (GetProcAddress)
 # → không cần libnode.dll khi link trên windows-gnu (matches crates/* addons).
 addon = ["dep:napi", "dep:napi-derive"]
+win-sandbox = []
 
 [dependencies]
 napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols"], optional = true }
@@ -22,3 +23,4 @@ napi-derive = { version = "2", optional = true }
 # Landlock enforcement (`mod landlock`) calls libc::syscall directly.
 [target.'cfg(target_os = "linux")'.dependencies]
 libc = "0.2"
+

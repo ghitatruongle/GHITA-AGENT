@@ -1,0 +1,10 @@
+{
+  "name": "@ghita/engine-native",
+  "version": "1.1.0",
+  "private": true,
+  "description": "ghita-engine napi addon (v0.0.2-preview T5 — rig-core model layer)",
+  "napi": {
+    "name": "engine",
+    "triples": {}
+  }
+}

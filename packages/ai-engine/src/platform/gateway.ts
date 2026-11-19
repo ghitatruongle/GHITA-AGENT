@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'http';
 import { timingSafeEqual } from 'node:crypto';
 import type { Orchestrator } from '../orchestrator.js';
+import { isRustEngineEnabled, tryNativeCompletion } from '../rig-bridge.js';
 
 export interface GatewayConfig {
   port?: number;
@@ -129,6 +130,48 @@ export class AIGatewayServer {
           // 4. Content / PII Filtering
           if (this.config.piiFilteringEnabled) {
             body.messages = this.filterPII(body.messages);
+          }
+
+          // v0.0.2-preview T5: opt-in native engine fast-path (GHITA_ENGINE=native).
+          // tryNativeCompletion trả null khi flag tắt / addon vắng / lỗi →
+          // rơi xuống orchestrator TS hiện có (fallback giữ nguyên luồng cũ).
+          if (isRustEngineEnabled()) {
+            const native = await tryNativeCompletion({
+              provider: body.provider ?? 'openai',
+              model: body.model ?? 'gpt-4o-mini',
+              messages: body.messages ?? [],
+              max_tokens: body.max_tokens ?? null,
+            });
+            if (native !== null) {
+              // F8 review: native path phải ghi sổ như TS path — cost, tokens,
+              // audit log, latency metric (trước đây bị bỏ qua).
+              const usage = {
+                promptTokens: native.usageIn,
+                completionTokens: native.usageOut,
+                totalTokens: native.usageIn + native.usageOut,
+              };
+              const cost = this.estimateCost(native.model, usage);
+              this.accumulatedCost += cost;
+              this.metrics.llmCostTotal += cost;
+              this.metrics.llmTokenUsageTotal += usage.totalTokens;
+              this.logAudit({
+                timestamp: Date.now(),
+                model: native.model,
+                tokens: usage.totalTokens,
+                cost,
+                durationMs: Date.now() - startTime,
+              });
+              this.metrics.llmRequestDurationSecondsSum += (Date.now() - startTime) / 1000;
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(
+                JSON.stringify({
+                  id: `chatcmpl-native-${Date.now().toString(36)}`,
+                  object: 'chat.completion',
+                  choices: [{ index: 0, message: { role: 'assistant', content: native.text } }],
+                }),
+              );
+              return;
+            }
           }
 
           // Forward to Orchestrator

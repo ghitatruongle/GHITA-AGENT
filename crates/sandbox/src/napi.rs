@@ -106,3 +106,11 @@ pub fn spawn_sandboxed(
         blocked: result.blocked,
     })
 }
+
+/// Which enforcement tier would be active right now (capability probe).
+/// v1 Windows: "restricted-token" chỉ khi codex sandbox provisioned — hiện
+/// probe trả false (backlog R2) nên Windows luôn báo "supervised".
+#[napi]
+pub fn detect_enforcement() -> String {
+    crate::detect_enforcement().as_str().to_string()
+}

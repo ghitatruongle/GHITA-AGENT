@@ -97,6 +97,7 @@ fn bpe_for(family: EncodingFamily) -> Result<&'static tiktoken_rs::CoreBPE, Stri
     static CL100K: OnceLock<Option<tiktoken_rs::CoreBPE>> = OnceLock::new();
     static R50K: OnceLock<Option<tiktoken_rs::CoreBPE>> = OnceLock::new();
 
+    #[allow(clippy::type_complexity)]
     let (slot, load): (
         &OnceLock<Option<tiktoken_rs::CoreBPE>>,
         fn() -> Result<tiktoken_rs::CoreBPE, String>,

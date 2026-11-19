@@ -87,11 +87,15 @@ const TOKEN_PATTERN = /[\p{L}\p{N}_-]+/gu;
 
 import { cosineSimilarityJS, getNativeCosine } from './semantic/rustAddon.js';
 
+// Optional durable vec0 index (v0.0.2-preview T4) — null khi addon vắng.
+import { getVecStore, getVecDim, type VecStoreApi } from './hybrid-native.js';
+
 export class CrossSessionSearch {
   private readonly sessions = new Map<string, SessionRecord>();
   private readonly index = new Map<string, Set<string>>();
   private readonly sessionTokens = new Map<string, Set<string>>();
   private readonly config: Required<SearchConfig>;
+  private readonly vecIndex: VecStoreApi | null;
 
   constructor(maxSessionsOrConfig?: number | SearchConfig) {
     const cfg =
@@ -107,6 +111,7 @@ export class CrossSessionSearch {
       minScore: cfg?.minScore ?? 0.1,
       defaultLimit: cfg?.defaultLimit ?? 5,
     };
+    this.vecIndex = getVecStore();
   }
 
   indexSession(session: SessionRecord): void {
@@ -117,6 +122,22 @@ export class CrossSessionSearch {
     }
 
     this.sessions.set(session.sessionId, session);
+
+    // Durable vec0 index (best-effort, native-optional): index session summary.
+    // Vector lệch dim (env GHITA_MEMORY_VEC_DIM, default 1536) bị bỏ qua —
+    // INSERT sai dim sẽ lỗi vec0 và bị nuốt im lặng (bug F6 review).
+    if (this.vecIndex && session.vector && session.vector.length === getVecDim()) {
+      try {
+        this.vecIndex.vecStore(
+          session.sessionId,
+          session.summary ?? session.messages[0]?.content ?? session.sessionId,
+          new Float32Array(session.vector),
+          JSON.stringify({ startTime: session.startTime, endTime: session.endTime }),
+        );
+      } catch {
+        // native index best-effort — JS cosine fallback vẫn đầy đủ.
+      }
+    }
 
     const tokens = new Set<string>();
 
@@ -155,6 +176,16 @@ export class CrossSessionSearch {
     const removed = this.sessions.delete(sessionId);
     if (!removed) return false;
 
+    // Durable vec0 index: dọn entry để session bị evict không thành phantom
+    // hit (bug F7 review) — best-effort, lỗi nuốt im lặng.
+    if (this.vecIndex) {
+      try {
+        this.vecIndex.vecDelete(sessionId);
+      } catch {
+        // native index best-effort.
+      }
+    }
+
     const tokens = this.sessionTokens.get(sessionId);
     if (tokens) {
       for (const token of tokens) {
@@ -184,12 +215,27 @@ export class CrossSessionSearch {
       if (set) for (const id of set) candidateSessionIds.add(id);
     }
 
-    // Also include sessions matching by vector if queryVector provided
+    // Also include sessions matching by vector if queryVector provided.
+    // Durable vec0 index (native) preferred — JS cosine per-session fallback.
+    const vecScores = new Map<string, number>();
     if (options.queryVector) {
-      for (const [id, session] of this.sessions) {
-        if (session.vector) {
-          const vs = this.cosine(options.queryVector, session.vector);
-          if (vs >= minScore) candidateSessionIds.add(id);
+      if (this.vecIndex) {
+        try {
+          for (const hit of this.vecIndex.vecSearch(new Float32Array(options.queryVector), limit)) {
+            vecScores.set(hit.id, hit.score);
+            if (hit.score >= minScore) candidateSessionIds.add(hit.id);
+          }
+        } catch {
+          // native index best-effort — fallback dưới đây vẫn chạy.
+        }
+      }
+      if (vecScores.size === 0) {
+        for (const [id, session] of this.sessions) {
+          if (session.vector) {
+            const vs = this.cosine(options.queryVector, session.vector);
+            if (vs >= minScore) candidateSessionIds.add(id);
+            vecScores.set(id, vs);
+          }
         }
       }
     }
@@ -209,11 +255,11 @@ export class CrossSessionSearch {
       const matches: CrossSessionResult['matches'] = [];
       let maxMsgScore = 0;
 
-      // Session-level vector score
-      const sessionVecScore =
-        options.queryVector && session.vector
+      // Session-level vector score — prefer the durable vec0 hit when present.
+      const sessionVecScore = vecScores.get(sessionId)
+        ?? (options.queryVector && session.vector
           ? this.cosine(options.queryVector, session.vector)
-          : 0;
+          : 0);
 
       for (const msg of session.messages) {
         const msgTokens = this.tokenize(msg.content);

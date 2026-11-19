@@ -1,0 +1,32 @@
+[package]
+name = "ghita-patch"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+description = "GHITA unified-diff application engine (vendored codex apply-patch core)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+addon = ["dep:napi", "dep:napi-derive"]
+
+[dependencies]
+anyhow = "1"
+similar = "2"
+thiserror = "2"
+tokio = { version = "1", default-features = false, features = ["rt", "macros"] }
+serde = { version = "1", features = ["derive"] }
+schemars = "0.8"
+url = "2"
+base64 = "0.22"
+dunce = "1"
+dirs = "6"
+urlencoding = "2"
+napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols"], optional = true }
+napi-derive = { version = "2", optional = true }
+
+[dev-dependencies]
+pretty_assertions = "1"
+tempfile = "3"

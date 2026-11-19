@@ -742,3 +742,4 @@ export {
   type DynamicFallbackOptions,
 } from './routing/multi-engine-pipeline.js';
 export { repairIncompleteJson, accumulateToolStream } from './tool-calling/repair.js';
+export * from './rig-bridge.js';

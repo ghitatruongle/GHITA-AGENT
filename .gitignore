@@ -318,3 +318,6 @@ test-ledger.sqlite
 
 # Mimosa security-scan tool state (agent-local, not project code)
 .mimosa/
+
+# ZCode plugin pointer (agent-local, not project code)
+.v2c/

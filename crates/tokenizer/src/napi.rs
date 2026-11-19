@@ -24,7 +24,7 @@ pub fn count_tokens_js(text: String, family: Option<String>) -> Result<u32> {
     let f = parse_family(family);
     count_tokens(&text, f)
         .map(|n| n as u32)
-        .map_err(|e| Error::from_reason(e))
+        .map_err(Error::from_reason)
 }
 
 /// Count tokens for a list of [role, content] message pairs.
@@ -38,7 +38,7 @@ pub fn count_messages_tokens_js(messages: Vec<MessagePair>, family: Option<Strin
         .collect();
     count_messages_tokens(&pairs, f)
         .map(|n| n as u32)
-        .map_err(|e| Error::from_reason(e))
+        .map_err(Error::from_reason)
 }
 
 /// Detect the best encoding family from a model name string.

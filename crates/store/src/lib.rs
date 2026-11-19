@@ -1,6 +1,9 @@
 #[cfg(feature = "addon")]
 mod napi;
 
+#[cfg(feature = "vec")]
+mod vec;
+
 #[cfg(feature = "addon")]
 use rusqlite::OptionalExtension;
 
@@ -22,6 +25,11 @@ impl KvStore {
     pub fn open(path: &str) -> Result<Self, StoreError> {
         #[cfg(feature = "addon")]
         {
+            // vec0 (sqlite-vec) phải đăng ký TRƯỚC khi mở connection —
+            // sqlite3_auto_extension chỉ áp dụng cho connection mở sau đó.
+            #[cfg(feature = "vec")]
+            crate::vec::ensure_registered();
+
             let db = if path == ":memory:" {
                 rusqlite::Connection::open_in_memory()
             } else {

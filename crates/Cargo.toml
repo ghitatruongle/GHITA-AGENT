@@ -1,8 +1,18 @@
 [workspace]
 resolver = "2"
-members = ["secscan", "retrieval", "codegraph", "sandbox", "tokenizer", "docloader", "store"]
+members = ["secscan", "retrieval", "codegraph", "sandbox", "tokenizer", "docloader", "store", "patch", "engine"]
 
 [workspace.package]
 version = "0.0.1"
 edition = "2021"
 license = "MIT"
+
+# Lighter dev builds for the workspace crates: keep file:line in backtraces
+# but skip full debug data; dependencies get no .pdb debug files at all.
+# One full rebuild is needed for this to apply.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+

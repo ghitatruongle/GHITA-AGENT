@@ -17,7 +17,7 @@ rayon = ["dep:rayon"]
 napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols"], optional = true }
 napi-derive = { version = "2", optional = true }
 rayon = { version = "1.12.0", optional = true }
-tree-sitter = "0.26.12"
+tree-sitter = "0.27.2"
 tree-sitter-javascript = "0.25.0"
 tree-sitter-python = "0.25.0"
 tree-sitter-typescript = "0.23.2"

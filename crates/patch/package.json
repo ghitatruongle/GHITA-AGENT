@@ -1,0 +1,10 @@
+{
+  "name": "@ghita/patch-native",
+  "version": "1.1.0",
+  "private": true,
+  "description": "ghita-patch napi addon (v0.0.2-preview T2 — codex-apply-patch core)",
+  "napi": {
+    "name": "patch",
+    "triples": {}
+  }
+}

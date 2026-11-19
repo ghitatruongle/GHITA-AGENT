@@ -1,0 +1,28 @@
+[package]
+name = "ghita-engine"
+version.workspace = true
+edition = "2024"
+license.workspace = true
+description = "GHITA Rust-side model layer (rig-core, opt-in)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+addon = ["dep:napi", "dep:napi-derive", "dep:serde_json", "dep:tokio"]
+rig = ["dep:rig-core"]
+full = ["addon", "rig"]
+
+[dependencies]
+async-trait = "0.1"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", default-features = false, features = ["rt", "macros"], optional = true }
+serde_json = { version = "1", optional = true }
+rig-core = { version = "=0.46.0", default-features = false, features = ["derive", "reqwest", "rustls"], optional = true }
+napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols", "async"], optional = true }
+napi-derive = { version = "2", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+serde_json = "1"

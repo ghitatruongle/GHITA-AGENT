@@ -115,3 +115,7 @@ export function isAddonBuilt(name: string): boolean {
 }
 
 export const NATIVE_BRIDGE_VERSION = '0.0.1';
+
+export * from './patch.js';
+export * from './sandbox-native.js';
+export * from './vecstore.js';

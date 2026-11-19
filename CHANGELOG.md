@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — v0.0.2-preview (T1–T6, 2026-11-15)
+
+> Chủ đề: **Tích hợp sâu upstream Rust engines**. Kế hoạch: `docs/plans/2026-11-14-v0.0.2-preview-deep-integration.md`.
+> Toàn bộ làm trên working tree — CHƯA commit (chờ lệnh owner).
+
+### T1 — Nền
+- Disk guard cho `scripts/build-native.mjs` (`--disk-check-only`, floor 12GB).
+- tree-sitter 0.26.12 → 0.27.2 (codegraph 16 tests xanh).
+
+### T2 — ghita-patch (codex apply-patch)
+- Vendor surgery từ openai/codex @ rust-v0.169.0: parser + applier V4A + path-uri + absolute-path (cắt exec-server/protocol/mxc — xem `crates/patch/VENDOR.md`).
+- Wrapper `apply()` (partial/skipped mapping) + 26 tests; napi addon; tool MCP `apply_patch` trong sidecar (GHITA_PATCH flag, fallback lịch sự).
+
+### T3 — Sandbox Windows
+- `Enforcement::RestrictedToken` + probe `windows.rs` (v1 false — 3 blocker upstream ghi rõ) + napi `detect_enforcement` + TS bridge + `scripts/sandbox-smoke.mjs` (4 case thật: supervised không chặn write/network → giữ supervised mặc định, opt-in `GHITA_SANDBOX=restricted-token`).
+
+### T4 — sqlite-vec hybrid memory
+- ghita-store feature `vec` (sqlite-vec 0.1.9, registration trước connection-open); napi `vecEnsureSchema/vecStore/vecSearch/vecDelete/vecCount`; hybrid native-first trong `CrossSessionSearch` + JS cosine fallback; embeddings opt-in `GHITA_MEMORY_EMBEDDINGS`.
+
+### T5 — ghita-engine (rig, opt-in)
+- Crate `ghita-engine`: ModelClient + RigAdapter (rig-core 0.46.0 wire/driver API) + napi `engineComplete` (JSON Promise) + `rig-bridge.ts` + gateway fast-path; opt-in `GHITA_ENGINE=native`, fallback TS providers.
+
 ## [0.0.1] - 2026-11-04
 
 > Beta đầu của chu kỳ mới. Chủ đề: **Chạy thật, tin được, sửa không hỏng**.

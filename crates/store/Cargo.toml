@@ -11,9 +11,11 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = []
 addon = ["dep:napi", "dep:napi-derive", "dep:rusqlite"]
+vec = ["dep:sqlite-vec", "addon"]
 
 [dependencies]
 rusqlite = { version = "0.32", features = ["bundled"], optional = true }
+sqlite-vec = { version = "=0.1.9", optional = true }
 napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols"], optional = true }
 napi-derive = { version = "2", optional = true }
 

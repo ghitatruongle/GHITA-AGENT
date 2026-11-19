@@ -71,3 +71,13 @@ codegen-units = 1
 strip = true
 panic = "abort"
 incremental = false
+
+# Lighter dev builds: keep crash backtraces showing file:line, but drop full
+# debug data, and remove dependencies' giant per-crate .pdb files entirely —
+# the main reason target/debug grew past 10GB on Windows.
+# One full rebuild is needed for this to apply.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false

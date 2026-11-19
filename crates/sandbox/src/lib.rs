@@ -168,6 +168,9 @@ pub fn scrub_env(extra_allow: &[String]) -> BTreeMap<String, String> {
 pub enum Enforcement {
     Landlock,
     Seatbelt,
+    /// Windows restricted-token sandbox (codex preflight pass). Spawn v1 vẫn
+    /// đi đường supervised; full ACL orchestration là backlog R2.
+    RestrictedToken,
     Supervised,
 }
 
@@ -176,6 +179,7 @@ impl Enforcement {
         match self {
             Enforcement::Landlock => "landlock",
             Enforcement::Seatbelt => "seatbelt",
+            Enforcement::RestrictedToken => "restricted-token",
             Enforcement::Supervised => "supervised",
         }
     }
@@ -194,12 +198,21 @@ pub fn detect_enforcement() -> Enforcement {
             return Enforcement::Seatbelt;
         }
     }
+    #[cfg(all(target_os = "windows", feature = "win-sandbox"))]
+    {
+        if windows::available() {
+            return Enforcement::RestrictedToken;
+        }
+    }
     Enforcement::Supervised
 }
 
 // ---------------------------------------------------------------------------
 // Platform-specific modules (Landlock on Linux, stubs elsewhere)
 // ---------------------------------------------------------------------------
+
+#[cfg(all(target_os = "windows", feature = "win-sandbox"))]
+mod windows;
 
 #[cfg(target_os = "linux")]
 mod landlock {
@@ -899,5 +912,25 @@ mod tests {
 
         assert!(!res.blocked);
         assert!(res.stdout.contains("hello"));
+    }
+}
+
+#[cfg(test)]
+mod t3_tests {
+    use super::*;
+
+    #[test]
+    fn enforcement_as_str_covers_all_tiers() {
+        assert_eq!(Enforcement::Landlock.as_str(), "landlock");
+        assert_eq!(Enforcement::Seatbelt.as_str(), "seatbelt");
+        assert_eq!(Enforcement::RestrictedToken.as_str(), "restricted-token");
+        assert_eq!(Enforcement::Supervised.as_str(), "supervised");
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn detect_on_windows_v1_reports_supervised_until_provisioned() {
+        // v1: probe codex sandbox disabled (backlog R2) → supervised
+        assert_eq!(detect_enforcement(), Enforcement::Supervised);
     }
 }

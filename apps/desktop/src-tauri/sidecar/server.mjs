@@ -1359,18 +1359,70 @@ function createCodeGraphTools() {
 // đây không tốn công nào lúc khởi động. Host tool trả về string thuần, còn
 // ToolDefinition.handler phải trả MCP text content blocks, nên cần adapter.
 function getMcpHostTools() {
-  return createCodeGraphTools().map((tool) => ({
+  const codeGraphTools = createCodeGraphTools().map((tool) => ({
     name: tool.name,
     description: tool.description,
     inputSchema: {
       type: 'object',
       properties: tool.parameters?.properties ?? {},
-      required: Array.isArray(tool.parameters?.required) ? tool.parameters.required : [],
+      required: Array.isArray(tool.parameters?.required) ? tool.parameters?.required : [],
     },
     handler: async (args) => ({
       content: [{ type: 'text', text: String(await tool.execute(args ?? {})) }],
     }),
   }));
+  // v0.0.2-preview T2: native patch engine (codex V4A) as an MCP host tool.
+  // GHITA_PATCH=legacy tắt tool; addon vắng → isError lịch sự để agent rơi về
+  // luồng write toàn phần (JS fallback = luồng edit hiện có).
+  if ((process.env.GHITA_PATCH ?? 'native') !== 'native') {
+    return codeGraphTools;
+  }
+  const applyPatchTool = {
+    name: 'apply_patch',
+    description:
+      'Apply a V4A unified patch ("*** Begin Patch" ... "*** End Patch") to files under the workspace. Prefer this over whole-file rewrites for small multi-line edits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        patch_text: { type: 'string', description: 'V4A patch body' },
+        cwd: { type: 'string', description: 'Workspace root (absolute); defaults to effective workspace root' },
+      },
+      required: ['patch_text'],
+    },
+    handler: async (args) => {
+      const patchText = typeof args?.patch_text === 'string' ? args.patch_text : '';
+      if (!patchText.trim()) {
+        return { content: [{ type: 'text', text: 'patch_text is required' }], isError: true };
+      }
+      let cwd = typeof args?.cwd === 'string' && args.cwd ? args.cwd : undefined;
+      if (!cwd) {
+        try {
+          cwd = fs.realpathSync(getEffectiveWorkspaceRoot());
+        } catch {
+          cwd = process.cwd();
+        }
+      }
+      try {
+        const { tryApplyPatchNative } = await import('@ghita/native-bridge');
+        const summary = tryApplyPatchNative(patchText, cwd);
+        if (!summary) {
+          return {
+            content: [{ type: 'text', text: 'apply_patch native addon unavailable — use whole-file write tools instead' }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: 'text', text: JSON.stringify(summary) }],
+        };
+      } catch (err) {
+        return {
+          content: [{ type: 'text', text: `apply_patch failed: ${err instanceof Error ? err.message : String(err)}` }],
+          isError: true,
+        };
+      }
+    },
+  };
+  return [...codeGraphTools, applyPatchTool];
 }
 
 async function getOrCreateWorkspaceMemory() {

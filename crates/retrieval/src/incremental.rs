@@ -232,8 +232,16 @@ impl IncrementalIndex {
         // false nên params_changed không thấy, nhưng lần rebuild có kèm thay
         // đổi nội dung sẽ dùng luôn NaN → mọi điểm BM25 thành NaN, và vì
         // self.k1 không được cập nhật nên độc chất dai dẳng sang các lần sau.
-        let k1 = if k1.is_finite() && k1 > 0.0 { k1 } else { self.k1 };
-        let b = if b.is_finite() && (0.0..=1.0).contains(&b) { b } else { self.b };
+        let k1 = if k1.is_finite() && k1 > 0.0 {
+            k1
+        } else {
+            self.k1
+        };
+        let b = if b.is_finite() && (0.0..=1.0).contains(&b) {
+            b
+        } else {
+            self.b
+        };
 
         let plan = self.tracker.plan(files);
 
