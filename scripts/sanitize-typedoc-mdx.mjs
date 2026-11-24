@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 
-import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { readdir, readFile, writeFile, rename, mkdir } from 'node:fs/promises';
+import { dirname, join, relative, resolve } from 'node:path';
 
 const projectRoot = resolve(import.meta.dirname, '..');
 const apiDirectory = resolve(projectRoot, 'docs/docs/api');
 let changedFiles = 0;
+
+// Docusaurus bỏ qua mọi file/thư mục bắt đầu bằng `_` (quy ước partial MDX).
+// typedoc-plugin-markdown đặt module KHÔNG TÊN vào thư mục `_/`, nên toàn bộ
+// link tới `_/classes/...` vỡ khi build docs. Đổi tên thành `modules` và
+// rewrite link tương ứng.
+const UNNAMED_MODULE_DIR = '_';
+const RENAMED_MODULE_DIR = 'modules';
 
 async function markdownFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -17,6 +24,17 @@ async function markdownFiles(directory) {
     }),
   );
   return files.flat();
+}
+
+/** Đổi `_/` (một segment path) thành `modules/` trong link target Markdown. */
+function rewriteUnnamedModuleLinks(line) {
+  return line.replace(/\]\(([^)\s]+)\)/g, (whole, target) => {
+    const [pathPart, ...rest] = target.split('#');
+    const segments = pathPart.split('/');
+    const rewritten = segments.map((s) => (s === UNNAMED_MODULE_DIR ? RENAMED_MODULE_DIR : s));
+    if (rewritten.every((s, i) => s === segments[i])) return whole;
+    return `](${rewritten.join('/')}${rest.length ? `#${rest.join('#')}` : ''})`;
+  });
 }
 
 function encodeMdxText(line) {
@@ -63,10 +81,30 @@ function sanitizeMarkdown(source) {
         else if (fence === marker) fence = undefined;
         return line;
       }
-      return fence ? line : encodeMdxText(line);
+      return fence ? line : rewriteUnnamedModuleLinks(encodeMdxText(line));
     })
     .join('\n');
 }
+
+/** Đổi tên mọi thư mục `_` (module không tên) thành `modules` trong cây API. */
+async function renameUnnamedModuleDirs(directory) {
+  let renamed = 0;
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const path = join(directory, entry.name);
+    if (entry.name === UNNAMED_MODULE_DIR) {
+      const target = join(directory, RENAMED_MODULE_DIR);
+      await mkdir(dirname(target), { recursive: true });
+      await rename(path, target);
+      renamed++;
+      continue;
+    }
+    renamed += await renameUnnamedModuleDirs(path);
+  }
+  return renamed;
+}
+
+const renamedDirs = await renameUnnamedModuleDirs(apiDirectory);
 
 for (const file of await markdownFiles(apiDirectory)) {
   const source = await readFile(file, 'utf8');
@@ -77,8 +115,8 @@ for (const file of await markdownFiles(apiDirectory)) {
   }
 }
 
-console.log(
-  `[typedoc-mdx] Sanitized ${changedFiles} generated Markdown file(s) under ${relative(
+console.info(
+  `[typedoc-mdx] Renamed ${renamedDirs} unnamed module dir(s) and sanitized ${changedFiles} generated Markdown file(s) under ${relative(
     projectRoot,
     apiDirectory,
   )}.`,
