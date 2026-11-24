@@ -25,6 +25,8 @@ import { createCrewWorkflowHandlers } from './crew-handlers.mjs';
 import { createMcpHandlers, createMcpSubsystem } from './mcp-handlers.mjs';
 import { containsSensitiveMemory, WorkspaceMemoryJournal } from './memory-journal.mjs';
 import { captureScreenJpeg } from './native-screenshot.mjs';
+import { createComputerUseBridge } from './computer-use-bridge.mjs';
+import { createChooseBridge } from './choose-bridge.mjs';
 
 // --- Lazy-loaded heavy modules (loaded on first use, not at startup) ---
 // This reduces startup time by 2-5 seconds by deferring Playwright, agents, etc.
@@ -44,12 +46,6 @@ let _computerUse = null;
 async function loadComputerUse() {
   if (!_computerUse) _computerUse = await import('@ghita/computer-use');
   return _computerUse;
-}
-
-let _computerUseNode = null;
-async function loadComputerUseNode() {
-  if (!_computerUseNode) _computerUseNode = await import('@ghita/computer-use/node');
-  return _computerUseNode;
 }
 
 let _browserControl = null;
@@ -325,6 +321,21 @@ globalThis.approveFileWriteHandler = async (operation, filePath) => {
     });
   });
 };
+
+// Track S3 integration: `choose` tool bridge — the ai-engine choose tool
+// (human-in-the-loop option picker) pauses the agent run and calls
+// globalThis.chooseRequestHandler; the bridge relays the question to the
+// trusted desktop UI over the require_approval / approve_command /
+// reject_command vocabulary and feeds the decision back via resolveChoose().
+// Desktop-room-only + payload whitelist + engine-side 60s deny-default timeout
+// + id-guard (unknown/stale ids are no-ops) — pattern parity with the S4
+// computer-use bridge (see choose-bridge.mjs).
+const chooseBridge = createChooseBridge({
+  emitToDesktop,
+  log,
+  getEngine: () => _aiEngine,
+});
+chooseBridge.install();
 
 // Global permission mode: 'custom' = confirm all, 'auto' = only dangerous
 globalThis.agentPermissionMode = 'custom';
@@ -1085,6 +1096,11 @@ function syncApiConfigToOrchestrator(preferredProvider) {
 let nodeRegistry = null;
 let computerController = null; // Phase 8: expose for mobile remote touch
 let browserController = null;
+
+// Track S4: computer-use bridge sidecar → desktop WebView → Tauri Rust.
+// Sidecar node.exe không có __TAURI__ nên adapter cũ luôn rỗng; bridge RPC
+// các lệnh computer_* qua socket desktop tin cậy (xem computer-use-bridge.mjs).
+const computerUseBridge = createComputerUseBridge({ log });
 let codeGraphState = null;
 let workspaceMemoryState = null;
 
@@ -1139,17 +1155,15 @@ async function getOrCreateNodeRegistry() {
   const registry = createNodeSkillRegistry({ defaultCwd: workspaceRoot });
   log(`Node skill registry workspace: ${workspaceRoot}`);
 
-  try {
-    const { createTauriAdapter } = await loadComputerUseNode();
-    const tauriAdapter = await createTauriAdapter();
-    computerController = new ComputerUseController(tauriAdapter);
-    registry.registerMany(createComputerUseSkills(computerController));
-    log('Loaded computer-use Tauri native adapter.');
-  } catch (e) {
-    log(`Failed to load computer-use node adapter: ${e.message}`);
-    computerController = new ComputerUseController();
-    registry.registerMany(createComputerUseSkills(computerController));
-  }
+  // Track S4: sidecar node.exe không bao giờ có globalThis.__TAURI__, nên
+  // createTauriAdapter() (WebView-only) luôn throw và controller rơi về rỗng —
+  // mouse/keyboard/screenshot từ agent path không hoạt động. Dùng desktop
+  // bridge adapter: RPC computer_* qua socket desktop tin cậy, WebView relay
+  // vào Tauri invoke. Khi không có desktop client, các action reject với lỗi
+  // rõ ràng thay vì "adapter is not available".
+  computerController = new ComputerUseController(computerUseBridge.createAdapter());
+  registry.registerMany(createComputerUseSkills(computerController));
+  log('Loaded computer-use desktop bridge adapter (sidecar → WebView → Tauri).');
 
   browserController = new BrowserController(createLazyBrowserAdapter({ headless: false }));
   registry.registerMany(createBrowserControlSkills(browserController));
@@ -2029,6 +2043,13 @@ function registerSocketEvents(socket, isCloud = false) {
       resolve(true);
       pendingApprovals.delete(id);
     }
+    // Track S3 integration: the same event also resolves a pending `choose`
+    // question (UI sends the picked option as `choice`). No-op (returns false)
+    // for ids that are not a pending choose request — id-guard lives in the
+    // engine's ToolApprovalManager, so command/file-write ids are untouched.
+    if (chooseBridge.approve(id, data?.choice)) {
+      log(`Choose request ${id} APPROVED by client.`);
+    }
   });
 
   socket.on('reject_command', (data) => {
@@ -2040,6 +2061,9 @@ function registerSocketEvents(socket, isCloud = false) {
       log(`Command approval ID ${id} REJECTED by client.`);
       resolve(false);
       pendingApprovals.delete(id);
+    }
+    if (chooseBridge.reject(id)) {
+      log(`Choose request ${id} REJECTED by client.`);
     }
   });
 
@@ -2400,6 +2424,7 @@ You can use the following tools:
 - memory_search: Search durable memory scoped to this workspace.
 - memory_remember: Store a preference/fact/context only when the user asks.
 - memory_forget: Delete a workspace memory by ID when the user asks.
+- choose: Ask the user to pick one option from 2-8 choices; the run pauses until they answer.
 
 Additional browser/computer tools may be available when the user has enabled
 their corresponding skills. Use the exact function names from the supplied tool schema.
@@ -3029,6 +3054,8 @@ io.on('connection', (socket) => {
 
   if (isTrustedDesktopSocket(socket)) {
     socket.join('desktop');
+    // Track S4: trusted desktop socket làm relay cho computer-use bridge.
+    computerUseBridge.attachDesktopSocket(socket);
   }
 
   if (socket.data.authType === 'device' && socket.data.deviceId) {

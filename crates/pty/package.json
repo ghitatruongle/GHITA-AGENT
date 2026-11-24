@@ -1,0 +1,10 @@
+{
+  "name": "@ghita/pty-native",
+  "version": "0.0.1",
+  "private": true,
+  "description": "ghita-pty napi addon (0.0.2-alpha Track R1) — PTY stream mode for the Node sidecar",
+  "napi": {
+    "name": "pty",
+    "triples": {}
+  }
+}

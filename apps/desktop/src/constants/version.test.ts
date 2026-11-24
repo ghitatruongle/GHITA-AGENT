@@ -9,16 +9,18 @@ const here = dirname(fileURLToPath(import.meta.url));
 const desktopRoot = join(here, '..', '..');
 
 describe('APP_VERSION single source (H1)', () => {
-  it('giá trị là 0.0.1 (trần — owner chốt 2026-11-08)', () => {
-    expect(APP_VERSION).toBe('0.0.1');
-    expect(APP_VERSION_LABEL).toBe('v0.0.1');
+  it('giá trị theo chu kỳ 0.0.2-alpha (owner chốt 2026-11-24)', () => {
+    expect(APP_VERSION).toBe('0.0.2-alpha');
+    expect(APP_VERSION_LABEL).toBe('v0.0.2-alpha');
   });
 
-  it('khớp tauri.conf.json (phần số)', () => {
-    const conf = JSON.parse(readFileSync(join(desktopRoot, 'src-tauri', 'tauri.conf.json'), 'utf8')) as {
+  it('khớp tauri.conf.json (nguyên giá trị, gồm cả hậu tố chu kỳ)', () => {
+    const conf = JSON.parse(
+      readFileSync(join(desktopRoot, 'src-tauri', 'tauri.conf.json'), 'utf8'),
+    ) as {
       version: string;
     };
-    expect(conf.version).toBe(APP_VERSION.replace(/-beta$/, ''));
+    expect(conf.version).toBe(APP_VERSION);
   });
 
   it('splash.html hiển thị đúng label', () => {

@@ -57,6 +57,7 @@ export function ChatPanel() {
     handleReconnect,
     handleApproveTool,
     handleRejectTool,
+    handleChooseOption,
     handleApproveFileWrite,
     handleRejectFileWrite,
     handleConfirmResume,
@@ -112,7 +113,7 @@ export function ChatPanel() {
     connectionStatus,
     modelOptions,
     provider,
-    
+
     isSending,
     setIsSending,
     setActiveFlow,
@@ -235,6 +236,7 @@ export function ChatPanel() {
         resumeApprovalRequest={resumeApprovalRequest}
         onApproveTool={handleApproveTool}
         onRejectTool={handleRejectTool}
+        onChooseOption={handleChooseOption}
         onApproveFileWrite={handleApproveFileWrite}
         onRejectFileWrite={handleRejectFileWrite}
         onConfirmResume={handleConfirmResume}

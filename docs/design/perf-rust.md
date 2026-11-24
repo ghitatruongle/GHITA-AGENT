@@ -106,13 +106,13 @@
 
 > Sau khi build lại toàn bộ 8 addon (`node scripts/build-native.mjs`, cargo test workspace xanh: 16+6+43+6+19+2+3 test). Addons lần đầu có mặt cho cả tokenizer/docloader/sandbox/store.
 
-| Probe | Native | JS baseline | Kết quả |
-|---|---|---|---|
-| Scanner 5MB | 16.3 ms | 15.0 ms | 0.9x — **lùi nhẹ so ghi chép 8.1 ms (v1.1.0)**; variance máy/bộ rules, cần đo lại ở 0.0.2 với corpus khóa |
-| BM25 query 10k chunks | 0.132 ms | 0.4 ms | **3.0x** |
-| PageRank 20k×30 | 1.6 ms | 3.2 ms | **2.0x** |
-| AST parse 1k files | 58.9 ms | 817.4 ms | **13.9x** · 10k files: 932.7 ms |
+| Probe                 | Native   | JS baseline | Kết quả                                                                                                   |
+| --------------------- | -------- | ----------- | --------------------------------------------------------------------------------------------------------- |
+| Scanner 5MB           | 16.3 ms  | 15.0 ms     | 0.9x — **lùi nhẹ so ghi chép 8.1 ms (v1.1.0)**; variance máy/bộ rules, cần đo lại ở 0.0.2 với corpus khóa |
+| BM25 query 10k chunks | 0.132 ms | 0.4 ms      | **3.0x**                                                                                                  |
+| PageRank 20k×30       | 1.6 ms   | 3.2 ms      | **2.0x**                                                                                                  |
+| AST parse 1k files    | 58.9 ms  | 817.4 ms    | **13.9x** · 10k files: 932.7 ms                                                                           |
 
 Ghi chú thẳng thắn: scanner native hôm nay KHÔNG nhanh hơn JS fast-path trên máy này — không phải regression code (không đổi Rust), khác biệt do corpus/máy. Không đổi claim bản cũ; đo lại có kiểm soát ở 0.0.2.
 
-Số liệu thô: chạy `node scripts/bench-native.mjs`. Addons mới (tokenizer/docloader/sandbox/store) chưa có probe bench riêng — thiếu này đã ghi vào design doc `docs/rust-store-napi-design.md` (T4.1).
+Số liệu thô: chạy `node scripts/bench-native.mjs`. Addons mới (tokenizer/docloader/sandbox/store) chưa có probe bench riêng — thiếu này đã ghi vào design doc `docs/design/rust-store-napi-design.md` (T4.1).

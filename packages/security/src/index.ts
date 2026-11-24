@@ -5,6 +5,22 @@ export type { SecretRotatorOptions } from './secret-rotator.js';
 export { AuditRunner } from './audit-runner.js';
 export type { AuditRunOptions } from './audit-runner.js';
 
+// Track S4 optional: hashcash PoW (SHA3-256) cho local API bridge.
+export {
+  DEFAULT_HASHCASH_BITS,
+  DEFAULT_HASHCASH_TTL_MS,
+  MAX_HASHCASH_BITS,
+  checkHashcash,
+  hashcashLeadingZeroNibbles,
+  mintHashcash,
+} from './hashcash.js';
+export type {
+  CheckHashcashOptions,
+  HashcashCheckResult,
+  HashcashStampInfo,
+  MintHashcashOptions,
+} from './hashcash.js';
+
 // v0.4.9 A1: Local rule-based security scanner (original implementation)
 export {
   SecurityScanner,
@@ -56,10 +72,13 @@ export type {
 
 export {
   SandboxRunner,
+  DEFAULT_SANDBOX_DENY_GLOBS,
+  resolveSandboxPolicy,
   type SandboxProfileType,
   type SandboxRunnerOptions,
   type SandboxViolationInfo,
   type SandboxExecutionResult,
+  type SandboxPolicyConfig,
 } from './sandbox/index.js';
 
 export type {
@@ -73,4 +92,4 @@ export type {
   RotationEvent,
 } from './types.js';
 
-export const SECURITY_VERSION = '0.0.1';
+export const SECURITY_VERSION = '0.0.2-alpha';

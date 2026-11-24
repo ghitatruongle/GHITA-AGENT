@@ -1,0 +1,34 @@
+[package]
+name = "ghita-pty"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Ghita shared PTY core (Track R1) — portable-pty sessions with drain/kill-tree, Windows ConPTY + posix openpty, consumed by src-tauri (terminal UI) and the napi addon (agent stream mode)"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+# Production addon: napi bindings for the TS/native-bridge layer.
+# dyn-symbols: napi-sys resolves Node API symbols dynamically (GetProcAddress)
+# → không cần libnode.dll khi link trên windows-gnu (matches crates/* addons).
+addon = ["dep:napi", "dep:napi-derive"]
+
+[dependencies]
+portable-pty = "0.8"
+dashmap = "6"
+napi = { version = "2", default-features = false, features = ["compat-mode", "napi4", "dyn-symbols"], optional = true }
+napi-derive = { version = "2", optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_System_Console",
+    "Win32_System_Threading",
+    "Win32_System_SystemInformation",
+] }
+
+[target.'cfg(unix)'.dependencies]
+# killpg() for process-tree teardown on posix (session created by portable-pty setsid).
+libc = "0.2"

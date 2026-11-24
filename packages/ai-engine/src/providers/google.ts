@@ -8,12 +8,8 @@ import type {
   EmbeddingManyResponse,
 } from '../types.js';
 import { BaseProvider } from './base.js';
-import {
-  extractGoogleToolCalls,
-  googleSystemInstruction,
-  googleToolFields,
-  toGoogleContents,
-} from './google-tool-calling.js';
+import { extractGoogleToolCalls } from './google-tool-calling.js';
+import { renderGoogleGenerateContentRequest } from '../standard-request.js';
 
 const GOOGLE_MODELS = [
   'gemini-3.6-flash',
@@ -32,6 +28,10 @@ export class GoogleProvider extends BaseProvider {
     super(config);
   }
 
+  protected override wireFormat() {
+    return 'google' as const;
+  }
+
   async isReady(): Promise<boolean> {
     return this.keyManager.hasHealthyKey();
   }
@@ -39,26 +39,16 @@ export class GoogleProvider extends BaseProvider {
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
-
-    const contents = toGoogleContents(messages);
-    const systemInstruction = googleSystemInstruction(messages);
+    const body = renderGoogleGenerateContentRequest(
+      this.buildStandardRequest(messages, options, model),
+    );
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          ...(systemInstruction ? { systemInstruction } : {}),
-          ...googleToolFields(options),
-          generationConfig: {
-            maxOutputTokens: this.getMaxTokens(options),
-            temperature: this.getTemperature(options),
-            topP: options?.topP,
-            stopSequences: options?.stop,
-          },
-        }),
+        body: JSON.stringify(body),
         signal: options?.signal,
       },
     );
@@ -113,26 +103,16 @@ export class GoogleProvider extends BaseProvider {
   async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<AIStreamChunk> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
-
-    const contents = toGoogleContents(messages);
-    const systemInstruction = googleSystemInstruction(messages);
+    const body = renderGoogleGenerateContentRequest(
+      this.buildStandardRequest(messages, options, model),
+    );
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          ...(systemInstruction ? { systemInstruction } : {}),
-          ...googleToolFields(options),
-          generationConfig: {
-            maxOutputTokens: this.getMaxTokens(options),
-            temperature: this.getTemperature(options),
-            topP: options?.topP,
-            stopSequences: options?.stop,
-          },
-        }),
+        body: JSON.stringify(body),
         signal: options?.signal,
       },
     );
@@ -179,6 +159,8 @@ export class GoogleProvider extends BaseProvider {
                 content?: {
                   parts?: Array<{
                     text?: string;
+                    /** Gemini marks thinking-summary parts with thought: true. */
+                    thought?: boolean;
                     functionCall?: {
                       id?: string;
                       name: string;
@@ -189,8 +171,28 @@ export class GoogleProvider extends BaseProvider {
               }>;
             };
             const parts = parsed.candidates?.[0]?.content?.parts ?? [];
-            const text = parts.map((part) => part.text ?? '').join('');
-            if (text) yield { content: text, done: false, provider: 'google', model };
+            // Track S3 P2: thought parts stream as `reasoning` StreamObjects
+            // instead of being flattened into the visible answer.
+            const reasoningText = parts
+              .filter((part) => part.thought === true)
+              .map((part) => part.text ?? '')
+              .join('');
+            const text = parts
+              .filter((part) => part.thought !== true)
+              .map((part) => part.text ?? '')
+              .join('');
+            if (reasoningText) {
+              yield {
+                content: reasoningText,
+                done: false,
+                provider: 'google',
+                model,
+                type: 'reasoning',
+              };
+            }
+            if (text) {
+              yield { content: text, done: false, provider: 'google', model, type: 'text-delta' };
+            }
             for (const call of extractGoogleToolCalls(parts)) {
               streamedCalls.set(call.id ?? `${call.name}:${streamedCalls.size}`, call);
             }
@@ -203,12 +205,14 @@ export class GoogleProvider extends BaseProvider {
       reader.releaseLock();
     }
 
+    const terminalCalls = [...streamedCalls.values()];
     yield {
       content: '',
       done: true,
       provider: 'google',
       model,
-      toolCalls: [...streamedCalls.values()],
+      type: terminalCalls.length ? 'tool-call' : 'text-delta',
+      toolCalls: terminalCalls,
     };
   }
 
@@ -218,6 +222,15 @@ export class GoogleProvider extends BaseProvider {
         return 'stop';
       case 'MAX_TOKENS':
         return 'length';
+      // Deterministic safety/copyright blocks (Track S2 ladder rule 3):
+      // retrying or nudging cannot help — surface as a blocked generation,
+      // same as OpenAI's content_filter and Anthropic's refusal.
+      case 'SAFETY':
+      case 'RECITATION':
+      case 'BLOCKLIST':
+      case 'PROHIBITED_CONTENT':
+      case 'SPII':
+        return 'error';
       default:
         return 'stop';
     }

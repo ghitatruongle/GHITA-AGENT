@@ -1,8 +1,14 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs';
-import { FileEditCheckpointer, assertEditablePath, atomicWriteFileSync, withTagHeader } from './edit-guard.js';
+import {
+  FileEditCheckpointer,
+  assertEditablePath,
+  atomicWriteFileSync,
+  withTagHeader,
+} from './edit-guard.js';
 import { diagnosticsAfterWrite } from './diagnostics.js';
 import { spawn } from 'node:child_process';
+import { tryLoadPtyNative } from '@ghita/native-bridge';
 
 // Declaring global workspace root for typescript awareness
 declare global {
@@ -10,6 +16,11 @@ declare global {
   var approveCommandHandler: ((command: string) => Promise<boolean>) | null;
   var approveFileWriteHandler: ((operation: string, filePath: string) => Promise<boolean>) | null;
   var agentPermissionMode: 'custom' | 'auto';
+  // Track R1 P3: live PTY runs from stream mode (id → kill()) so an aborted
+  // agent run can tear down PTY children exactly like __activeChildProcs.
+  var ghitaActivePtyKills: Map<string, () => void> | undefined;
+  // Optional incremental output hook for stream mode (sidecar wiring later).
+  var commandStreamHandler: ((id: string, chunk: string) => void) | undefined;
 }
 
 // Global approval hook for terminal commands
@@ -292,7 +303,7 @@ export async function readFile(args: {
   const end = Math.min(lines.length, args.endLine ?? lines.length);
 
   const extractedLines = lines.slice(start - 1, end);
-  return `${tagged.split('\n')[0]  }\n${  extractedLines.join('\n')}`;
+  return `${tagged.split('\n')[0]}\n${extractedLines.join('\n')}`;
 }
 
 /**
@@ -317,11 +328,11 @@ export async function writeFile(args: { filePath: string; content: string }): Pr
   }
 
   // Track 3.3/3.4 — checkpoint + ghi nguyên tử.
-  const checkpointer = new FileEditCheckpointer(`auto-${  Date.now().toString(36)}`);
+  const checkpointer = new FileEditCheckpointer(`auto-${Date.now().toString(36)}`);
   checkpointer.captureBefore(fullPath);
   atomicWriteFileSync(fullPath, args.content);
   const diagnosticsNote = await diagnosticsAfterWrite(relPath);
-  return `File written successfully to ${relPath}${  diagnosticsNote ? ` — ${  diagnosticsNote}` : ''}`;
+  return `File written successfully to ${relPath}${diagnosticsNote ? ` — ${diagnosticsNote}` : ''}`;
 }
 
 /**
@@ -369,12 +380,12 @@ export async function replaceFileContent(args: {
     args.replacementContent +
     content.substring(firstIndex + args.targetContent.length);
   // Track 3.3/3.4 — checkpoint + ghi nguyên tử.
-  const checkpointer2 = new FileEditCheckpointer(`auto-${  Date.now().toString(36)}`);
+  const checkpointer2 = new FileEditCheckpointer(`auto-${Date.now().toString(36)}`);
   checkpointer2.captureBefore(fullPath);
   atomicWriteFileSync(fullPath, newContent);
 
   const diagnosticsNote2 = await diagnosticsAfterWrite(relPath);
-  return `Successfully replaced content in ${relPath}${  diagnosticsNote2 ? ` — ${  diagnosticsNote2}` : ''}`;
+  return `Successfully replaced content in ${relPath}${diagnosticsNote2 ? ` — ${diagnosticsNote2}` : ''}`;
 }
 
 /**
@@ -452,6 +463,124 @@ export async function grepSearch(args: { query: string }): Promise<string> {
 }
 
 /**
+ * 6a. run_command stream mode via the ghita-pty native addon (Track R1 P3)
+ *
+ * Opt-in only: enabled when GHITA_AGENT_PTY_STREAM=1 (or 'true') in the
+ * sidecar environment. When enabled AND the ghita-pty addon is built, the
+ * command runs through a real PTY (ConPTY on Windows) — merged stdout/stderr,
+ * correct ANSI/TUI behaviour, console-aware tree kill on timeout. Output still
+ * aggregates into the tool's string result; chunks additionally flow to
+ * `globalThis.commandStreamHandler` when the sidecar installs one. Without the
+ * addon (or when disabled) runCommand keeps the buffered shell spawn below.
+ */
+
+function isPtyStreamModeEnabled(): boolean {
+  const flag = process.env['GHITA_AGENT_PTY_STREAM'];
+  return flag === '1' || flag === 'true';
+}
+
+async function runViaPty(command: string, cwd: string, timeout: number): Promise<string | null> {
+  let loaded;
+  try {
+    loaded = tryLoadPtyNative();
+  } catch {
+    return null;
+  }
+  if (!loaded.native || !loaded.impl) {
+    return null; // addon not built → caller keeps the buffered fallback
+  }
+  const impl = loaded.impl;
+  const id = `run_command_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const isWin = process.platform === 'win32';
+
+  return new Promise<string | null>((resolve) => {
+    let output = '';
+    let settled = false;
+    let timedOut = false;
+    let exitCode: number | null = null;
+    // v0.0.2-alpha integration: kill/grace timers sống trong một mảng khai báo
+    // TRƯỚC finish — addons thật (như fake của R1 test) có thể gọi onExit ĐỒNG
+    // BỘ ngay trong ptySpawn, tức là trước khi const graceTimer (cửa sổ grace
+    // cuối hàm) được khởi tạo; một closure finish đọc const đó sẽ dính TDZ
+    // ReferenceError và làm runViaPty rơi nhầm về buffered fallback.
+    const timers: NodeJS.Timeout[] = [];
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      for (const timer of timers) clearTimeout(timer);
+      globalThis.ghitaActivePtyKills?.delete(id);
+      let result = '';
+      if (output) result += `${output}\n`;
+      if (timedOut) {
+        result += `ERROR: Command timed out after ${timeout}ms`;
+      } else if (exitCode !== 0) {
+        result += `ERROR: Command failed with code ${exitCode}`;
+      }
+      resolve(result || 'Command executed successfully with empty output.');
+    };
+
+    // Registry parity with __activeChildProcs: lets an aborted agent run kill
+    // the PTY child tree.
+    globalThis.ghitaActivePtyKills = globalThis.ghitaActivePtyKills || new Map();
+    globalThis.ghitaActivePtyKills.set(id, () => {
+      try {
+        impl.ptyKill(id);
+      } catch {
+        /* ignore if already exited */
+      }
+    });
+
+    timers.push(
+      setTimeout(() => {
+        timedOut = true;
+        try {
+          impl.ptyKill(id);
+        } catch {
+          /* ignore if already exited */
+        }
+      }, timeout),
+    );
+
+    try {
+      impl.ptySpawn(
+        id,
+        isWin ? 'cmd.exe' : '/bin/sh',
+        isWin ? ['/d', '/s', '/c', command] : ['-c', command],
+        cwd,
+        120,
+        40,
+        (_pid, chunk) => {
+          output += chunk;
+          const handler = globalThis.commandStreamHandler;
+          if (typeof handler === 'function') {
+            try {
+              handler(id, chunk);
+            } catch {
+              /* listener errors must not break the run */
+            }
+          }
+        },
+        (_pid, code, _signal) => {
+          exitCode = code;
+          finish();
+        },
+      );
+    } catch {
+      // Spawn failure (broken/unavailable addon) → buffered fallback handles it.
+      for (const timer of timers) clearTimeout(timer);
+      globalThis.ghitaActivePtyKills?.delete(id);
+      resolve(null);
+      return;
+    }
+
+    // Last-resort guard: the tree kill must make onExit fire promptly; settle
+    // regardless after a grace window so the tool never hangs.
+    timers.push(setTimeout(() => finish(), timeout + 10_000));
+  });
+}
+
+/**
  * 6. run_command tool implementation
  */
 export async function runCommand(args: { command: string; timeoutMs?: number }): Promise<string> {
@@ -483,6 +612,17 @@ export async function runCommand(args: { command: string; timeoutMs?: number }):
       if (!approved) {
         throw new Error(`Permission Denied: User rejected the execution of command "${command}".`);
       }
+    }
+  }
+
+  // Track R1 P3: stream mode is opt-in via GHITA_AGENT_PTY_STREAM — run the
+  // command through a real PTY when the native addon is available. The
+  // buffered shell spawn below stays the default fallback, and the approval
+  // flow above applies to both paths unchanged.
+  if (isPtyStreamModeEnabled()) {
+    const viaPty = await runViaPty(command, sandbox, timeout);
+    if (viaPty !== null) {
+      return viaPty;
     }
   }
 

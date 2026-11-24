@@ -25,6 +25,12 @@ pub struct SandboxOptionsInput {
     pub memory_limit_mb: Option<u32>,
     /// Active process limit (max child processes in job).
     pub process_limit: Option<u32>,
+    /// ReadOnly/Strict: commit overlay upper/ về workspace sau run thay vì
+    /// rollback (default false — mọi write tương đối bị hủy).
+    pub overlay_commit: Option<bool>,
+    /// IO write budget (MB) cho process tree — vượt → kill + violation
+    /// "io-budget" (Windows Job Object IO counters).
+    pub io_write_limit_mb: Option<u32>,
 }
 
 #[napi(object)]
@@ -44,6 +50,14 @@ pub struct SandboxRunOutput {
     pub violations: Vec<SandboxViolationOutput>,
     /// True when policy blocked the spawn (command never ran).
     pub blocked: bool,
+    /// Trạng thái cuối lifecycle: created | running | killing | killed |
+    /// timed-out | completed | failed.
+    pub state: Option<String>,
+    /// Overlay session dir (ReadOnly/Strict) — relative writes của child đổ
+    /// vào đây rồi được rollback (mặc định) hoặc commit.
+    pub overlay_dir: Option<String>,
+    /// True khi overlay được commit về workspace thay vì rollback.
+    pub overlay_committed: Option<bool>,
 }
 
 /// Spawn a command inside the sandbox. Pre-exec policy violations block the
@@ -62,6 +76,8 @@ pub fn spawn_sandboxed(
         timeout_ms: None,
         memory_limit_mb: None,
         process_limit: None,
+        overlay_commit: None,
+        io_write_limit_mb: None,
     });
     let profile = match input.profile.as_deref() {
         None => SandboxProfile::Workspace,
@@ -81,11 +97,23 @@ pub fn spawn_sandboxed(
     let mut opts = SandboxOptions::new(profile, workspace);
     opts.deny_globs = input.deny_globs.unwrap_or_default();
     opts.env_allow = input.env_allow.unwrap_or_default();
-    opts.timeout = Some(Duration::from_millis(
-        input.timeout_ms.unwrap_or(120_000.0) as u64
-    ));
-    opts.memory_limit_mb = input.memory_limit_mb;
-    opts.process_limit = input.process_limit.or(Some(64));
+    // Guard: timeout_ms NaN/negative/0 cast sang u64 saturate về 0 →
+    // Duration::from_millis(0) sẽ timeout-kill child NGAY LẬP TỨC. Giá trị
+    // vô nghĩa → rơi về default 120s (đúng doc của timeout_ms).
+    let timeout_ms = input.timeout_ms.unwrap_or(120_000.0);
+    let timeout_ms = if timeout_ms.is_finite() && timeout_ms > 0.0 {
+        timeout_ms
+    } else {
+        120_000.0
+    };
+    opts.timeout = Some(Duration::from_millis(timeout_ms as u64));
+    // memory_limit_mb=0 → job memory limit 0 byte (mọi allocation fail) →
+    // coi như không set. process_limit=0 → AssignProcessToJobObject luôn
+    // fail (child tự thân đếm vào limit) → rơi về default 64.
+    opts.memory_limit_mb = input.memory_limit_mb.filter(|&mb| mb > 0);
+    opts.process_limit = Some(input.process_limit.filter(|&p| p > 0).unwrap_or(64));
+    opts.overlay_commit = input.overlay_commit.unwrap_or(false);
+    opts.io_write_limit_mb = input.io_write_limit_mb;
 
     let result = spawn_core(&command, &args, &opts)
         .map_err(|err| Error::new(Status::GenericFailure, err.to_string()))?;
@@ -104,6 +132,9 @@ pub fn spawn_sandboxed(
             })
             .collect(),
         blocked: result.blocked,
+        state: Some(result.state.to_string()),
+        overlay_dir: result.overlay_dir,
+        overlay_committed: Some(result.overlay_committed),
     })
 }
 

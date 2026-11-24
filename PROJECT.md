@@ -64,12 +64,11 @@ strictly-scoped proxy.
 | 10  | Quality loop / LLM-as-judge           | ✅ Done |
 | 11  | Hardening audit (44 findings)         | ✅ Done |
 
-## Current focus (v0.1.5 Trust Hardening)
+## Current focus (v0.0.2-alpha — chu kỳ mở 22/11/2026)
 
-- Unified version **0.1.5**
-- Honest tiered coverage gates (`docs/coverage-policy.md`)
-- Security + agents critical-path tests
-- Integrity CI job (version / artifacts / smells)
+- Chu kỳ trước **v0.0.2-preview** (T1–T6: patch engine codex, sandbox Windows, sqlite-vec hybrid search, rig engine opt-in) hoàn tất 15/11/2026 — chi tiết trong [`ROADMAP.md`](./ROADMAP.md).
+- Đã vệ sinh tài liệu 22/11/2026: docs organized (`design/`, `research/`, `findings/`, `plans/0.0.2-alpha/`), xóa 74 log rác.
+- **v0.0.2-alpha hoàn tất 24/11/2026**: hấp thụ kiến trúc từ 6 dự án ít sao nhất trong `refer_project/` vào các thành phần sẵn có — crate `ghita-pty`, sandbox v2 (`SandboxBackend` + CAS + overlay rollback), harness scoring 7 evidence states, `StandardRequest` + retry ladder, micro-batch stream, computer-use bridge. Review + debug toàn bộ: 0 P0, 2 P1 đã fix, 8 P2 đã fix. Nghiên cứu: `docs/plans/0.0.2-alpha/`.
 
 ## Previous focus (Phase 11)
 
@@ -92,7 +91,7 @@ strictly-scoped proxy.
 - [`README.md`](./README.md) — user-facing overview, screenshots, install.
 - [`SECURITY.md`](./SECURITY.md) — threat model, disclosure policy.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — PR conventions, branch model.
-- [`docs/architecture.md`](./docs/architecture.md) — deep-dive package map.
+- [`docs/docs/architecture.md`](./docs/docs/architecture.md) — deep-dive package map.
 - [`.agents/orchestrator/codebase_audit_report.md`](./.agents/orchestrator/codebase_audit_report.md) — current audit findings.
 
 ## Owners

@@ -6,6 +6,27 @@ export * from './vision/types.js';
 export { GuiGrounder } from './vision/grounding.js';
 export { VisionScreenshotAnalyzer } from './vision/analyzer.js';
 export { ActionParser } from './actionParser.js';
+
+// Track S4 — nut-js screen patterns (validate/clamp/waitFor/MatchRequest).
+export {
+  InvalidSearchRegionError,
+  clampRegionToScreen,
+  validateSearchRegion,
+  type Region,
+} from './screen/region.js';
+export {
+  DEFAULT_MATCH_CONFIDENCE,
+  createMatchRequest,
+  type MatchRequest,
+  type MatchRequestInput,
+  type MatchResult,
+} from './screen/match-request.js';
+export {
+  WaitAbortedError,
+  waitFor,
+  type WaitForAction,
+  type WaitForOptions,
+} from './screen/waitFor.js';
 export {
   HeadlessSearchScanner,
   type HeadlessSearchOptions,
@@ -13,7 +34,7 @@ export {
 } from './scanner/headlessSearch.js';
 export { UITarsBoundingBoxDetector, type UITarget } from './uitars/bounding-box-detector.js';
 
-export const COMPUTER_USE_VERSION = '0.0.1';
+export const COMPUTER_USE_VERSION = '0.0.2-alpha';
 
 export interface Point {
   x: number;

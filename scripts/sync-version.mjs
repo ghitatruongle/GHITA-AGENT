@@ -253,7 +253,14 @@ for (const entry of readdirSync(packagesRoot, { withFileTypes: true })) {
   const indexPath = join('packages', entry.name, 'src', 'index.ts');
   if (existsSync(join(root, indexPath))) versionConstantFiles.push(indexPath);
 }
-versionConstantFiles.push('packages/shared/src/constants.ts', 'packages/skills/src/types.ts');
+versionConstantFiles.push(
+  'packages/shared/src/constants.ts',
+  'packages/skills/src/types.ts',
+  // UI hiển thị version (H1.1): splash.html + i18n + tauri.conf.json đều suy
+  // ra từ hằng này, nên nó phải được bump cùng lúc — trước đây thiếu tên ở
+  // đây nên working tree kẹt 0.0.1 sau `--set`.
+  'apps/desktop/src/constants/version.ts',
+);
 
 for (const file of versionConstantFiles) {
   const full = join(root, file);

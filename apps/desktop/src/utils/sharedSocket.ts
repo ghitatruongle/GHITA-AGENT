@@ -12,6 +12,62 @@ import { useAppStore } from '../stores/appStore';
 let socket: Socket | null = null;
 let connectionPromise: Promise<Socket | null> | null = null;
 
+// Track S4 — computer-use bridge relay. The sidecar (agent path) runs in a
+// separate node.exe without `__TAURI__`, so whitelisted `computer_*` Tauri
+// commands are relayed through this trusted socket client. The result travels
+// back via the socket.io acknowledgement. The whitelist is defense in depth:
+// the sidecar bridge (computer-use-bridge.mjs) whitelists as well, and this
+// side must never become a generic Tauri invoke proxy for the sidecar process.
+const COMPUTER_USE_COMMANDS = new Set([
+  'computer_health_check',
+  'computer_get_screen_size',
+  'computer_screenshot',
+  'computer_move_mouse',
+  'computer_click',
+  'computer_type_text',
+  'computer_press_key',
+]);
+
+interface ComputerUseInvokePayload {
+  id?: unknown;
+  cmd?: unknown;
+  args?: Record<string, unknown>;
+}
+
+function registerComputerUseRelay(sock: Socket): void {
+  sock.on(
+    'computer_use_invoke',
+    async (payload: ComputerUseInvokePayload, ack?: (response: unknown) => void) => {
+      const respond = (response: Record<string, unknown>) => {
+        try {
+          ack?.(response);
+        } catch {
+          // Ack is optional — a disconnected requester must not crash the relay.
+        }
+      };
+      const { id, cmd, args } = payload ?? {};
+      if (typeof id !== 'string' || typeof cmd !== 'string' || !COMPUTER_USE_COMMANDS.has(cmd)) {
+        respond({
+          id: typeof id === 'string' ? id : null,
+          ok: false,
+          error: `[computer-use relay] command not allowed: ${String(cmd)}`,
+        });
+        return;
+      }
+      try {
+        const data = await invoke<unknown>(cmd, args ?? {});
+        respond({ id, ok: true, data });
+      } catch (err) {
+        respond({
+          id,
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    },
+  );
+}
+
 /**
  * Get or create the shared socket connection to the sidecar server.
  * Returns null if the server is not available.
@@ -45,6 +101,8 @@ export async function getSharedSocket(): Promise<Socket | null> {
         reconnectionDelayMax: 30000,
         auth: { token: sessionToken },
       });
+
+      registerComputerUseRelay(socket);
 
       // Automatically sync active workspace on connection/reconnection
       socket.on('connect', () => {

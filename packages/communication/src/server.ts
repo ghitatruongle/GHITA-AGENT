@@ -10,6 +10,7 @@ import { SOCKET_EVENTS, generateId } from '@ghita/shared';
 import type { DeviceInfo } from '@ghita/shared';
 import { PairingManager } from './pairing.js';
 import { ScreenCapture, type ScreenCaptureOptions } from './screen-capture.js';
+import { ChatChunkBatcher } from './chat-chunk-batcher.js';
 import type { ServerConfig, ServerEvents, PairedDevice, CommandPayload } from './types.js';
 import { ChannelPluginRegistry } from './channel-plugin-contract.js';
 
@@ -86,6 +87,9 @@ export class CommunicationServer {
   private pendingApprovals = new Map<string, (approved: boolean) => void>();
   readonly channelRegistry = new ChannelPluginRegistry();
 
+  /** Track S3 P3: micro-batcher for mobile chat_chunk deltas (16 chars / 10ms). */
+  private chatChunkBatcher: ChatChunkBatcher;
+
   private loadPairedDevices(): void {
     try {
       if (fs.existsSync(this.pairedDevicesFile)) {
@@ -120,7 +124,7 @@ export class CommunicationServer {
   private savePairedDevices(): void {
     try {
       const list = Array.from(this.connectedDevices.values())
-        .filter((d) => d.id && d.id !== 'cloud_session') 
+        .filter((d) => d.id && d.id !== 'cloud_session')
         .map((d) => ({
           id: d.id,
           name: d.name,
@@ -148,10 +152,28 @@ export class CommunicationServer {
         : DEFAULT_PAIRED_DEVICES_FILE);
     this.pairing = new PairingManager();
     this.screenCapture = new ScreenCapture({}, options);
+    this.chatChunkBatcher = this.createChatChunkBatcher();
+  }
+
+  /** Fresh micro-batcher bound to the current io instance (recreated per start). */
+  private createChatChunkBatcher(): ChatChunkBatcher {
+    return new ChatChunkBatcher(
+      (text) => {
+        if (!this.io) return;
+        this.io.to('paired-devices').emit(SOCKET_EVENTS.CHAT_CHUNK, {
+          text,
+          timestamp: Date.now(),
+        });
+      },
+      {
+        maxChars: this.config.chatChunkBatch?.maxChars,
+        maxDelayMs: this.config.chatChunkBatch?.maxDelayMs,
+      },
+    );
   }
 
   // Lifecycle
-  
+
   /**
    * Start the Socket.io server
    */
@@ -162,6 +184,10 @@ export class CommunicationServer {
     }
 
     this.loadPairedDevices();
+    // Track S3 P3: a previous stop() disposed the batcher — start() always
+    // has a live one bound to the current io.
+    this.chatChunkBatcher.dispose();
+    this.chatChunkBatcher = this.createChatChunkBatcher();
 
     const getLocalIP = (): string => {
       const interfaces = networkInterfaces();
@@ -404,6 +430,10 @@ export class CommunicationServer {
     this.disableGlobalCommandApproval();
     this.screenCapture.dispose();
     this.pairing.dispose();
+    // Track S3 P3: end-of-turn flush of pending mobile deltas, then stop the
+    // batcher timer.
+    this.chatChunkBatcher.flush();
+    this.chatChunkBatcher.dispose();
 
     if (process.env.NODE_ENV === 'test' && fs.existsSync(this.pairedDevicesFile)) {
       try {
@@ -495,7 +525,7 @@ export class CommunicationServer {
   }
 
   // Public API
-  
+
   /**
    * Register event callbacks
    */
@@ -597,6 +627,57 @@ export class CommunicationServer {
   }
 
   /**
+   * Track S3 P3: buffer a text delta for mobile `chat_chunk`. Deltas are
+   * micro-batched (16 chars / 10 ms, whichever comes first) to keep frame
+   * rate sane over Socket.IO.
+   */
+  broadcastChatChunk(text: string): void {
+    this.chatChunkBatcher.push(text);
+  }
+
+  /** Flush any pending chat_chunk buffer immediately (end of turn). */
+  flushChatChunks(): void {
+    this.chatChunkBatcher.flush();
+  }
+
+  /**
+   * Track S3 P2: broadcast a typed StreamObject on the `chat_chunk` wire.
+   * Text deltas go through the micro-batcher; every other kind (reasoning,
+   * tool-call, tool-result, tool-incomplete-result) flushes the pending text
+   * first to preserve ordering, then emits immediately.
+   */
+  broadcastStreamObject(obj: {
+    type?: string;
+    text?: string;
+    done?: boolean;
+    provider?: string;
+    model?: string;
+    toolCallId?: string;
+    reason?: string;
+    toolCalls?: Array<{ id?: string; name: string; arguments: Record<string, unknown> }>;
+    usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+    [key: string]: unknown;
+  }): void {
+    if (!this.io) return;
+    const isTextDelta = !obj.type || obj.type === 'text-delta';
+    if (isTextDelta) {
+      this.chatChunkBatcher.push(String(obj.text ?? ''));
+      // Terminal text-delta (done:true) must not linger in the batcher: the
+      // batcher emit only carries {text}, so a buffered final chunk would land
+      // up to 10ms AFTER the caller's chat_done event (and its done flag is
+      // carried by chat_done, not by the batched frame). Flush immediately so
+      // ordering stays: last text → done.
+      if (obj.done === true) {
+        this.chatChunkBatcher.flush();
+      }
+      return;
+    }
+    // Ordering: text queued before a structural event must land first.
+    this.chatChunkBatcher.flush();
+    this.io.to('paired-devices').emit(SOCKET_EVENTS.CHAT_CHUNK, { ...obj, timestamp: Date.now() });
+  }
+
+  /**
    * Broadcast terminal command approval requirement
    */
   broadcastRequireApproval(data: { id: string; command: string; timestamp: number }): void {
@@ -605,7 +686,7 @@ export class CommunicationServer {
   }
 
   // Socket Event Handlers
-  
+
   private registerSocketHandlers(): void {
     if (!this.io) return;
 
@@ -619,7 +700,7 @@ export class CommunicationServer {
         if (existingDevice) {
           existingDevice.socketId = socket.id;
           existingDevice.lastSeen = Date.now();
-          
+
           // reconnecting device actually receives broadcasts (chat, status,
           // screenshot, approvals). Previously the socketId was updated but
           // the room membership was never granted, leaving the device
@@ -868,7 +949,7 @@ export class CommunicationServer {
     } else if (deviceId) {
       // Session Resumption / Reconnection
       device = this.connectedDevices.get(deviceId);
-      
+
       // comparison — the previous `authToken === device.secret` leaked timing
       // information that could help brute-force a session token.
       if (device && device.secret && authToken && secureStringEqual(authToken, device.secret)) {

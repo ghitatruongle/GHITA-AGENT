@@ -1,8 +1,17 @@
 // v0.4.9 A3: Agent Work Loop Harness — Session Evidence Report
 //
 // Renders a WorkLoopReview into a durable, reader-safe Markdown report. No raw
-// prompts, commands, paths, or secrets are emitted — only bounded summaries.
+// prompts, commands, paths, or secrets are emitted: every free-text field is
+// sanitized through InputSanitizer (packages/security) and the shared
+// pii-redaction middleware — nothing is reimplemented here. The emission bar
+// is re-enforced at render time so hand-built reviews cannot bypass it.
 
+import { InputSanitizer } from '@ghita/security';
+import type { ManagedAgent } from '../runtime.js';
+import type { MiddlewareContext } from '../middleware/types.js';
+import { createPiiRedactionMiddleware } from '../middleware/context-middleware.js';
+import { HumanMessage } from '../messages/message.js';
+import { passesEmissionBar } from './work-loop.js';
 import type { WorkLoopReview } from './types.js';
 
 const DIMENSION_LABELS: Record<string, string> = {
@@ -13,14 +22,37 @@ const DIMENSION_LABELS: Record<string, string> = {
   'learning-capture': 'Learning Capture',
 };
 
+const sanitizer = new InputSanitizer();
+const piiRedaction = createPiiRedactionMiddleware();
+
+/**
+ * Sanitize one free-text field for the reader-safe report: strip injected
+ * scripts/handlers via InputSanitizer.scan, then redact PII (emails, API
+ * keys, tokens, private keys…) through the shared pii-redaction middleware.
+ */
+async function sanitizeText(text: string): Promise<string> {
+  const { cleaned } = sanitizer.scan(text, 'session-report');
+  const context: MiddlewareContext = {
+    // The pii-redaction middleware only reads `messages`; a bare agent stub
+    // is enough for this offline, report-local pass.
+    agent: {} as unknown as ManagedAgent,
+    messages: [new HumanMessage(cleaned)],
+    metadata: {},
+  };
+  const result = await piiRedaction.preModel?.(context);
+  return result?.messages?.[0]?.getText() ?? cleaned;
+}
+
 /**
  * Render a WorkLoopReview into a Markdown session-evidence report.
  */
-export function renderSessionReport(review: WorkLoopReview): string {
+export async function renderSessionReport(review: WorkLoopReview): Promise<string> {
   const lines: string[] = [];
-  lines.push(`# Agent Work Loop Report — ${review.episodeId}`);
+  const episodeId = await sanitizeText(review.episodeId);
+  const goal = await sanitizeText(review.goal);
+  lines.push(`# Agent Work Loop Report — ${episodeId}`);
   lines.push('');
-  lines.push(`**Goal:** ${review.goal}`);
+  lines.push(`**Goal:** ${goal}`);
   lines.push(`**Loop Effectiveness:** ${review.loopEffectiveness}/100`);
   if (review.sessionLimited) {
     lines.push('');
@@ -44,21 +76,30 @@ export function renderSessionReport(review: WorkLoopReview): string {
     lines.push(`### ${label}`);
     lines.push('');
     for (const check of dim.checks) {
-      lines.push(`- **${check.checkId}** — \`${check.state}\`: ${check.summary}`);
+      const summary = await sanitizeText(check.summary);
+      lines.push(`- **${check.checkId}** — \`${check.state}\`: ${summary}`);
     }
     lines.push('');
   }
 
-  if (review.findings.length > 0) {
+  // Emission bar re-check — findings missing any bound field are not rendered.
+  const emittable = review.findings.filter(passesEmissionBar);
+  if (emittable.length > 0) {
     lines.push('## Findings');
     lines.push('');
-    for (const f of review.findings) {
+    for (const f of emittable) {
       const progress = f.repairProgress ? ` _(repair: ${f.repairProgress})_` : '';
+      const [problem, impact, repair, validationRoute] = await Promise.all([
+        sanitizeText(f.problem),
+        sanitizeText(f.impact),
+        sanitizeText(f.repair),
+        sanitizeText(f.validationRoute),
+      ]);
       lines.push(`### [${f.severity.toUpperCase()}] ${f.id} — ${f.primaryCheck}${progress}`);
-      lines.push(`- **Problem:** ${f.problem}`);
-      lines.push(`- **Impact:** ${f.impact}`);
-      lines.push(`- **Repair:** ${f.repair}`);
-      lines.push(`- **Validation:** ${f.validationRoute}`);
+      lines.push(`- **Problem:** ${problem}`);
+      lines.push(`- **Impact:** ${impact}`);
+      lines.push(`- **Repair:** ${repair}`);
+      lines.push(`- **Validation:** ${validationRoute}`);
       lines.push('');
     }
   } else {

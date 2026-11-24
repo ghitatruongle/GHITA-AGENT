@@ -60,4 +60,12 @@ export type {
   WsMuxStats,
 } from './ws/index.js';
 
-export const COMMUNICATION_VERSION = '0.0.1';
+/** Track S3 P3 — micro-batcher behind broadcastChatChunk (16 chars / 10 ms). */
+export {
+  ChatChunkBatcher,
+  DEFAULT_CHAT_CHUNK_MAX_CHARS,
+  DEFAULT_CHAT_CHUNK_MAX_DELAY_MS,
+} from './chat-chunk-batcher.js';
+export type { ChatChunkBatcherOptions } from './chat-chunk-batcher.js';
+
+export const COMMUNICATION_VERSION = '0.0.2-alpha';

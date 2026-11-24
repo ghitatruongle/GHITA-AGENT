@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["secscan", "retrieval", "codegraph", "sandbox", "tokenizer", "docloader", "store", "patch", "engine"]
+members = ["secscan", "retrieval", "codegraph", "sandbox", "tokenizer", "docloader", "store", "patch", "engine", "pty"]
 
 [workspace.package]
-version = "0.0.1"
+version = "0.0.2-alpha"
 edition = "2021"
 license = "MIT"
 

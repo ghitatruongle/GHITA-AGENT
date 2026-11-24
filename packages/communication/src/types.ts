@@ -15,6 +15,11 @@ export interface ServerConfig {
     methods?: string[];
   };
   pairedDevicesFile?: string;
+  /** Track S3 P3: mobile chat_chunk micro-batch bounds (defaults: 16 chars / 10 ms). */
+  chatChunkBatch?: {
+    maxChars?: number;
+    maxDelayMs?: number;
+  };
 }
 
 // --- Paired Device (extended from shared DeviceInfo) ---

@@ -8,11 +8,8 @@ import type {
   EmbeddingManyResponse,
 } from '../types.js';
 import { BaseProvider } from './base.js';
-import {
-  extractOpenAIToolCalls,
-  openAIToolFields,
-  toOpenAIChatMessages,
-} from './openai-tool-calling.js';
+import { extractOpenAIToolCalls } from './openai-tool-calling.js';
+import { renderOpenAIChatRequest } from '../standard-request.js';
 
 const OPENAI_MODELS = [
   'gpt-4o',
@@ -41,6 +38,9 @@ export class OpenAIProvider extends BaseProvider {
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
+    const body = renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+      samplingExtras: true,
+    });
 
     const response = await fetch(this.getChatCompletionsUrl(), {
       method: 'POST',
@@ -48,15 +48,7 @@ export class OpenAIProvider extends BaseProvider {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        top_p: options?.topP,
-        stop: options?.stop,
-      }),
+      body: JSON.stringify(body),
       signal: options?.signal,
     });
 
@@ -100,6 +92,9 @@ export class OpenAIProvider extends BaseProvider {
   async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<AIStreamChunk> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
+    const body = renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+      stream: true,
+    });
 
     const response = await fetch(this.getChatCompletionsUrl(), {
       method: 'POST',
@@ -107,14 +102,7 @@ export class OpenAIProvider extends BaseProvider {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        stream: true,
-      }),
+      body: JSON.stringify(body),
       signal: options?.signal,
     });
 
@@ -161,12 +149,14 @@ export class OpenAIProvider extends BaseProvider {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
+          const terminalCalls = completedToolCalls();
           yield {
             content: '',
             done: true,
             provider: 'openai',
             model,
-            toolCalls: completedToolCalls(),
+            type: terminalCalls.length ? 'tool-call' : 'text-delta',
+            toolCalls: terminalCalls,
           };
           return;
         }
@@ -180,12 +170,14 @@ export class OpenAIProvider extends BaseProvider {
           if (!trimmed || !trimmed.startsWith('data: ')) continue;
           const data = trimmed.slice(6);
           if (data === '[DONE]') {
+            const terminalCalls = completedToolCalls();
             yield {
               content: '',
               done: true,
               provider: 'openai',
               model,
-              toolCalls: completedToolCalls(),
+              type: terminalCalls.length ? 'tool-call' : 'text-delta',
+              toolCalls: terminalCalls,
             };
             return;
           }
@@ -195,6 +187,10 @@ export class OpenAIProvider extends BaseProvider {
               choices: Array<{
                 delta: {
                   content?: string;
+                  /** Reasoning models (o-series, DeepSeek-style compat). */
+                  reasoning_content?: string;
+                  /** OpenRouter-style reasoning delta. */
+                  reasoning?: string;
                   tool_calls?: Array<{
                     index?: number;
                     id?: string;
@@ -206,7 +202,18 @@ export class OpenAIProvider extends BaseProvider {
             const delta = parsed.choices[0]?.delta;
             const content = delta?.content;
             if (content) {
-              yield { content, done: false, provider: 'openai', model };
+              yield { content, done: false, provider: 'openai', model, type: 'text-delta' };
+            }
+            // Track S3 P2: reasoning deltas become first-class StreamObjects.
+            const reasoningText = delta?.reasoning_content ?? delta?.reasoning;
+            if (reasoningText) {
+              yield {
+                content: reasoningText,
+                done: false,
+                provider: 'openai',
+                model,
+                type: 'reasoning',
+              };
             }
             for (const toolDelta of delta?.tool_calls ?? []) {
               const index = toolDelta.index ?? 0;

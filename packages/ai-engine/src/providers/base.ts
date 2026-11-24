@@ -10,6 +10,11 @@ import type {
 } from '../types.js';
 import { AIUnsupportedFeatureError } from '../errors/index.js';
 import { KeyManager } from '../key-manager.js';
+import {
+  toStandardRequest,
+  type StandardRequest,
+  type StandardWireFormat,
+} from '../standard-request.js';
 import type { ProviderCapabilities } from './types.js';
 
 export abstract class BaseProvider implements AIProvider {
@@ -23,7 +28,7 @@ export abstract class BaseProvider implements AIProvider {
 
   constructor(config: ProviderConfig) {
     this.config = config;
-    
+
     const keys =
       config.apiKeys && config.apiKeys.length > 0
         ? config.apiKeys
@@ -83,6 +88,17 @@ export abstract class BaseProvider implements AIProvider {
     this.keyManager.reportFailure(key, statusCode);
   }
 
+  /**
+   * Track S2 switch-key ladder: pick a DIFFERENT healthy key for the next
+   * attempt. The failed key is already cooling down (reportKeyFailure ran in
+   * the provider error path), so KeyManager rotation naturally yields another
+   * key; `exclude` additionally rules out keys this request already tried.
+   * Returns null when no eligible alternative exists.
+   */
+  switchKey(exclude: ReadonlySet<string> = new Set()): string | null {
+    return this.keyManager.getNextKey(exclude);
+  }
+
   /** Get key manager for health status reporting */
   getKeyManager(): KeyManager {
     return this.keyManager;
@@ -90,6 +106,25 @@ export abstract class BaseProvider implements AIProvider {
 
   protected getBaseUrl(): string | undefined {
     return this.config.baseUrl;
+  }
+
+  /** Wire-format family this provider speaks. Override in non-OpenAI wires. */
+  protected wireFormat(): StandardWireFormat {
+    return 'openai';
+  }
+
+  /** Build the canonical StandardRequest for this provider's next wire call. */
+  protected buildStandardRequest(
+    messages: ChatMessage[],
+    options: ChatOptions | undefined,
+    model: string,
+  ): StandardRequest {
+    return toStandardRequest(messages, options, {
+      wire: this.wireFormat(),
+      model,
+      maxTokens: this.getMaxTokens(options),
+      temperature: this.getTemperature(options),
+    });
   }
 
   async embed(_text: string, _options?: { model?: string }): Promise<EmbeddingResponse> {

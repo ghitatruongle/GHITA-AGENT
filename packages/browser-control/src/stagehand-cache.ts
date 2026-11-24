@@ -16,7 +16,7 @@
 //
 // GHI CHÚ: `track7/act-cache.ts` đã có sẵn một bản cache cùng mục đích (SQLite,
 // TTL, khoá theo intent+URL+DOM signature) nhưng KHÔNG được nối vào đâu cả.
-// Hai bản nên gộp ở mốc sau — xem docs/research-demo2-10-points.md.
+// Hai bản nên gộp ở mốc sau — xem docs/research/research-demo2-10-points.md.
 
 /** Kiểu hàm LLM mà AIPageController dùng (khớp AIBrowserContext.llm). */
 import { createHash } from 'node:crypto';

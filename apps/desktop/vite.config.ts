@@ -14,7 +14,11 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: /^(node:)?(fs|path|os|crypto|url|net|tls|http|https|child_process|util|events|readline|stream|buffer|string_decoder|zlib|inspector|diagnostics_channel|worker_threads|module|timers|dns|process)(\/.*)?$/,
+        // `async_hooks`/`perf_hooks` are pulled in by Track S2 (TokenUsageTracker
+        // via AsyncLocalStorage) — without them here Vite externalises the
+        // import to `__vite-browser-external` and the build fails on the named
+        // export.
+        find: /^(node:)?(fs|path|os|crypto|url|net|tls|http|https|child_process|util|events|readline|stream|buffer|string_decoder|zlib|inspector|diagnostics_channel|worker_threads|module|timers|dns|process|async_hooks|perf_hooks)(\/.*)?$/,
         replacement: shimPath,
       },
       { find: /^better-sqlite3$/, replacement: shimPath },

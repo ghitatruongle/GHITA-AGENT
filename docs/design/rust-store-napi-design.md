@@ -7,15 +7,15 @@
 
 ### 1.1 Napi surface (`KvStoreAddon`)
 
-| Phương thức | Chữ ký | Ghi chú |
-|---|---|---|
-| `open` | `new KvStoreAddon(path: string)` | `:memory:` giữ nguyên; lỗi mở → napi Error |
-| `get` | `get(key: string): string \| null` | `OptionalExtension` như lib.rs |
-| `set` | `set(key: string, value: string): void` | upsert; cập nhật `updated_at` |
-| `del` | `del(key: string): boolean` | trả có xóa được không |
-| `list` | `list(prefix?: string): Array<[string, string]>` | sắp theo key; prefix dùng LIKE 'prefix%' escape |
-| `size` | `size(): number` | COUNT(*) |
-| `flush` | `flush(): void` | `PRAGMA wal_checkpoint(PASSIVE)` |
+| Phương thức | Chữ ký                                           | Ghi chú                                         |
+| ----------- | ------------------------------------------------ | ----------------------------------------------- |
+| `open`      | `new KvStoreAddon(path: string)`                 | `:memory:` giữ nguyên; lỗi mở → napi Error      |
+| `get`       | `get(key: string): string \| null`               | `OptionalExtension` như lib.rs                  |
+| `set`       | `set(key: string, value: string): void`          | upsert; cập nhật `updated_at`                   |
+| `del`       | `del(key: string): boolean`                      | trả có xóa được không                           |
+| `list`      | `list(prefix?: string): Array<[string, string]>` | sắp theo key; prefix dùng LIKE 'prefix%' escape |
+| `size`      | `size(): number`                                 | COUNT(*)                                        |
+| `flush`     | `flush(): void`                                  | `PRAGMA wal_checkpoint(PASSIVE)`                |
 
 Quy tắc an toàn giống tokenizer napi: không paníc qua FFI — mọi lỗi rusqlite map thành napi `Error`; không giữ lock xuyên call async.
 
@@ -32,7 +32,7 @@ Quy tắc an toàn giống tokenizer napi: không paníc qua FFI — mọi lỗi
 - So sánh 3 đường: (a) KvStore native qua FFI, (b) rusqlite trực tiếp trong Rust (đo trần FFI overhead), (c) JSON file hiện tại.
 - Ngưỡng gọi là "đáng wire": native ≥ 1.5x JSON ở `list` 10k và không chậm hơn JSON ở `set` (FFI overhead ~µs, SQLite phải thắng ở IO).
 - Script: `scripts/bench-native.mjs` thêm probe `[F] store` — đọc theo pattern probe `[D] ast-parse` hiện có.
-- Tiêu chí xong 0.0.2: parity test native↔JS (cùng seed cho cùng kết quả), `cargo clippy -D warnings` sạch, bench đạt ngưỡng, addons build được trên Windows-gnu dyn-symbols (như docs/perf-rust.md §2 ghi).
+- Tiêu chí xong 0.0.2: parity test native↔JS (cùng seed cho cùng kết quả), `cargo clippy -D warnings` sạch, bench đạt ngưỡng, addons build được trên Windows-gnu dyn-symbols (như docs/design/perf-rust.md §2 ghi).
 
 ## 3) Rủi ro
 

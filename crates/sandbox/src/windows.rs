@@ -25,6 +25,13 @@ pub fn available() -> bool {
 /// v1: restrict_writes giữ no-op có chủ đích — chặn path-level thực sự cần
 /// provisioning của codex sandbox (backlog R2). Spawn-level enforcement vẫn
 /// là Job Object containment của đường supervised.
+///
+/// R2 (Track R2, P2): containment path-level cho ReadOnly/Strict được cung
+/// cấp bởi overlay rollback (`overlay.rs`) — write tương đối đổ vào `upper/`,
+/// rollback = bỏ upper, commit = merge về base. Hàm này VẪN no-op vì ACL
+/// deny-write thật vẫn bị chặn bởi 3 blocker upstream ghi ở doc module
+/// (đã verify lại tại P2: chưa có codex sandbox dependency nào trong
+/// workspace). Khi 3 blocker được gỡ, restrict_writes mới có bản thật.
 pub fn restrict_writes(_write_roots: &[PathBuf]) -> std::io::Result<()> {
     Ok(())
 }

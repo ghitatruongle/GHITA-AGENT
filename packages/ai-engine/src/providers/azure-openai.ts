@@ -12,12 +12,8 @@ import type { AIProviderType, AIStreamChunk } from '@ghita/shared';
 import type { ChatMessage, ChatOptions, ChatResponse, ProviderConfig } from '../types.js';
 import { BaseProvider } from './base.js';
 import type { ProviderCapabilities } from './types.js';
-import {
-  extractOpenAIToolCalls,
-  OpenAIStreamToolAccumulator,
-  openAIToolFields,
-  toOpenAIChatMessages,
-} from './openai-tool-calling.js';
+import { extractOpenAIToolCalls, OpenAIStreamToolAccumulator } from './openai-tool-calling.js';
+import { renderOpenAIChatRequest } from '../standard-request.js';
 
 const DEFAULT_API_VERSION = '2024-06-01';
 
@@ -69,15 +65,13 @@ export class AzureOpenAIProvider extends BaseProvider {
         'Content-Type': 'application/json',
         'api-key': apiKey,
       },
-      body: JSON.stringify({
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        top_p: options?.topP,
-        stop: options?.stop,
-        stream: false,
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, deployment), {
+          stream: false,
+          samplingExtras: true,
+          omitModel: true,
+        }),
+      ),
       signal: options?.signal,
     });
 
@@ -125,13 +119,12 @@ export class AzureOpenAIProvider extends BaseProvider {
         'Content-Type': 'application/json',
         'api-key': apiKey,
       },
-      body: JSON.stringify({
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        stream: true,
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, deployment), {
+          stream: true,
+          omitModel: true,
+        }),
+      ),
       signal: options?.signal,
     });
 

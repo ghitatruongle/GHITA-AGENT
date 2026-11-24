@@ -1,11 +1,8 @@
 import type { AIStreamChunk } from '@ghita/shared';
 import type { ChatMessage, ChatOptions, ChatResponse, ProviderConfig } from '../types.js';
 import { BaseProvider } from './base.js';
-import {
-  anthropicToolFields,
-  extractAnthropicToolCalls,
-  toAnthropicMessages,
-} from './anthropic-tool-calling.js';
+import { extractAnthropicToolCalls } from './anthropic-tool-calling.js';
+import { renderAnthropicMessagesRequest } from '../standard-request.js';
 
 const ANTHROPIC_MODELS = [
   'claude-sonnet-4-20250514',
@@ -24,6 +21,10 @@ export class AnthropicProvider extends BaseProvider {
     super(config);
   }
 
+  protected override wireFormat() {
+    return 'anthropic' as const;
+  }
+
   async isReady(): Promise<boolean> {
     return this.keyManager.hasHealthyKey();
   }
@@ -31,19 +32,9 @@ export class AnthropicProvider extends BaseProvider {
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
-
-    const systemMsgs = messages.filter((m) => m.role === 'system');
-    const systemContent = systemMsgs.map((m) => m.content).join('\n\n');
-    const body: Record<string, unknown> = {
-      model,
-      max_tokens: this.getMaxTokens(options),
-      messages: toAnthropicMessages(messages),
-      ...anthropicToolFields(options),
-    };
-
-    if (systemContent) {
-      body['system'] = systemContent;
-    }
+    const body = renderAnthropicMessagesRequest(
+      this.buildStandardRequest(messages, options, model),
+    );
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -94,20 +85,12 @@ export class AnthropicProvider extends BaseProvider {
   async *chatStream(messages: ChatMessage[], options?: ChatOptions): AsyncGenerator<AIStreamChunk> {
     const apiKey = this.getApiKey();
     const model = this.getModel(options);
-
-    const systemMsgs = messages.filter((m) => m.role === 'system');
-    const systemContent = systemMsgs.map((m) => m.content).join('\n\n');
-    const body: Record<string, unknown> = {
-      model,
-      max_tokens: this.getMaxTokens(options),
-      messages: toAnthropicMessages(messages),
-      ...anthropicToolFields(options),
-      stream: true,
-    };
-
-    if (systemContent) {
-      body['system'] = systemContent;
-    }
+    const body = renderAnthropicMessagesRequest(
+      this.buildStandardRequest(messages, options, model),
+      {
+        stream: true,
+      },
+    );
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -163,12 +146,14 @@ export class AnthropicProvider extends BaseProvider {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
+          const terminalCalls = completedToolCalls();
           yield {
             content: '',
             done: true,
             provider: 'anthropic',
             model,
-            toolCalls: completedToolCalls(),
+            type: terminalCalls.length ? 'tool-call' : 'text-delta',
+            toolCalls: terminalCalls,
           };
           return;
         }
@@ -191,7 +176,13 @@ export class AnthropicProvider extends BaseProvider {
                 id?: string;
                 name?: string;
               };
-              delta?: { type: string; text?: string; partial_json?: string };
+              delta?: {
+                type: string;
+                text?: string;
+                partial_json?: string;
+                /** Extended-thinking models stream reasoning via thinking_delta. */
+                thinking?: string;
+              };
             };
 
             if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
@@ -200,6 +191,23 @@ export class AnthropicProvider extends BaseProvider {
                 done: false,
                 provider: 'anthropic',
                 model,
+                type: 'text-delta',
+              };
+            }
+
+            // Track S3 P2: thinking blocks were silently dropped before —
+            // emit them as `reasoning` StreamObjects.
+            if (
+              parsed.type === 'content_block_delta' &&
+              parsed.delta?.type === 'thinking_delta' &&
+              parsed.delta.thinking
+            ) {
+              yield {
+                content: parsed.delta.thinking,
+                done: false,
+                provider: 'anthropic',
+                model,
+                type: 'reasoning',
               };
             }
 
@@ -224,12 +232,14 @@ export class AnthropicProvider extends BaseProvider {
             }
 
             if (parsed.type === 'message_stop') {
+              const terminalCalls = completedToolCalls();
               yield {
                 content: '',
                 done: true,
                 provider: 'anthropic',
                 model,
-                toolCalls: completedToolCalls(),
+                type: terminalCalls.length ? 'tool-call' : 'text-delta',
+                toolCalls: terminalCalls,
               };
               return;
             }

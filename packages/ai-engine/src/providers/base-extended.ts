@@ -9,6 +9,7 @@ import {
   openAIToolFields,
   toOpenAIChatMessages,
 } from './openai-tool-calling.js';
+import { renderOpenAIChatRequest, type StandardRequest } from '../standard-request.js';
 
 type BaseProviderClass = abstract new (config: ProviderConfig) => LLMProvider;
 
@@ -60,20 +61,18 @@ export function defineVendor(
       );
       const body = spec.transformRequest
         ? spec.transformRequest(messages, options)
-        : {
-            model,
-            messages: toOpenAIChatMessages(messages),
-            ...openAIToolFields(options),
-            max_tokens: (
-              this as unknown as { getMaxTokens: (o?: ChatOptions) => number }
-            ).getMaxTokens(options),
-            temperature: (
-              this as unknown as { getTemperature: (o?: ChatOptions) => number }
-            ).getTemperature(options),
-            top_p: options?.topP,
-            stop: options?.stop,
-            stream: false,
-          };
+        : renderOpenAIChatRequest(
+            (
+              this as unknown as {
+                buildStandardRequest: (
+                  messages: ChatMessage[],
+                  options: ChatOptions | undefined,
+                  model: string,
+                ) => StandardRequest;
+              }
+            ).buildStandardRequest(messages, options, model),
+            { stream: false, samplingExtras: true },
+          );
       const headers = this.buildVendorHeaders(apiKey);
       const response = await fetch(spec.chatUrl, {
         method: 'POST',
@@ -123,22 +122,32 @@ export function defineVendor(
       const model = (this as unknown as { getModel: (o?: ChatOptions) => string }).getModel(
         options,
       );
-      const baseBody = spec.transformRequest
-        ? (spec.transformRequest(messages, options) as Record<string, unknown>)
-        : {};
-      const body = {
-        ...baseBody,
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: (this as unknown as { getMaxTokens: (o?: ChatOptions) => number }).getMaxTokens(
-          options,
-        ),
-        temperature: (
-          this as unknown as { getTemperature: (o?: ChatOptions) => number }
-        ).getTemperature(options),
-        stream: true,
-      };
+      const body: Record<string, unknown> = spec.transformRequest
+        ? {
+            ...(spec.transformRequest(messages, options) as Record<string, unknown>),
+            model,
+            messages: toOpenAIChatMessages(messages),
+            ...openAIToolFields(options),
+            max_tokens: (
+              this as unknown as { getMaxTokens: (o?: ChatOptions) => number }
+            ).getMaxTokens(options),
+            temperature: (
+              this as unknown as { getTemperature: (o?: ChatOptions) => number }
+            ).getTemperature(options),
+            stream: true,
+          }
+        : renderOpenAIChatRequest(
+            (
+              this as unknown as {
+                buildStandardRequest: (
+                  messages: ChatMessage[],
+                  options: ChatOptions | undefined,
+                  model: string,
+                ) => StandardRequest;
+              }
+            ).buildStandardRequest(messages, options, model),
+            { stream: true },
+          );
       const response = await fetch(spec.chatUrl, {
         method: 'POST',
         headers: this.buildVendorHeaders(apiKey),

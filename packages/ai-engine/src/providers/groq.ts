@@ -5,12 +5,8 @@ import type { AIStreamChunk } from '@ghita/shared';
 import type { ChatMessage, ChatOptions, ChatResponse, ProviderConfig } from '../types.js';
 import { BaseProvider } from './base.js';
 import type { ProviderCapabilities } from './types.js';
-import {
-  extractOpenAIToolCalls,
-  OpenAIStreamToolAccumulator,
-  openAIToolFields,
-  toOpenAIChatMessages,
-} from './openai-tool-calling.js';
+import { extractOpenAIToolCalls, OpenAIStreamToolAccumulator } from './openai-tool-calling.js';
+import { renderOpenAIChatRequest } from '../standard-request.js';
 
 const GROQ_MODELS = [
   'llama-3.3-70b-versatile',
@@ -60,15 +56,11 @@ export class GroqProvider extends BaseProvider {
     const response = await fetch(this.getChatUrl(), {
       method: 'POST',
       headers: this.buildHeaders(apiKey),
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        top_p: options?.topP,
-        stop: options?.stop,
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+          samplingExtras: true,
+        }),
+      ),
       signal: options?.signal,
     });
 
@@ -116,14 +108,11 @@ export class GroqProvider extends BaseProvider {
     const response = await fetch(this.getChatUrl(), {
       method: 'POST',
       headers: this.buildHeaders(apiKey),
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        stream: true,
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+          stream: true,
+        }),
+      ),
       signal: options?.signal,
     });
 

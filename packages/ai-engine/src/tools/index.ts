@@ -8,6 +8,8 @@ import {
   grepSearch,
   runCommand,
 } from './workspace-tools.js';
+import { ToolApprovalManager } from '../tool-calling/approvals.js';
+import { AgentError } from '../errors/index.js';
 
 export { WebSearchTool } from './web-search.js';
 export type { SearchResult, SearchResponse } from './web-search.js';
@@ -23,6 +25,134 @@ export interface BuiltInTool {
   description: string;
   parameters: unknown;
   execute: (args: Record<string, unknown>) => Promise<string>;
+}
+
+// --- Track S3 P3: `choose` — human-in-the-loop decision tool ---
+//
+// The model asks the user to pick from 2-8 options and the run PAUSES until
+// the user decides. Reuses the existing ToolApprovalManager (awaitDecision,
+// deny-default) and the require_approval / approve_command event vocabulary —
+// no new approval machinery.
+
+/** Payload a host (sidecar / mobile bus) receives when `choose` starts waiting. */
+export interface ChooseRequestPayload {
+  id: string;
+  question: string;
+  options: string[];
+  allowCustom: boolean;
+}
+
+interface ChooseHostGlobals {
+  chooseRequestHandler?: (payload: ChooseRequestPayload) => void;
+}
+
+export const CHOOSE_TIMEOUT_MS = 60_000;
+const CHOOSE_DECISION_PREFIX = 'choice:';
+
+/** Shared approval manager for every `choose` invocation. */
+const chooseApprovals = new ToolApprovalManager({ timeoutMs: CHOOSE_TIMEOUT_MS });
+
+export function getChooseApprovalManager(): ToolApprovalManager {
+  return chooseApprovals;
+}
+
+/**
+ * Host-side resolver: feed the user's decision back into the pending `choose`
+ * request. `choice` is the picked option text (or free text when allowCustom).
+ * Wire-compatible with the existing approve_command / reject_command events —
+ * the sidecar just calls this (or `approve(id)` for the default option).
+ */
+export function resolveChoose(id: string, approved: boolean, choice?: string): boolean {
+  if (approved) {
+    return chooseApprovals.approve(
+      id,
+      choice !== undefined ? `${CHOOSE_DECISION_PREFIX}${choice}` : 'user',
+    );
+  }
+  return chooseApprovals.deny(id, choice ?? 'user');
+}
+
+function chooseError(
+  message: string,
+  code: 'invalid_request' | 'auth',
+  details?: unknown,
+): AgentError {
+  return new AgentError(message, { code, provider: 'choose', retryable: false, details });
+}
+
+/** Execute the `choose` tool: broadcast the question, wait, report the pick. */
+export async function executeChoose(args: Record<string, unknown>): Promise<string> {
+  const question = String(args.question ?? '').trim();
+  const options = Array.isArray(args.options) ? args.options.map((o) => String(o)) : [];
+  const allowCustom = args.allowCustom === true;
+
+  if (!question) {
+    throw chooseError('choose: "question" is required', 'invalid_request');
+  }
+  if (options.length < 2 || options.length > 8 || options.some((o) => !o.trim())) {
+    throw chooseError('choose: "options" must contain 2-8 non-empty choices', 'invalid_request');
+  }
+
+  const request = chooseApprovals.request('choose', { question, options, allowCustom }, 'choose');
+  const host = globalThis as unknown as ChooseHostGlobals;
+  if (typeof host.chooseRequestHandler === 'function') {
+    try {
+      host.chooseRequestHandler({
+        id: request.call.id,
+        question,
+        options,
+        allowCustom,
+      });
+    } catch (err) {
+      console.warn('[choose] chooseRequestHandler failed:', err);
+    }
+  }
+
+  const decision = await chooseApprovals.awaitDecision(request.call.id);
+  if (decision.state !== 'approved') {
+    throw chooseError(`User declined to answer: "${question}"`, 'auth', {
+      decidedBy: decision.decidedBy ?? 'timeout',
+      state: decision.state,
+    });
+  }
+
+  const decidedBy = decision.decidedBy ?? '';
+  let selected = '';
+  let selectedIndex = -1;
+  if (decidedBy.startsWith(CHOOSE_DECISION_PREFIX)) {
+    const raw = decidedBy.slice(CHOOSE_DECISION_PREFIX.length);
+    const index = options.indexOf(raw);
+    if (index >= 0) {
+      selected = raw;
+      selectedIndex = index;
+    } else if (allowCustom && raw) {
+      // Free-text answer from the user.
+      selected = raw;
+    } else {
+      // Plain approve (no encoded choice, e.g. desktop Approve button) or an
+      // unrecognized choice — fall back to the first option.
+      selected = options[0] ?? '';
+      selectedIndex = 0;
+    }
+  } else {
+    // Approved by session-default or a bare user approve.
+    selected = options[0] ?? '';
+    selectedIndex = 0;
+  }
+
+  return JSON.stringify(
+    {
+      approved: true,
+      question,
+      options,
+      selected,
+      selectedIndex,
+      customAnswer: selectedIndex === -1,
+      decidedBy,
+    },
+    null,
+    2,
+  );
 }
 
 export function createBuiltInTools(): BuiltInTool[] {
@@ -191,6 +321,31 @@ export function createBuiltInTools(): BuiltInTool[] {
         const timeoutMs = args.timeoutMs !== undefined ? Number(args.timeoutMs) : undefined;
         return await runCommand({ command, timeoutMs });
       },
+    },
+    {
+      name: 'choose',
+      description:
+        'Ask the user to pick one option from 2-8 choices. The agent run pauses until the user answers; returns the option the user selected. Use for any decision that needs human input.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: {
+            type: 'string',
+            description: 'The question to show the user',
+          },
+          options: {
+            type: 'array',
+            items: { type: 'string' },
+            description: '2-8 answer options the user can pick from',
+          },
+          allowCustom: {
+            type: 'boolean',
+            description: 'Whether the user may answer with free text instead of the listed options',
+          },
+        },
+        required: ['question', 'options'],
+      },
+      execute: async (args) => await executeChoose(args),
     },
   ];
 }

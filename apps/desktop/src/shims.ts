@@ -31,6 +31,48 @@ export const setImmediate = (fn: (...args: unknown[]) => void, ...args: unknown[
 export const clearImmediate = (id: Parameters<typeof globalThis.clearTimeout>[0]) =>
   globalThis.clearTimeout(id);
 
+// async_hooks — Track S2 wraps token accounting in AsyncLocalStorage. The
+// browser build has no async context tracking; this stand-in keeps the call
+// sites working and always reports "outside a run", which is the correct
+// answer for the WebView (all usage accounting happens in the sidecar).
+export class AsyncLocalStorage<T = unknown> {
+  private store: T | undefined;
+  run<R>(store: T, callback: (...args: unknown[]) => R, ...args: unknown[]): R {
+    const previous = this.store;
+    this.store = store;
+    try {
+      return callback(...args);
+    } finally {
+      this.store = previous;
+    }
+  }
+  getStore(): T | undefined {
+    return this.store;
+  }
+  enterWith(store: T): void {
+    this.store = store;
+  }
+  exit<R>(callback: (...args: unknown[]) => R, ...args: unknown[]): R {
+    const previous = this.store;
+    this.store = undefined;
+    try {
+      return callback(...args);
+    } finally {
+      this.store = previous;
+    }
+  }
+  disable(): void {
+    this.store = undefined;
+  }
+}
+export const executionAsyncId = () => 0;
+export const triggerAsyncId = () => 0;
+export const createHook = () => ({
+  enable: () => {},
+  disable: () => {},
+});
+export const AsyncResource = MockClass;
+
 // native-bridge shims
 export const loadNative = <T = unknown>(_name: string, fallback?: () => T) => ({
   native: false,
@@ -40,6 +82,34 @@ export const loadNative = <T = unknown>(_name: string, fallback?: () => T) => ({
 export const registerNative = () => {};
 export const unregisterNative = () => {};
 export const addonCandidates = () => [];
+// Track R1: `@ghita/native-bridge` is aliased to this shim for the browser
+// bundle, so its named exports must all exist here. The WebView never runs a
+// PTY/sandbox/patch addon — the Node sidecar does — hence the permanent
+// "unavailable" shape that callers treat as "use the JS fallback".
+export const tryLoadPtyNative = () => ({
+  native: false,
+  impl: null,
+  reason: 'browser environment',
+});
+export const tryRunSandboxedNative = async () => ({
+  native: false,
+  impl: null,
+  reason: 'browser environment',
+});
+export const tryDetectEnforcementNative = () => ({
+  native: false,
+  impl: null,
+  reason: 'browser environment',
+});
+export const tryApplyPatchNative = () => ({
+  native: false,
+  impl: null,
+  reason: 'browser environment',
+});
+export const getNativeVecStore = () => null;
+export const getVecDim = () => 1536;
+export const isAddonBuilt = () => false;
+export const NATIVE_BRIDGE_VERSION = '0.0.0-browser';
 
 type Listener = (...args: unknown[]) => void;
 
@@ -105,6 +175,30 @@ export const rmdirSync = () => {};
 export const copyFileSync = () => {};
 export const renameSync = () => {};
 export const watch = () => ({ close: () => {} });
+
+// `node:fs/promises` also resolves to this shim (the vite alias covers
+// `fs(/.*)?`), so the promise APIs are imported as *top-level* named exports by
+// workspace packages — e.g. packages/security/src/scanner/engine.ts imports
+// `{ readdir, readFile, realpath, stat }`. They must exist here or Rollup fails
+// with `"stat" is not exported by "src/shims.ts"`. The `promises` namespace
+// below stays for `import { promises } from 'node:fs'` call sites.
+const browserStat = async () => ({
+  isDirectory: () => false,
+  isFile: () => true,
+  size: 0,
+  mtimeMs: 0,
+});
+export const stat = browserStat;
+export const lstat = browserStat;
+export const readdir = async () => [];
+export const realpath = async (path: string) => path;
+export const access = async () => {};
+export const mkdtemp = async (prefix: string) => `${prefix}tmp`;
+export const rm = async () => {};
+export const unlink = async () => {};
+export const mkdir = async () => {};
+export const copyFile = async () => {};
+export const rename = async () => {};
 
 export const promises = {
   readFile: async () => '',
@@ -237,7 +331,6 @@ export const randomUUID = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : (() => {
-        
         // produced weak, non-crypto UUIDs. Use the Web Crypto API's random
         // values when available (then set the v4 bits), falling back to
         // Math.random only as a last resort.

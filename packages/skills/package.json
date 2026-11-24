@@ -1,6 +1,6 @@
 {
   "name": "@ghita/skills",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha",
   "private": true,
   "sideEffects": false,
   "description": "Skill system cho Ghita Agent",

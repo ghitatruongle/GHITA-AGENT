@@ -1,47 +1,65 @@
 # 🗺️ Ghita Agent — Public Roadmap
 
-> **Current version:** v0.0.2-preview (chu kỳ đang chạy: tích hợp sâu codex/rig/sqlite-vec — T1–T6)
-> **Last updated:** 2026-11-15 — T1–T6 plan v0.0.2-preview hoàn tất (patch engine vendored + MCP apply_patch tool, sandbox plumbing + smoke honest, sqlite-vec hybrid search, rig engine opt-in); KHÔNG commit/tag/release — chờ lệnh owner
+> **Current version:** v0.0.2-alpha (chu kỳ mở 22/11/2026; R1–R2 + S1–S4 hoàn tất 24/11/2026)
+> **Last updated:** 2026-11-24 — Chu kỳ v0.0.2-alpha: hấp thụ kiến trúc từ 6 dự án ít sao nhất trong `refer_project/` (PTY backend, sandbox v2, harness scoring 7 evidence states, StandardRequest + retry ladder, micro-batch stream, computer-use bridge) vào các thành phần sẵn có; review + debug toàn bộ code thay đổi (0 P0, 2 P1 đã fix, 8 P2 đã fix); gates xanh: typecheck 44/44, lint 43/43, knip 0, test 44/44, cargo 171/171 + 57/57
+
+---
+
+## ✅ Done — v0.0.2-alpha R1–R2 · S1–S4 (2026-11-24)
+
+| Khu vực             | Nội dung                                                                                                                                                 | Trạng thái |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 🖥️ R1 PTY           | Crate `ghita-pty` (portable-pty 0.8) tách khỏi `terminal.rs`; kill-tree console-aware + chống PID reuse; napi addon; stream mode opt-in                  | ✅         |
+| 🛡️ R2 Sandbox       | `SandboxBackend` trait + `SandboxError`; CAS 7 trạng thái; overlay-dir rollback; spawn race CREATE_SUSPENDED; `PIPE_DRAIN_DEADLINE` (treo 29.4s → 504ms) | ✅         |
+| 📊 S1 Harness       | Điểm authored + validator ceiling; average tất định; consistency gate; privacy sanitizer; evals 7 EvidenceLevel                                          | ✅         |
+| 🧠 S2 AI engine     | `StandardRequest` canonical; `AgentError` 11 mã; retry ladder; wire kimi/minimax/deepseek; TokenUsageTracker ALS; StreamObject 5 loại                    | ✅         |
+| 🔭 S3 Observability | Micro-batch chat chunk + flush `done:true`; tool `choose` end-to-end                                                                                     | ✅         |
+| 🖱️ S4 Computer use  | Sidecar bridge socket.io; pattern nut-js cho screen; hashcash PoW                                                                                        | ✅         |
+| 🧪 Review + debug   | 0 P0 · 2 P1 (đã fix) · ~10 P2 (8 đã fix) · ~8 P3 (khuyến nghị); typecheck 44/44, lint 43/43, knip 0, test 44/44, cargo 171/171 + 57/57                   | ✅         |
+
+> Nghiên cứu: `docs/plans/0.0.2-alpha/` (deep-dive 12 tài liệu cho 6 dự án: open-agent, node-pty, better-harness, nut-js, AgentEnv, ds2api).
+
+---
 
 ---
 
 ## ✅ Done — v0.0.2-preview T1–T6 (2026-11-15)
 
-| Khu vực | Nội dung | Trạng thái |
-| --- | --- | --- |
-| 🦀 T2 Patch | Crate `ghita-patch`: engine diff V4A vendored từ codex @ rust-v0.169.0 (26 tests), napi addon, tool MCP `apply_patch` (GHITA_PATCH) | ✅ |
-| 🦀 T3 Sandbox | Enforcement::RestrictedToken + detect napi + TS bridge + smoke 4 case honest (supervised giữ mặc định — backlog R2 cho ACL thật) | ✅ |
-| 🦀 T4 Memory | sqlite-vec 0.1.9 vào ghita-store (vec0, 6 tests) + hybrid search native-first trong packages/memory (271 tests) + embeddings opt-in | ✅ |
-| 🦀 T5 Engine | Crate `ghita-engine` (rig-core 0.46.0, opt-in GHITA_ENGINE=native): ModelClient + RigAdapter + napi JSON + gateway fast-path (947 tests) | ✅ |
-| 🧹 Nền tảng | Baseline gates + disk-guard build-native + tree-sitter 0.27.2 + docs flags/3 chuyên đề | ✅ |
+| Khu vực       | Nội dung                                                                                                                                 | Trạng thái |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 🦀 T2 Patch   | Crate `ghita-patch`: engine diff V4A vendored từ codex @ rust-v0.169.0 (26 tests), napi addon, tool MCP `apply_patch` (GHITA_PATCH)      | ✅         |
+| 🦀 T3 Sandbox | Enforcement::RestrictedToken + detect napi + TS bridge + smoke 4 case honest (supervised giữ mặc định — backlog R2 cho ACL thật)         | ✅         |
+| 🦀 T4 Memory  | sqlite-vec 0.1.9 vào ghita-store (vec0, 6 tests) + hybrid search native-first trong packages/memory (271 tests) + embeddings opt-in      | ✅         |
+| 🦀 T5 Engine  | Crate `ghita-engine` (rig-core 0.46.0, opt-in GHITA_ENGINE=native): ModelClient + RigAdapter + napi JSON + gateway fast-path (947 tests) | ✅         |
+| 🧹 Nền tảng   | Baseline gates + disk-guard build-native + tree-sitter 0.27.2 + docs flags/3 chuyên đề                                                   | ✅         |
 
 ## ✅ Done — v0.0.1 chu kỳ chốt (2026-11-08)
 
-| Khu vực | Nội dung | Trạng thái |
-| --- | --- | --- |
-| 🔐 Bảo mật | Xóa `screenshot-desktop` khỏi dependency tree → GHSA-mh99 ra khỏi allowlist; capture native (C# helper + Tauri command) | ✅ |
-| 🔐 Bảo mật | React Native 0.76 → 0.87.1; mobile jest 35/35 | ✅ |
-| 🧱 Ổn định | smoke-sidecar vào CI (quality-gates.yml) + WebView2 crashpad noise tắt trong dev | ✅ |
-| 🧩 MCP | MCP server wire vào desktop sidecar (`mcp-handlers.mjs`, 15/15 tests, `McpToolsPanel` + `useMcp`) | ✅ |
-| 🧩 Tính năng | Hooks events parity claude-code (+4 events); AI Page verbs (observe/act/extract) vào browser skills | ✅ |
-| 🎨 UI | 4 fx components react-bits (framer-motion) + `lib/motion.ts` chuẩn hóa + reduced-motion toàn cục | ✅ |
-| 🦀 Rust hóa | Fuzzy-matching cascade cho search-replace (pattern oh-my-pi) + design doc crates/store napi | ✅ |
-| 🧹 Refer | Sync 10 clone; crewai nghiên cứu nốt → xóa (686MB) | ✅ |
-| 📦 Installer | Gates + rebuild installer v0.0.1 + SHA-256 → Desktop | ✅ |
+| Khu vực      | Nội dung                                                                                                                | Trạng thái |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 🔐 Bảo mật   | Xóa `screenshot-desktop` khỏi dependency tree → GHSA-mh99 ra khỏi allowlist; capture native (C# helper + Tauri command) | ✅         |
+| 🔐 Bảo mật   | React Native 0.76 → 0.87.1; mobile jest 35/35                                                                           | ✅         |
+| 🧱 Ổn định   | smoke-sidecar vào CI (quality-gates.yml) + WebView2 crashpad noise tắt trong dev                                        | ✅         |
+| 🧩 MCP       | MCP server wire vào desktop sidecar (`mcp-handlers.mjs`, 15/15 tests, `McpToolsPanel` + `useMcp`)                       | ✅         |
+| 🧩 Tính năng | Hooks events parity claude-code (+4 events); AI Page verbs (observe/act/extract) vào browser skills                     | ✅         |
+| 🎨 UI        | 4 fx components react-bits (framer-motion) + `lib/motion.ts` chuẩn hóa + reduced-motion toàn cục                        | ✅         |
+| 🦀 Rust hóa  | Fuzzy-matching cascade cho search-replace (pattern oh-my-pi) + design doc crates/store napi                             | ✅         |
+| 🧹 Refer     | Sync 10 clone; crewai nghiên cứu nốt → xóa (686MB)                                                                      | ✅         |
+| 📦 Installer | Gates + rebuild installer v0.0.1 + SHA-256 → Desktop                                                                    | ✅         |
 
 ---
 
 ## ✅ Done — v0.0.1 Beta (2026-11-04)
 
-| Khu vực | Nội dung | Trạng thái |
-| --- | --- | --- |
-| 🧲 Engine Crew | Timeout/task, retry trần kép, validate kickoff, usage metrics → UI | ✅ |
-| 🧱 Block-graph | Validate input/output, UI hints, persist graph+version, no-fail-fast, retry per-node, secret redaction | ✅ |
-| ✏️ Edit guard | Tag hash `[path#TAG]`, stale recovery, checkpoint+rollback, ghi nguyên tử, PathPolicy | ✅ |
-| 🔁 Chạy bền | Event log id+seq, gap-tolerant cursor, delta theo frame, reconnect grace, confirmation idempotent | ✅ |
-| ➕ Nâng cao | RPM, memory-tools, event bus, LLM guardrail, doom-loop gate, stop controller, compaction verify | ✅ |
-| 🧪 Chất lượng | Review 3 vòng (tĩnh 7 P1 + ~16 P2; vòng 3 debug runtime: 1 P1 + 5 P2 sửa hết) + ~20 scenario e2e; typecheck 44/44, lint 43/43, test 44/44 + root 702/702, cargo 0 lỗi, audit:policy pass | ✅ |
-| 📦 Installer | `Ghita-Agent-Setup-v0.0.1.exe` + SHA-256 | ✅ |
+| Khu vực        | Nội dung                                                                                                                                                                                 | Trạng thái |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 🧲 Engine Crew | Timeout/task, retry trần kép, validate kickoff, usage metrics → UI                                                                                                                       | ✅         |
+| 🧱 Block-graph | Validate input/output, UI hints, persist graph+version, no-fail-fast, retry per-node, secret redaction                                                                                   | ✅         |
+| ✏️ Edit guard  | Tag hash `[path#TAG]`, stale recovery, checkpoint+rollback, ghi nguyên tử, PathPolicy                                                                                                    | ✅         |
+| 🔁 Chạy bền    | Event log id+seq, gap-tolerant cursor, delta theo frame, reconnect grace, confirmation idempotent                                                                                        | ✅         |
+| ➕ Nâng cao    | RPM, memory-tools, event bus, LLM guardrail, doom-loop gate, stop controller, compaction verify                                                                                          | ✅         |
+| 🧪 Chất lượng  | Review 3 vòng (tĩnh 7 P1 + ~16 P2; vòng 3 debug runtime: 1 P1 + 5 P2 sửa hết) + ~20 scenario e2e; typecheck 44/44, lint 43/43, test 44/44 + root 702/702, cargo 0 lỗi, audit:policy pass | ✅         |
+| 📦 Installer   | `Ghita-Agent-Setup-v0.0.1.exe` + SHA-256                                                                                                                                                 | ✅         |
 
 ---
 

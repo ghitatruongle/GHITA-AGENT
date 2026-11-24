@@ -5,26 +5,83 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — v0.0.2-alpha (2026-11-24)
+
+> Chủ đề: **Hấp thụ kiến trúc từ 6 dự án ít sao nhất** (`refer_project/`) vào các thành phần sẵn có.
+> Nghiên cứu: `docs/plans/0.0.2-alpha/deep-dive/` (12 tài liệu) · Tổng hợp: `docs/plans/0.0.2-alpha/2026-11-22-tong-hop-kien-truc-6-du-an.md` · Track: `docs/plans/0.0.2-alpha/tracks/`.
+
+### R1 — PTY backend (node-pty)
+
+- Crate `ghita-pty` tách từ `terminal.rs` (portable-pty 0.8); adapter Tauri giữ nguyên contract `terminal_*`.
+- Kill-tree console-aware (AttachConsole + GetConsoleProcessList) + 2 lớp chống PID reuse; `args_to_commandline` qua CommandLineToArgvW; exit shape `{exitCode, signal}`; resize pixel.
+- napi addon `pty.*.node`; `run_command` dùng stream mode opt-in `GHITA_AGENT_PTY_STREAM=1` (mặc định vẫn cmd.exe buffered).
+
+### R2 — Sandbox v2 (AgentEnv)
+
+- `SandboxBackend` trait + `SandboxError{Recoverable, Terminal}`; state machine CAS 7 trạng thái.
+- Rollback bằng overlay-dir (cwd=upper/ + junction tới base) thay vì snapshot toàn cây.
+- Fix race spawn: CREATE_SUSPENDED → gán Job Object → resume; `PIPE_DRAIN_DEADLINE=1000ms` + `spawn_pipe_reader`/`reap_output` (repro treo 29.43s → 504ms).
+- Win11 26300 bỏ CPU/IO rate limit của Job Object → tự degrade thay vì fail.
+
+### S1 — Harness scoring (better-harness)
+
+- Bỏ công thức `ceiling − findings×8/×6`; thay bằng điểm authored + validator ceiling (`InvalidWorkLoopScoreError`), average tất định Present40/Wired60/Exercised75/Outcome90, floor 35 cho learning-capture.
+- Consistency gate trong `evaluate()`; emission bar; privacy sanitizer (async) dùng lại InputSanitizer + `createPiiRedactionMiddleware`.
+- `packages/evals`: 4 → 7 EvidenceLevel khớp `harness/types.ts`.
+
+### S2 — AI engine (open-agent)
+
+- `StandardRequest` canonical (N×M → N+M), `AgentError` 11 mã, retry ladder, credentials/key-manager.
+- Wire thêm 3 vendor: kimi, minimax, deepseek; `orchestrator/chat.ts` failover + switch-key đúng provider.
+- `StreamObject` 5 loại + `TokenUsageTracker` qua AsyncLocalStorage.
+
+### S3 — Observability & stream
+
+- Micro-batch chat chunk (`chat-chunk-batcher.ts`) + flush đúng khi `done:true`.
+- Tool `choose` end-to-end (sidecar bridge → WebView render).
+
+### S4 — Computer use (nut-js) + security
+
+- Sidecar bridge socket.io cho computer-use; pattern nut-js cho `packages/computer-use/src/screen/`.
+- hashcash PoW trong `packages/security`.
+
+### Sửa lỗi phát hiện khi review
+
+- `orchestratorChatStream` treo vô hạn khi message cuối trùng nudge (0 terminal chunk).
+- Google `mapFinishReason`: SAFETY/RECITATION → `'stop'` (trước đó phá retry ladder).
+- Failover đổi key sai provider; `done:true` kẹt trong batcher; `choose` question không render; ghost tmp rename trong autogpt store; flush UTF-8 multibyte; rò rỉ `generations` map.
+
+### Hạ tầng / CI
+
+- `scripts/desktop-smoke.mjs`: đo startup trong process con `node` thuần (bỏ overhead `--import tsx`), best-of-2 → hết flaky `startup-modules`.
+- Docs site: tắt webpack performance hints (webpack 5.112.2 `SizeLimitsPlugin.hasEmbeddedRuntime` gọi `module.is` trên ConcatenatedModule → crash build).
+- `cargo fmt` toàn workspace crates; clippy `-D warnings` xanh cả `crates/` và `src-tauri/`.
+
 ## [Unreleased] — v0.0.2-preview (T1–T6, 2026-11-15)
 
 > Chủ đề: **Tích hợp sâu upstream Rust engines**. Kế hoạch: `docs/plans/2026-11-14-v0.0.2-preview-deep-integration.md`.
 > Toàn bộ làm trên working tree — CHƯA commit (chờ lệnh owner).
 
 ### T1 — Nền
+
 - Disk guard cho `scripts/build-native.mjs` (`--disk-check-only`, floor 12GB).
 - tree-sitter 0.26.12 → 0.27.2 (codegraph 16 tests xanh).
 
 ### T2 — ghita-patch (codex apply-patch)
+
 - Vendor surgery từ openai/codex @ rust-v0.169.0: parser + applier V4A + path-uri + absolute-path (cắt exec-server/protocol/mxc — xem `crates/patch/VENDOR.md`).
 - Wrapper `apply()` (partial/skipped mapping) + 26 tests; napi addon; tool MCP `apply_patch` trong sidecar (GHITA_PATCH flag, fallback lịch sự).
 
 ### T3 — Sandbox Windows
+
 - `Enforcement::RestrictedToken` + probe `windows.rs` (v1 false — 3 blocker upstream ghi rõ) + napi `detect_enforcement` + TS bridge + `scripts/sandbox-smoke.mjs` (4 case thật: supervised không chặn write/network → giữ supervised mặc định, opt-in `GHITA_SANDBOX=restricted-token`).
 
 ### T4 — sqlite-vec hybrid memory
+
 - ghita-store feature `vec` (sqlite-vec 0.1.9, registration trước connection-open); napi `vecEnsureSchema/vecStore/vecSearch/vecDelete/vecCount`; hybrid native-first trong `CrossSessionSearch` + JS cosine fallback; embeddings opt-in `GHITA_MEMORY_EMBEDDINGS`.
 
 ### T5 — ghita-engine (rig, opt-in)
+
 - Crate `ghita-engine`: ModelClient + RigAdapter (rig-core 0.46.0 wire/driver API) + napi `engineComplete` (JSON Promise) + `rig-bridge.ts` + gateway fast-path; opt-in `GHITA_ENGINE=native`, fallback TS providers.
 
 ## [0.0.1] - 2026-11-04
@@ -34,12 +91,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > grok-build, oh-my-pi, OpenHands). Kế hoạch: `docs/plans/2026-11-03-v0.0.1-beta.md`.
 
 ### Track 1 — Engine Crew tự giới hạn (CrewAI MIT)
+
 - **Timeout mỗi task** (`maxExecutionTime`, task-level + crew default): task treo tự hủy, event `task_timeout`, deadline chia sẻ cho cả retry + guardrail revision.
 - **Retry lỗi LLM tạm thời** với trần kép 3/task · 10/run (rate limit, network): backoff 250ms→2s, event `task_llm_retry`.
 - **Validate kickoff**: chặn manager trùng member, hierarchical thiếu crewmate, context trỏ task tương lai/không tồn tại — trước khi burn token.
 - **Usage metrics** theo task + crew (prompt/completion/cached tokens), tổng crew báo ra UI (chip Tokens trong CrewRunner).
 
 ### Track 2 — Block-graph chắc tay (AutoGPT — ý tưởng only)
+
 - **Pipeline validate input**: merge default + coerce kiểu (string→number/boolean), lỗi mismatch hành động được; chuỗi rỗng không âm thầm thành 0.
 - **Validate output mỗi emission**: giá trị lệch schema chặn ở node (BlockOutputError), không poison downstream.
 - **Pin `schema` cho `llm_structured`**: JSON Schema bắt buộc cho JSON parse ra, phát bản đã coerce.
@@ -47,12 +106,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Persist graph + version** (`GraphLibraryStore`): thư viện graph + lịch sử run sống qua restart; save tăng version; file hỏng bị quarantine.
 
 ### Track 3 — Edit không hỏng file (oh-my-pi MIT + grok-build Apache-2.0)
+
 - **Tag hash `[path#TAG]`**: tool read in header tag 4-hex; edit kèm tag lệch bị chặn; CRLF/LF chuẩn hóa một nền.
 - **Stale-tag recovery**: khối tìm vẫn khớp thì áp kèm cảnh báo, không khớp thì lỗi nêu expected/actual.
 - **Checkpoint manifest** `.ghita/checkpoints/<runId>/` + rollback (kể cả file mới tạo); prune giữ 20 run; snapshot API cho UI Undo.
 - **Ghi nguyên tử** (tmp + rename) cho mọi đường ghi file + PathPolicy chặn URI scheme/path verbatim `\?\`/bidi.
 
 ### Track 4 — Chạy bền (OpenHands MIT)
+
 - **RunEventLog** JSONL per run: event có id+seq, dedup, chịu dòng hỏng; tail + afterSeq là handshake resume.
 - **GapTolerantSeqCursor**: event lệch thứ tự không mất không lặp; gap >1024 nhảy qua, release vùng liên tục trước.
 - **StreamingDeltaBatcher**: token stream gom slot, commit ≤1 lần/frame, flush-first.
@@ -60,18 +121,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **ConfirmationGate idempotent**: bấm đôi không gửi 2 lần; event replay không tạo confirmation zombie.
 
 ### Track 5 — Crew nâng cao
+
 - RPM limiter (request/phút, clock injectable) · memory thành tool (`crew_memorize`/`crew_recall`) · event bus nhiều listener cô lập lỗi · guardrail dạng mô tả chấm bằng LLM (`config.llmJudge`).
 
 ### Track 6 — Block-graph nâng cao
+
 - Node lỗi không giết cả run (node đã queued vẫn chạy xong) · retry per-node an toàn (không retry sau timeout/sau khi đã phát dữ liệu) · secret redaction `<secret>` trên event · AbortController riêng per node-run.
 
 ### Track 7 — Edit nâng cao
+
 - PathPolicy (đã nối vào cả 3 đường ghi) · DiagnosticsWritethrough (provider seam, nối vào writeFile/replaceFileContent) · snapshot/undo API · DoomLoopGate (run-length tool call lặp).
 
 ### Track 8 — Chạy bền nâng cao
+
 - RunStopController tách bạch interrupt vs pause-after-step · CompactionVerifier 3 outcome (compacted/no_change/timeout).
 
 ### Track 9 — Chất lượng
+
 - Review 3 vòng: vòng 1–2 tĩnh (7 P1 + ~16 P2), vòng 3 DEBUG CHẠY THẬT từng vùng
   (1 P1 timer RPM mồ côi + 5 P2: member delegate mất memory tools, judge ngoài
   deadline, kickoff đồng thời nhiễm chéo state, member bypass RPM, remember
@@ -100,12 +166,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   qua `GraphLibraryStore` tại `<workspace>/.ghita/graph-library`; test
   integration 8/8 (`crew-handlers.test.mjs`, engine thật).
 - **H3 — Smoke bắt buộc**: `scripts/smoke-sidecar.mjs` spawn sidecar bundle
-  + socket handshake auth (`GHITA_SESSION_TOKEN`) → emit `crew_run` →
-  assert có phản hồi; chạy được sau mỗi lần build.
+  - socket handshake auth (`GHITA_SESSION_TOKEN`) → emit `crew_run` →
+    assert có phản hồi; chạy được sau mỗi lần build.
 - **H4 — Gates**: typecheck 44/44 (cần `NODE_OPTIONS=--max-old-space-size=4096`
-  + `--concurrency=2`, máy owner RAM yếu) · lint 43/43 · turbo test 44/44 ·
-  root `check-version-sync` 5/5. **KHÔNG rebuild installer** — chờ owner xác
-  minh rồi ra lệnh.
+  - `--concurrency=2`, máy owner RAM yếu) · lint 43/43 · turbo test 44/44 ·
+    root `check-version-sync` 5/5. **KHÔNG rebuild installer** — chờ owner xác
+    minh rồi ra lệnh.
 
 ### Chu kỳ 0.0.1 (chốt) — 2026-11-08: Track 1–6 hoàn tất (kế hoạch `docs/plans/2026-11-08-v0.0.1.md`)
 
@@ -128,8 +194,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **[P1] Fuzzy O(L²) treo agent ở file lớn** (đo thật: 2k dòng ≈ 7s/scan,
   20k dòng >600s) → khai tử bằng **banded Levenshtein** (`|i−j| ≤ maxDist`)
-  + early-exit row-min + line-match prefilter + cell-budget bail. Đo lại:
-  2k=40ms, 20k=1ms, miss 8ms; banded khớp full DP tuyệt đối tại biên ngưỡng.
+  - early-exit row-min + line-match prefilter + cell-budget bail. Đo lại:
+    2k=40ms, 20k=1ms, miss 8ms; banded khớp full DP tuyệt đối tại biên ngưỡng.
 - **[P2] `mcp_call_tool` không có timeout server-side** → tool treo giữ
   promise vĩnh viễn → thêm `withTimeout` 120s (injectable) + `markFailure`;
   2 test hồi quy mới (sidecar 17/17).
@@ -170,7 +236,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   SubagentStop, Notification, UserPromptSubmit); AI Page verbs (observe/act/
   extract) wire vào browser skills; audit wiring demo2
   (`docs/demo2-modules-wiring-audit.md`).
-
 
 ## [1.2.0-demo1] - 2026-10-04 (DEMO — đang thử nghiệm, chưa phải bản phát hành)
 

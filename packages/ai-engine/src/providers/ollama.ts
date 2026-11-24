@@ -9,21 +9,7 @@ import type {
   EmbeddingManyResponse,
 } from '../types.js';
 import { BaseProvider } from './base.js';
-
-interface OllamaToolDef {
-  type: 'function';
-  function: { name: string; description?: string; parameters?: Record<string, unknown> };
-}
-
-interface OllamaChatRequest {
-  model: string;
-  messages: Array<{ role: string; content: string }>;
-  stream: boolean;
-  format?: Record<string, unknown> | 'json';
-  tools?: OllamaToolDef[];
-  think?: boolean | string;
-  options?: Record<string, unknown>;
-}
+import { renderOllamaChatRequest, type OllamaWireRequest } from '../standard-request.js';
 
 interface OllamaChatResponseData {
   message?: {
@@ -45,6 +31,10 @@ export class OllamaProvider extends BaseProvider {
 
   constructor(config: ProviderConfig) {
     super(config);
+  }
+
+  protected override wireFormat() {
+    return 'ollama' as const;
   }
 
   private getOllamaUrl(): string {
@@ -78,33 +68,12 @@ export class OllamaProvider extends BaseProvider {
     messages: ChatMessage[],
     stream: boolean,
     options?: ChatOptions,
-  ): OllamaChatRequest {
-    const body: OllamaChatRequest = {
-      model,
-      messages: messages.map((m) => ({ role: m.role, content: m.content ?? '' })),
+  ): OllamaWireRequest {
+    // Canonical layer render — byte-parity with the legacy inline construction
+    // (options.num_predict/temperature, format/tools/think passthrough).
+    return renderOllamaChatRequest(this.buildStandardRequest(messages, options, model), {
       stream,
-      options: {
-        num_predict: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-      },
-    };
-
-    // v1.1.5-beta1 T4.2: format (structured JSON output)
-    const format = (options as Record<string, unknown>)?.format as
-      | Record<string, unknown>
-      | 'json'
-      | undefined;
-    if (format) body.format = format;
-
-    // v1.1.5-beta1 T4.2: tools (function calling)
-    const tools = (options as Record<string, unknown>)?.tools as OllamaToolDef[] | undefined;
-    if (tools && tools.length > 0) body.tools = tools;
-
-    // v1.1.5-beta1 T4.2: think (reasoning tokens for qwen3/deepseek-r1)
-    const think = (options as Record<string, unknown>)?.think as boolean | string | undefined;
-    if (think !== undefined) body.think = think;
-
-    return body;
+    });
   }
 
   async chat(messages: ChatMessage[], options?: ChatOptions): Promise<ChatResponse> {
@@ -189,19 +158,28 @@ export class OllamaProvider extends BaseProvider {
               thinking?: string;
             };
             // Yield thinking before content — reasoning precedes the answer.
+            // Track S3 P2: thinking is a `reasoning` StreamObject, no longer
+            // indistinguishable from the visible answer.
             if (parsed.thinking) {
               yield {
                 content: parsed.thinking,
                 done: false,
                 provider: 'ollama',
                 model,
+                type: 'reasoning',
               };
             }
             if (parsed.message?.content) {
-              yield { content: parsed.message.content, done: false, provider: 'ollama', model };
+              yield {
+                content: parsed.message.content,
+                done: false,
+                provider: 'ollama',
+                model,
+                type: 'text-delta',
+              };
             }
             if (parsed.done) {
-              yield { content: '', done: true, provider: 'ollama', model };
+              yield { content: '', done: true, provider: 'ollama', model, type: 'text-delta' };
               return;
             }
           } catch {
@@ -212,7 +190,7 @@ export class OllamaProvider extends BaseProvider {
     } finally {
       reader.releaseLock();
     }
-    yield { content: '', done: true, provider: 'ollama', model };
+    yield { content: '', done: true, provider: 'ollama', model, type: 'text-delta' };
   }
 
   async embed(text: string, options?: { model?: string }): Promise<EmbeddingResponse> {
