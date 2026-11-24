@@ -120,6 +120,19 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Ensure Windows updater signature
+        # updater-manifest + fail_on_unmatched_files đều cần `.exe.sig`;
+        # `createUpdaterArtifacts: false` nên phải ký thủ công (pattern macOS).
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path apps/desktop/src-tauri/target/release/bundle/nsis -Filter *-setup.exe | Select-Object -First 1
+          if (-not $exe) { throw "NSIS installer not found" }
+          if (-not (Test-Path "$($exe.FullName).sig")) {
+            pnpm --filter @ghita/desktop tauri signer sign `
+              --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" `
+              --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" `
+              "$($exe.FullName)"
+          }
       - name: Create Windows updater record
         run: >
           node scripts/updater-manifest.mjs record
@@ -168,6 +181,19 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Ensure Linux updater signature
+        # `createUpdaterArtifacts: false` nên Tauri không tự sinh `.sig`;
+        # updater-manifest bắt buộc phải có (thiếu → ENOENT). Ký thủ công,
+        # cùng pattern với macOS.
+        run: |
+          set -euo pipefail
+          APPIMAGE=$(ls apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage)
+          if [ ! -f "${APPIMAGE}.sig" ]; then
+            pnpm --filter @ghita/desktop tauri signer sign \
+              --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" \
+              --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
+              "${APPIMAGE}"
+          fi
       - name: Create Linux updater record
         run: >
           node scripts/updater-manifest.mjs record
@@ -241,10 +267,10 @@ jobs:
             tar -C "${APP_DIR}" -czf "${TARBALL}" "Ghita Agent.app"
           fi
           if [ ! -f "${TARBALL}.sig" ]; then
-            pnpm --filter @ghita/desktop tauri sign \
+            pnpm --filter @ghita/desktop tauri signer sign \
               --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" \
               --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
-              --file "${TARBALL}"
+              "${TARBALL}"
           fi
       - name: Create macOS updater record
         run: >
