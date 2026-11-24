@@ -35,6 +35,22 @@ const config: Config = {
     },
   },
 
+  // webpack 5.112.2 crashes the production build while reporting performance
+  // hints: SizeLimitsPlugin.hasEmbeddedRuntime() calls `module.is("runtime")`
+  // on concatenated modules, which do not implement `is` → "module.is is not a
+  // function" for any entrypoint over the 250 KB default. 5.108.4 (also in the
+  // lockfile) predates that code. The docs site does not act on these hints, so
+  // disabling the plugin is the smallest correct fix; the webpack regression is
+  // reported upstream instead of pinning webpack repo-wide.
+  plugins: [
+    function disableWebpackPerformanceHints() {
+      return {
+        name: 'ghita-disable-webpack-performance-hints',
+        configureWebpack: () => ({ performance: false }),
+      };
+    },
+  ],
+
   i18n: {
     defaultLocale: 'vi',
     locales: ['vi', 'en'],

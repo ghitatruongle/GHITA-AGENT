@@ -10,6 +10,14 @@ export { AlertEngine } from './alert-rules.js';
 export { UsageTelemetry, getTelemetry, initTelemetry } from './telemetry.js';
 export type { TelemetryEvent, TelemetryConfig } from './telemetry.js';
 
+/**
+ * Track S3 P1 — cost surface: receives ai-engine RunCostReport emissions
+ * (`globalThis.costReportHandler`), aggregates per-turn token/cost totals and
+ * forwards them to the local UsageTelemetry. No ai-engine dependency.
+ */
+export { CostSurface, registerCostSurface } from './cost-surface.js';
+export type { CostTurnReport, CostSurfaceStats, CostSurfaceOptions } from './cost-surface.js';
+
 export type {
   Severity,
   MonitoringContext,
@@ -24,4 +32,4 @@ export type {
   MonitoringStats,
 } from './types.js';
 
-export const MONITORING_VERSION = '0.0.1';
+export const MONITORING_VERSION = '0.0.2-alpha';

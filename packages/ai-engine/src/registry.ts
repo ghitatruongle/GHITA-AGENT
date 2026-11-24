@@ -14,6 +14,12 @@ import { OpenRouterProvider } from './providers/openrouter.js';
 import { TogetherProvider } from './providers/together.js';
 import { PerplexityProvider } from './providers/perplexity.js';
 import { AzureOpenAIProvider } from './providers/azure-openai.js';
+// Track S2: wire the defineVendor dedicated classes that previously fell
+// through to the default throw (kimi/minimax) or the CustomProvider shim
+// (deepseek).
+import { KimiProvider } from './providers/kimi.js';
+import { MiniMaxProvider } from './providers/minimax.js';
+import { DeepSeekProvider } from './providers/deepseek.js';
 
 export class ProviderRegistry {
   private providers = new Map<AIProviderType, AIProvider>();
@@ -76,10 +82,10 @@ export class ProviderRegistry {
         return new OllamaProvider(config);
       case 'custom':
         return new CustomProvider(config);
-      
+
       case 'groq':
         return new GroqProvider(config);
-      
+
       case 'mistral':
         return new MistralProvider(config);
       // v0.4.9 A5: Dedicated providers (proper models + capabilities)
@@ -93,11 +99,17 @@ export class ProviderRegistry {
         return new PerplexityProvider(config);
       case 'azure-openai':
         return new AzureOpenAIProvider(config);
+      // Track S2: dedicated defineVendor providers now wired into the registry.
+      case 'kimi':
+        return new KimiProvider(config);
+      case 'minimax':
+        return new MiniMaxProvider(config);
+      case 'deepseek':
+        return new DeepSeekProvider(config);
       // OpenAI-compatible providers (reuse CustomProvider)
-      
+
       case 'opengateway':
       case 'mimo':
-      case 'deepseek':
       case 'hicap':
       case 'github-models':
       case 'cerebras':

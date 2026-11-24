@@ -1,6 +1,6 @@
 {
   "name": "@ghita/security",
-  "version": "0.0.1",
+  "version": "0.0.2-alpha",
   "private": true,
   "sideEffects": false,
   "description": "Security audit toolkit: input sanitization, XSS prevention, CORS review, API key rotation cho Ghita Agent",

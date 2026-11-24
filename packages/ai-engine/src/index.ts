@@ -48,6 +48,62 @@ export type {
 export * from './errors/index.js';
 
 /**
+ * StandardRequest canonical layer (Track S2): one canonical request shape that
+ * the four wire-format adapters (OpenAI-compat / Anthropic / Google / Ollama)
+ * translate into their provider bodies, with byte-parity against the legacy
+ * inline constructions.
+ */
+export type {
+  StandardRequest,
+  StandardMessage,
+  StandardToolCall,
+  StandardToolDefinition,
+  StandardToolChoice,
+  StandardWireFormat,
+} from './standard-request.js';
+export {
+  toStandardRequest,
+  renderOpenAIChatRequest,
+  renderAnthropicMessagesRequest,
+  renderGoogleGenerateContentRequest,
+  renderOllamaChatRequest,
+  isNonEmptyChatContent,
+} from './standard-request.js';
+export type {
+  OpenAIWireOptions,
+  AnthropicWireOptions,
+  GoogleWireOptions,
+  OllamaWireOptions,
+  OllamaWireRequest,
+} from './standard-request.js';
+
+/**
+ * Credential-pool gate (Track S2): FIFO waiter + exclude-set acquire on top of
+ * a KeyManager-like source. KeyManager remains the source of truth for
+ * cooldowns and rotation.
+ */
+export { KeyGate } from './credentials/key-gate.js';
+export type { KeyGateSource, KeyGateOptions } from './credentials/key-gate.js';
+
+/**
+ * Retry ladder (Track S2): empty → synthetic follow-up (max 1), 429 →
+ * switch-key once, content_filter → never retried; everything else keeps the
+ * legacy retry/fallback semantics.
+ */
+export {
+  runChatRetryLadder,
+  createRetryLadderState,
+  SYNTHETIC_FOLLOW_UP_PROMPT,
+  MAX_SYNTHETIC_FOLLOW_UPS,
+  MAX_KEY_SWITCHES,
+} from './orchestrator/retry-ladder.js';
+export type {
+  KeySwitcher,
+  RetryLadderDeps,
+  RetryLadderState,
+} from './orchestrator/retry-ladder.js';
+
+/**
  * Multi-key management with health monitoring, cooldown, and rotation strategies.
  * Supports round-robin, failover, and random key selection across multiple API keys
  * per provider for load distribution and rate-limit avoidance.
@@ -251,9 +307,19 @@ export type {
 } from './hooks/types.js';
 
 /** Built-in tools for searching and fetching web pages. */
-export { WebSearchTool, WebFetchTool, createBuiltInTools } from './tools/index.js';
+export {
+  WebSearchTool,
+  WebFetchTool,
+  createBuiltInTools,
+  getChooseApprovalManager,
+  resolveChoose,
+  executeChoose,
+  CHOOSE_TIMEOUT_MS,
+} from './tools/index.js';
 /** Types representing search query results and web response buffers. */
 export type { SearchResult, SearchResponse, FetchResponse, BuiltInTool } from './tools/index.js';
+/** Track S3 P3 — payload broadcast when the `choose` tool waits for the user. */
+export type { ChooseRequestPayload } from './tools/index.js';
 
 /**
  * Context window management — token counting, message truncation,
@@ -369,6 +435,66 @@ export type { ModelPricing, BudgetOptions } from './utils/cost.js';
 
 export { ModelPricingDB, DEFAULT_MODEL_PRICES, estimateCost } from './cost/model-prices.js';
 export type { ModelPrice, PriceSyncFetcher, PriceLookup } from './cost/model-prices.js';
+
+/**
+ * Track S3 P1 — TokenUsageTracker: per-run token/cost attribution via
+ * AsyncLocalStorage. The cost middleware records every LLM step into the
+ * active run scope (`tokenUsageTracker.run`); when the scope exits a
+ * RunCostReport is emitted through `onReport` and `globalThis.costReportHandler`
+ * (the monitoring cost surface hooks in there).
+ */
+export {
+  TokenUsageTracker,
+  tokenUsageTracker,
+  estimateUsageFromLength,
+  MAIN_REQUEST_FRAME,
+} from './token-tracker.js';
+export type {
+  ToolChainFrame,
+  TokenStep,
+  RunContext,
+  RunCostReport,
+  WithRunOptions,
+  RecordStepInput,
+  WrapAsyncGeneratorOptions,
+} from './token-tracker.js';
+
+/**
+ * Track S3 P2 — StreamObject protocol: the 5-kind stream vocabulary
+ * (text-delta / reasoning / tool-call / tool-result / tool-incomplete-result)
+ * carried on AIStreamChunk.type, plus client-side merge and mobile wire
+ * converters.
+ */
+export {
+  STREAM_OBJECT_TYPES,
+  isStreamChunkType,
+  streamObjectType,
+  textDelta,
+  reasoningDelta,
+  toolCallChunk,
+  toolResultChunk,
+  toolIncompleteResultChunk,
+  mergeStreamObjects,
+  streamObjectToWire,
+  streamObjectFromWire,
+} from './stream-protocol.js';
+export type {
+  StreamChunkType,
+  StreamObjectWire,
+  MergedStreamResult,
+  ToolCallRecord,
+  ToolResultRecord,
+} from './stream-protocol.js';
+export { EventStream, event_to_dict, dict_to_event } from './stream/event-stream.js';
+export type {
+  StreamEvent,
+  StreamEventType,
+  EventSource,
+  EventSubscriber,
+  EventStreamConfig,
+  StreamStats,
+  ReplayFilter,
+} from './stream/types.js';
 
 /**
  * Prompt formatting templates (few-shot, templates pipeline, template managers).

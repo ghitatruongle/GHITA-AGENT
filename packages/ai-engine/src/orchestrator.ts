@@ -26,11 +26,14 @@ import type { z } from 'zod';
 import type { GenerateObjectResponse } from './utils/structured.js';
 import { SemanticCache } from './cache/semantic-cache.js';
 import { CostTracker, BudgetManager, createCostMiddleware } from './cost/index.js';
+import { AgentError } from './errors/index.js';
 import { wrapProvider } from './utils/middleware.js';
 import { SmartRouter } from './routing/smart-router.js';
 import type { RoutingDecision } from './routing/types.js';
 import { ModelDiscovery } from './discovery/model-discovery.js';
 import type { DiscoveryResult } from './discovery/types.js';
+import { EventStream } from './stream/event-stream.js';
+import { streamObjectType } from './stream-protocol.js';
 
 // Decomposed sub-modules
 import type { OrchestratorContext } from './orchestrator/types.js';
@@ -79,6 +82,14 @@ export class Orchestrator {
 
   readonly modelDiscovery: ModelDiscovery;
   readonly smartRouter: SmartRouter | null = null;
+
+  /**
+   * Track S3 P2: the (previously unwired) EventStream bus. Every streamed
+   * chunk now flows through `message.delta` / `message.complete` events with
+   * its StreamObject `type`, so reasoning deltas become observable downstream
+   * (ring buffer + rewind are already provided by the bus).
+   */
+  private readonly _eventStream = new EventStream();
 
   constructor(config: OrchestratorConfig) {
     this._config = config;
@@ -225,7 +236,45 @@ export class Orchestrator {
     messages: ChatMessage[],
     options?: ChatOptions & { provider?: AIProviderType },
   ): AsyncGenerator<AIStreamChunk> {
-    yield* orchestratorChatStream(this.ctx, messages, options);
+    // Track S3 P2: emit every chunk onto the EventStream bus (fire-and-forget
+    // — subscriber errors are swallowed by the bus and must never break the
+    // stream). Pure observation; the S2 retry/fallback logic is untouched.
+    this.emitStreamEvent('message.start', { providerHint: options?.provider });
+    for await (const chunk of orchestratorChatStream(this.ctx, messages, options)) {
+      this.emitStreamEvent('message.delta', {
+        type: streamObjectType(chunk),
+        content: chunk.content,
+        done: chunk.done === true,
+        provider: chunk.provider,
+        model: chunk.model,
+        toolCallId: chunk.toolCallId,
+        reason: chunk.reason,
+        hasToolCalls: Boolean(chunk.toolCalls?.length),
+      });
+      if (chunk.done) {
+        this.emitStreamEvent('message.complete', {
+          type: streamObjectType(chunk),
+          provider: chunk.provider,
+          model: chunk.model,
+          usage: chunk.usage,
+        });
+      }
+      yield chunk;
+    }
+  }
+
+  /** Access the engine event bus (ring buffer, rewind, replay). */
+  getEventStream(): EventStream {
+    return this._eventStream;
+  }
+
+  private emitStreamEvent(
+    type: 'message.start' | 'message.delta' | 'message.complete',
+    data: Record<string, unknown>,
+  ): void {
+    this._eventStream.emit(type, 'orchestrator', data).catch((err) => {
+      console.warn('[Orchestrator] EventStream emit failed:', err);
+    });
   }
 
   // --- Embedding & Media (delegates to orchestrator/embedding.ts) ---
@@ -478,7 +527,12 @@ export class Orchestrator {
     maxAttempts: number,
   ): Promise<T> {
     try {
-      return await retry(() => fn(primary), maxAttempts, this._config.retryDelayMs ?? 1000);
+      return await retry(() => fn(primary), maxAttempts, this._config.retryDelayMs ?? 1000, {
+        // Track S2 ladder: content-filter blocks are deterministic — retrying
+        // only burns budget. Every other classification keeps the shared
+        // default semantics (auth / hard-4xx non-retryable, rest retryable).
+        isRetryable: (error) => AgentError.from(error).retryable,
+      });
     } catch (primaryError) {
       const fallback = this.findFallbackProvider(primary.type);
       if (fallback) {

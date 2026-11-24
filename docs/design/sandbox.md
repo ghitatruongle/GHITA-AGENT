@@ -60,7 +60,7 @@ if (bridge.native) {
 
 Pre-exec policy violations block the spawn (`blocked: true`, `exitCode: null`)
 — combine with the exec policy (`@ghita/security` `checkCommand`) and the
-hooks system (`docs/hooks.md`) for layered pre-execution governance.
+hooks system (`docs/design/hooks.md`) for layered pre-execution governance.
 
 ## Tests
 

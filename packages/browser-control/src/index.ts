@@ -4,7 +4,7 @@ import { AIPageController } from './stagehand.js';
 import type { AIBrowserContext } from './ai-browser.js';
 import type { SchemaLike } from './stagehand.js';
 
-export const BROWSER_CONTROL_VERSION = '0.0.1';
+export const BROWSER_CONTROL_VERSION = '0.0.2-alpha';
 
 export type BrowserSessionStatus = 'idle' | 'launching' | 'ready' | 'closed' | 'error';
 
@@ -327,7 +327,10 @@ export function createBrowserControlSkills(
         }
         try {
           const aiPage = new AIPageController(controller, controller.getPage(), aiContext);
-          const result = await aiPage.extract<unknown>(query ?? 'Extract the requested data.', schema);
+          const result = await aiPage.extract<unknown>(
+            query ?? 'Extract the requested data.',
+            schema,
+          );
           if (!result.success) {
             return {
               success: false,
@@ -400,7 +403,8 @@ export function createBrowserControlSkills(
       parameters: {
         instruction: {
           type: 'string',
-          description: 'Natural-language action to perform (e.g. "click login", "type \\"hi\\" into search")',
+          description:
+            'Natural-language action to perform (e.g. "click login", "type \\"hi\\" into search")',
           required: true,
         },
         value: {

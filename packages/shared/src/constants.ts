@@ -2,7 +2,7 @@ import type { AIProviderType, SkillCategory } from './types.js';
 
 // --- App Info ---
 export const APP_NAME = 'Ghita Agent';
-export const APP_VERSION = '0.0.1';
+export const APP_VERSION = '0.0.2-alpha';
 export const APP_DESCRIPTION = 'Desktop AI Agent với multi-provider, skills, computer use';
 
 // --- Default Config ---
@@ -134,6 +134,10 @@ export const SOCKET_EVENTS = {
   REQUIRE_FILE_APPROVAL: 'require_file_approval',
 
   CHAT_START: 'chat_start',
+  // Track S3 P2/P3 — StreamObject wire (sidecar emits the same literal names).
+  CHAT_CHUNK: 'chat_chunk',
+  CHAT_DONE: 'chat_done',
+  CHAT_ERROR: 'chat_error',
 } as const;
 
 // --- Screen Stream Defaults ---

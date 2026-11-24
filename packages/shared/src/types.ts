@@ -76,12 +76,25 @@ export interface AIMessage {
   model?: string;
 }
 
+/**
+ * Track S3 P2 — StreamObject protocol. The 5 canonical chunk kinds carried on
+ * the `type` field of every AIStreamChunk (and mirrored on the mobile wire).
+ */
+export type StreamChunkType =
+  'text-delta' | 'reasoning' | 'tool-call' | 'tool-result' | 'tool-incomplete-result';
+
 export interface AIStreamChunk {
   content: string;
   done: boolean;
   provider?: AIProviderType;
   model?: string;
   usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  /** StreamObject kind — see StreamChunkType. Legacy chunks without the field are text deltas. */
+  type?: StreamChunkType;
+  /** Tool-call correlation id for `tool-result` / `tool-incomplete-result` chunks. */
+  toolCallId?: string;
+  /** Why a `tool-incomplete-result` was cut short (abort, error, partial). */
+  reason?: string;
   /** Provider-native function calls, emitted once their streamed arguments are complete. */
   toolCalls?: Array<{
     id?: string;
@@ -158,14 +171,7 @@ export interface AgentTask {
 
 // --- Communication ---
 export type MessageType =
-  | 'command'
-  | 'screenshot'
-  | 'status'
-  | 'approve'
-  | 'reject'
-  | 'chat'
-  | 'ping'
-  | 'pong';
+  'command' | 'screenshot' | 'status' | 'approve' | 'reject' | 'chat' | 'ping' | 'pong';
 
 export interface SocketMessage {
   type: MessageType;

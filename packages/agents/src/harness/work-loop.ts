@@ -7,6 +7,7 @@
 import type {
   CheckResult,
   DimensionScore,
+  EvaluateOptions,
   EvidenceState,
   TaskEpisode,
   WorkLoopCheckId,
@@ -46,8 +47,38 @@ const EVIDENCE_STRENGTH: Record<EvidenceState, number> = {
   'Outcome-supported': 4,
 };
 
+/**
+ * Deterministic evidence score per check state — the baseline a dimension
+ * falls back to when no score was authored. Non-observed states score 0
+ * (Missing/Unobserved/Not applicable carry no positive evidence).
+ */
+const EVIDENCE_SCORES: Record<EvidenceState, number> = {
+  Present: 40,
+  Wired: 60,
+  Exercised: 75,
+  'Outcome-supported': 90,
+  Missing: 0,
+  Unobserved: 0,
+  'Not applicable': 0,
+};
+
 /** Learning Capture floor once a bounded review completes. */
 const LEARNING_CAPTURE_FLOOR = 35;
+
+/** An authored dimension score below this must carry at least one linked finding. */
+export const LOW_SCORE_FINDING_THRESHOLD = 70;
+
+/**
+ * Thrown when an authored score violates the evidence-ceiling validator, or
+ * when an authored score below 70 is not backed by a linked finding (score-
+ * finding consistency gate) and `allowUnlinkedLowScore` is not set.
+ */
+export class InvalidWorkLoopScoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidWorkLoopScoreError';
+  }
+}
 
 export function checkToDimension(checkId: WorkLoopCheckId): WorkLoopDimension | undefined {
   for (const [dim, checks] of Object.entries(DIMENSION_CHECKS) as [
@@ -70,33 +101,87 @@ export function checkToDimension(checkId: WorkLoopCheckId): WorkLoopDimension | 
  *   console.log(review.loopEffectiveness, review.dimensions);
  */
 export class WorkLoopEvaluator {
-  evaluate(episode: TaskEpisode, findings: WorkLoopFinding[] = []): WorkLoopReview {
+  /**
+   * Resolve the Agent Work Loop review for one episode.
+   *
+   * Scores follow the original model: the ceiling is a cap, never a score
+   * formula. Each dimension resolves to either a reviewer-authored integer
+   * (validated against the evidence ceiling) or the deterministic baseline —
+   * the rounded mean of per-check evidence scores. Findings never move the
+   * score ("a score never creates or suppresses a finding").
+   *
+   *   const review = new WorkLoopEvaluator().evaluate(episode, findings, {
+   *     authoredScores: { 'change-validation': 88 },
+   *   });
+   *   console.log(review.loopEffectiveness, review.dimensions);
+   */
+  evaluate(
+    episode: TaskEpisode,
+    findings: WorkLoopFinding[] = [],
+    options: EvaluateOptions = {},
+  ): WorkLoopReview {
+    // Emission bar — a finding is emitted only when it carries an inspected
+    // gap, a bounded impact, a smallest-owner repair and a validation route.
+    const emitted = findings.filter(passesEmissionBar);
+    const emissionBarRejected = findings.filter((f) => !passesEmissionBar(f)).map((f) => f.id);
+
     const byCheck = new Map<WorkLoopCheckId, CheckResult>();
     for (const check of episode.checks) byCheck.set(check.checkId, check);
 
     const dimensions: DimensionScore[] = [];
     for (const dimension of Object.keys(DIMENSION_CHECKS) as WorkLoopDimension[]) {
-      dimensions.push(this.scoreDimension(dimension, byCheck, findings));
+      dimensions.push(this.scoreDimension(dimension, byCheck, options.authoredScores?.[dimension]));
     }
+
+    // Reverse-link both ways, projected from primaryCheck ownership.
+    for (const dim of dimensions) {
+      dim.findingRefs = emitted
+        .filter((f) => checkToDimension(f.primaryCheck) === dim.dimension)
+        .map((f) => f.id);
+    }
+    const emittedFindings = emitted.map((f) => {
+      const owner = checkToDimension(f.primaryCheck);
+      return { ...f, dimensionRefs: owner ? [owner] : [] };
+    });
 
     const loopEffectiveness = Math.round(
       dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length,
     );
 
-    return {
+    const review: WorkLoopReview = {
       episodeId: episode.id,
       goal: episode.goal,
       sessionLimited: !episode.sessionLinked,
       dimensions,
-      findings,
+      findings: emittedFindings,
       loopEffectiveness,
     };
+    if (emissionBarRejected.length > 0) {
+      review.emissionBarRejected = emissionBarRejected;
+    }
+
+    // Consistency gate — an authored score below the threshold must be backed
+    // by at least one linked finding. The deterministic baseline is generated
+    // with low confidence and is exempt (reference-model escape hatch); link
+    // integrity is checked for every review.
+    const violations = scoreFindingConsistency(review);
+    if (violations.length > 0) {
+      const hasAuthored = dimensions.some((d) => d.scoreSource === 'authored');
+      if (hasAuthored && !options.allowUnlinkedLowScore) {
+        throw new InvalidWorkLoopScoreError(
+          `INVALID_AGENT_WORK_LOOP_SCORE_REVIEW: ${violations.join('; ')}`,
+        );
+      }
+      review.consistencyViolations = violations;
+    }
+
+    return review;
   }
 
   private scoreDimension(
     dimension: WorkLoopDimension,
     byCheck: Map<WorkLoopCheckId, CheckResult>,
-    findings: WorkLoopFinding[],
+    authoredScore?: number,
   ): DimensionScore {
     const checkIds = DIMENSION_CHECKS[dimension];
     const checks: CheckResult[] = checkIds.map(
@@ -117,24 +202,104 @@ export class WorkLoopEvaluator {
     }
     const ceiling = EVIDENCE_CEILING[highest];
 
-    // A required check that is Missing keeps the dimension at 59 or lower.
+    // A required check that is Missing keeps the dimension at 59 or lower,
+    // even when another check carries stronger evidence.
     const hasMissing = checks.some((c) => c.state === 'Missing');
-    // Open findings on this dimension pull the score toward the ceiling floor.
-    const dimensionFindingCount = findings.filter(
-      (f) => checkToDimension(f.primaryCheck) === dimension && f.repairProgress !== 'verified',
-    ).length;
+    const validatedCeiling = hasMissing ? Math.min(ceiling, 59) : ceiling;
+
+    // Deterministic baseline: rounded mean of the per-check evidence scores.
+    const baseline = Math.round(
+      checks.reduce((sum, c) => sum + EVIDENCE_SCORES[c.state], 0) / checks.length,
+    );
 
     let score: number;
-    if (dimension === 'learning-capture') {
-      // Learning Capture is an authored integer 35..100 bounded by evidence.
-      score = Math.max(LEARNING_CAPTURE_FLOOR, ceiling - dimensionFindingCount * 8);
+    let scoreSource: 'authored' | 'baseline' = 'baseline';
+    if (authoredScore !== undefined) {
+      // Ceiling validator — an authored score may never exceed the evidence
+      // ceiling, and must be a non-negative integer.
+      if (
+        !Number.isInteger(authoredScore) ||
+        authoredScore < 0 ||
+        authoredScore > validatedCeiling
+      ) {
+        throw new InvalidWorkLoopScoreError(
+          `INVALID_AGENT_WORK_LOOP_SCORE_REVIEW: dimension "${dimension}" authored score ${authoredScore} is not an integer within 0..${validatedCeiling} (highest evidence: ${highest}${hasMissing ? '; a check is Missing' : ''}).`,
+        );
+      }
+      score = authoredScore;
+      scoreSource = 'authored';
     } else {
-      const base = hasMissing ? Math.min(ceiling, 59) : ceiling;
-      score = Math.max(0, base - dimensionFindingCount * 6);
+      score = baseline;
     }
 
-    return { dimension, score, highestEvidence: highest, ceiling, checks };
+    if (dimension === 'learning-capture') {
+      // Learning Capture floor: 35 only means "a bounded review completed" —
+      // it never rewards finding counts or asset volume.
+      score = Math.max(LEARNING_CAPTURE_FLOOR, score);
+    }
+
+    return {
+      dimension,
+      score,
+      scoreSource,
+      authored: authoredScore,
+      highestEvidence: highest,
+      ceiling,
+      validatedCeiling,
+      checks,
+    };
   }
+}
+
+/**
+ * Emission bar — a finding is emittable only when it carries all four bound
+ * fields: an inspected gap, a bounded impact, a smallest-owner repair and a
+ * validation route. Counts, filenames, severities, ages, churn or scores are
+ * never findings on their own.
+ */
+export function passesEmissionBar(finding: WorkLoopFinding): boolean {
+  return [finding.problem, finding.impact, finding.repair, finding.validationRoute].every(
+    (v) => typeof v === 'string' && v.trim().length > 0,
+  );
+}
+
+/**
+ * Score–finding consistency gate: every dimension whose score is below
+ * {@link LOW_SCORE_FINDING_THRESHOLD} must carry at least one linked finding,
+ * and every reverse-link must resolve in both directions. The deterministic
+ * baseline is exempt from the low-score rule (generated with low confidence);
+ * link integrity is checked for every review. Returns violation messages —
+ * an empty array means the review is consistent.
+ */
+export function scoreFindingConsistency(review: WorkLoopReview): string[] {
+  const violations: string[] = [];
+  const findingIds = new Set(review.findings.map((f) => f.id));
+
+  for (const dim of review.dimensions) {
+    const refs = dim.findingRefs ?? [];
+    for (const ref of refs) {
+      if (!findingIds.has(ref)) {
+        violations.push(`dimension "${dim.dimension}" references unknown finding "${ref}"`);
+      }
+    }
+    if (
+      dim.score < LOW_SCORE_FINDING_THRESHOLD &&
+      dim.scoreSource === 'authored' &&
+      refs.length === 0
+    ) {
+      violations.push(
+        `dimension "${dim.dimension}" has authored score ${dim.score} < ${LOW_SCORE_FINDING_THRESHOLD} without a linked finding`,
+      );
+    }
+  }
+
+  for (const f of review.findings) {
+    if (!f.dimensionRefs || f.dimensionRefs.length === 0) {
+      violations.push(`finding "${f.id}" has no dimensionRefs reverse-link`);
+    }
+  }
+
+  return violations;
 }
 
 /**

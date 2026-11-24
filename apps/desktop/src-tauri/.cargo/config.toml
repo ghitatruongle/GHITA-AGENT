@@ -3,7 +3,13 @@
 # release pipeline gates on Linux (ubuntu runner) and `cargo test`/
 # `cargo clippy` there would otherwise fail to link with
 # `rust-lld: cannot open /STACK:16777216`.
-[target.'cfg(target_os = "windows")']
+# Track R1 (0.0.2-alpha): additionally scope to target_env = "msvc" —
+# with the repo-pinned GNU toolchain (rust-toolchain.toml → 1.99.0 resolves
+# to x86_64-pc-windows-gnu on gnu-host machines) GNU ld fails silently
+# (`collect2: ld returned 1/5 exit status`) on the /STACK arg, making
+# every bin-type unit (build scripts, tests) unlinkable. The flag stays
+# applied for MSVC builds exactly as before.
+[target.'cfg(all(target_os = "windows", target_env = "msvc"))']
 rustflags = ["-C", "link-arg=/STACK:16777216"]
 
 [profile.dev]

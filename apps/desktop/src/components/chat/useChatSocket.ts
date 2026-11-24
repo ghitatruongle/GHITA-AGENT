@@ -19,7 +19,9 @@ export interface ToolApprovalRequest {
   name: string;
   arguments: string;
   warningMessage?: string;
-  approvalKind?: 'tool' | 'command';
+  approvalKind?: 'tool' | 'command' | 'choose';
+  /** Track S3 P3: present for `choose` — the options the user can pick from. */
+  chooseOptions?: string[];
 }
 
 export interface FileApprovalRequest {
@@ -378,8 +380,24 @@ export function useChatSocket({
 
         addTracked(
           'require_approval',
-          (data: { id: string; command: string; warningMessage?: string }) => {
+          (data: {
+            id: string;
+            command: string;
+            warningMessage?: string;
+            // Track S3 P3: `choose` requests ride the same event with options.
+            options?: string[];
+          }) => {
             if (active) {
+              if (Array.isArray(data.options) && data.options.length > 0) {
+                setApprovalRequest({
+                  toolCallId: data.id,
+                  name: 'choose',
+                  arguments: String(data.command ?? ''),
+                  approvalKind: 'choose',
+                  chooseOptions: data.options.map(String),
+                });
+                return;
+              }
               setApprovalRequest({
                 toolCallId: data.id,
                 name: 'run_command',
@@ -586,9 +604,33 @@ export function useChatSocket({
     setApprovalRequest(null);
   };
 
+  // Track S3 P3: the user picked one `choose` option — resolve the pending
+  // approval with the choice and aggregate the decision into the chat history.
+  const handleChooseOption = (option: string) => {
+    if (!approvalRequest || !socketRef.current) return;
+    socketRef.current.emit('approve_command', {
+      id: approvalRequest.toolCallId,
+      choice: option,
+    });
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: generateUUID(),
+        role: 'user',
+        content: `➡️ ${option}`,
+        timestamp: Date.now(),
+      },
+    ]);
+    setApprovalRequest(null);
+  };
+
   const handleRejectTool = (reason: string = 'User rejected execution') => {
     if (!approvalRequest || !socketRef.current) return;
-    if (approvalRequest.approvalKind === 'command') {
+    // Track S3 integration: `choose` rides the same approve_command /
+    // reject_command vocabulary — a bare `reject` event would land in the
+    // sidecar's device-pairing handler and the pending question would only
+    // die at its 60s timeout.
+    if (approvalRequest.approvalKind === 'command' || approvalRequest.approvalKind === 'choose') {
       socketRef.current.emit('reject_command', { id: approvalRequest.toolCallId });
     } else {
       socketRef.current.emit('reject', { toolCallId: approvalRequest.toolCallId, reason });
@@ -652,6 +694,7 @@ export function useChatSocket({
     handleReconnect,
     handleApproveTool,
     handleRejectTool,
+    handleChooseOption,
     handleApproveFileWrite,
     handleRejectFileWrite,
     handleConfirmResume,

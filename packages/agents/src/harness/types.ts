@@ -74,6 +74,8 @@ export interface WorkLoopFinding {
   validationRoute: string;
   /** Repair progress after an independent post-fix review. */
   repairProgress?: 'verified' | 'partial' | 'blocked' | 'pending';
+  /** Dimension ids linked to this finding (reverse-link of dimension findingRefs). */
+  dimensionRefs?: WorkLoopDimension[];
 }
 
 /** A Task Episode — one user goal with one acceptance boundary. */
@@ -90,11 +92,36 @@ export interface DimensionScore {
   dimension: WorkLoopDimension;
   /** 0–100 (learning-capture floors at 35). */
   score: number;
+  /** Whether the score was authored by a reviewer or the deterministic baseline. */
+  scoreSource: 'authored' | 'baseline';
+  /** Authored score exactly as submitted, when one was supplied. */
+  authored?: number;
   /** Highest evidence state observed across the dimension's checks. */
   highestEvidence: EvidenceState;
   /** Ceiling imposed by the highest evidence state. */
   ceiling: number;
+  /** Ceiling actually enforced on an authored score (a Missing check caps at 59). */
+  validatedCeiling: number;
   checks: CheckResult[];
+  /** Finding ids whose primary check belongs to this dimension (reverse-link). */
+  findingRefs?: string[];
+}
+
+/** Options for {@link WorkLoopEvaluator.evaluate}. */
+export interface EvaluateOptions {
+  /**
+   * Reviewer/AI-authored integer scores per dimension. Each score is validated
+   * against the evidence ceiling (state-highest, capped at 59 when a check is
+   * Missing). Dimensions without an authored score fall back to the
+   * deterministic evidence-score baseline.
+   */
+  authoredScores?: Partial<Record<WorkLoopDimension, number>>;
+  /**
+   * Escape hatch for the score-finding consistency gate: allow an authored
+   * score below 70 without a linked finding (mirrors the reference model's
+   * low-confidence exception). Violations are still recorded on the review.
+   */
+  allowUnlinkedLowScore?: boolean;
 }
 
 /** Full Agent Work Loop review result. */
@@ -107,4 +134,8 @@ export interface WorkLoopReview {
   findings: WorkLoopFinding[];
   /** Mean of the five dimension scores (Loop Effectiveness). */
   loopEffectiveness: number;
+  /** Finding ids dropped by the emission bar (no gap/impact/repair/validation). */
+  emissionBarRejected?: string[];
+  /** Score-finding consistency violations (recorded when the gate is not enforced). */
+  consistencyViolations?: string[];
 }

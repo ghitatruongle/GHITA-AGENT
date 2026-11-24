@@ -14,6 +14,7 @@ interface ChatToolApprovalProps {
   resumeApprovalRequest: ResumeApprovalRequest | null;
   onApproveTool: () => void;
   onRejectTool: () => void;
+  onChooseOption?: (option: string) => void;
   onApproveFileWrite: () => void;
   onRejectFileWrite: () => void;
   onConfirmResume: () => void;
@@ -27,6 +28,7 @@ export function ChatToolApproval({
   resumeApprovalRequest,
   onApproveTool,
   onRejectTool,
+  onChooseOption,
   onApproveFileWrite,
   onRejectFileWrite,
   onConfirmResume,
@@ -107,25 +109,64 @@ export function ChatToolApproval({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase' }}>
-                {t('chat.parameters')}
+                {approvalRequest.chooseOptions ? 'Options' : t('chat.parameters')}
               </span>
-              <pre
-                style={{
-                  margin: 0,
-                  padding: '10px',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  borderRadius: '8px',
-                  fontSize: '11px',
-                  color: '#cbd5e1',
-                  maxHeight: '120px',
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-all',
-                }}
-              >
-                {approvalRequest.arguments}
-              </pre>
+              {approvalRequest.chooseOptions ? (
+                // Track S3 P3: `choose` — the question rides in `arguments`
+                // (the sidecar relays it as `command`); without it the user
+                // would see options with nothing explaining what they answer.
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: '#e2e8f0',
+                      lineHeight: 1.5,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {approvalRequest.arguments}
+                  </span>
+                  {approvalRequest.chooseOptions.map((option, index) => (
+                    <button
+                      key={`${index}-${option}`}
+                      type="button"
+                      onClick={() => onChooseOption?.(option)}
+                      style={{
+                        padding: '9px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(59, 130, 246, 0.35)',
+                        background: 'rgba(59, 130, 246, 0.12)',
+                        color: '#e2e8f0',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {index + 1}. {option}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <pre
+                  style={{
+                    margin: 0,
+                    padding: '10px',
+                    background: 'rgba(15, 23, 42, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    color: '#cbd5e1',
+                    maxHeight: '120px',
+                    overflow: 'auto',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {approvalRequest.arguments}
+                </pre>
+              )}
             </div>
 
             {approvalRequest.warningMessage && (
@@ -163,25 +204,27 @@ export function ChatToolApproval({
               >
                 {t('chat.reject')}
               </button>
-              <button
-                type="button"
-                onClick={onApproveTool}
-                style={{
-                  flex: 1,
-                  padding: '10px 0',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
-                  color: '#fff',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(244, 63, 94, 0.3)',
-                  transition: 'transform 0.1s',
-                }}
-              >
-                {t('chat.approve')}
-              </button>
+              {!approvalRequest.chooseOptions && (
+                <button
+                  type="button"
+                  onClick={onApproveTool}
+                  style={{
+                    flex: 1,
+                    padding: '10px 0',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)',
+                    color: '#fff',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(244, 63, 94, 0.3)',
+                    transition: 'transform 0.1s',
+                  }}
+                >
+                  {t('chat.approve')}
+                </button>
+              )}
             </div>
           </div>
         </div>

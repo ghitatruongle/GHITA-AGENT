@@ -1,6 +1,6 @@
 [package]
 name = "ghita-coding-agent"
-version = "0.0.1"
+version = "0.0.2-alpha"
 description = "Ghita Agent Desktop"
 authors = ["ghitatruongle"]
 edition = "2021"
@@ -38,6 +38,9 @@ base64 = "0.22"
 # Phase 2: Native PTY terminal (replaces node-pty sidecar)
 portable-pty = "0.8"
 dashmap = "6"
+# Track R1: PTY core moved to the shared crates workspace — this crate is a
+# thin Tauri adapter keeping the terminal_* command contract.
+ghita-pty = { path = "../../../crates/pty" }
 
 # Security & Utils
 rand = "0.8"

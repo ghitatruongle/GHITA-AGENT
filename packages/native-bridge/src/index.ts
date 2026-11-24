@@ -114,8 +114,9 @@ export function isAddonBuilt(name: string): boolean {
   return addonCandidates(name).some((c) => existsSync(c));
 }
 
-export const NATIVE_BRIDGE_VERSION = '0.0.1';
+export const NATIVE_BRIDGE_VERSION = '0.0.2-alpha';
 
 export * from './patch.js';
+export * from './pty-native.js';
 export * from './sandbox-native.js';
 export * from './vecstore.js';

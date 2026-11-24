@@ -44,11 +44,25 @@ describe('computeRunScore', () => {
 describe('coveragePerDimension', () => {
   it('takes best evidence level per dimension', () => {
     const per = coveragePerDimension([
-      { dimension: 'controlled-execution', level: 'observed', label: 'a' },
-      { dimension: 'controlled-execution', level: 'artifact', label: 'b' },
-      { dimension: 'task-understanding', level: 'observed', label: 'c' },
+      { dimension: 'controlled-execution', level: 'present', label: 'a' },
+      { dimension: 'controlled-execution', level: 'wired', label: 'b' },
+      { dimension: 'task-understanding', level: 'present', label: 'c' },
     ]);
     expect(per['controlled-execution']).toBe(0.7);
     expect(per['task-understanding']).toBe(0.4);
+  });
+
+  it('ranks the 7 evidence levels monotonically (harness parity)', () => {
+    const per = coveragePerDimension([
+      { dimension: 'controlled-execution', level: 'exercised', label: 'ran tools' },
+      { dimension: 'change-validation', level: 'unobserved', label: 'nothing observed' },
+      { dimension: 'change-validation', level: 'not-applicable', label: 'slot not applicable' },
+      { dimension: 'reliable-delivery', level: 'outcome-supported', label: 'completed' },
+      { dimension: 'learning-capture', level: 'missing', label: 'nothing captured' },
+    ]);
+    expect(per['controlled-execution']).toBe(0.85);
+    expect(per['reliable-delivery']).toBe(1);
+    expect(per['change-validation']).toBe(0);
+    expect(per['learning-capture']).toBe(0);
   });
 });

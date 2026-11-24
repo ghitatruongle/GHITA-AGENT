@@ -13,12 +13,23 @@ export const EVAL_DIMENSIONS = [
 
 export type EvalDimension = (typeof EVAL_DIMENSIONS)[number];
 
-/** Evidence strength levels (from weakest to strongest). */
-export type EvidenceLevel = 'missing' | 'observed' | 'artifact' | 'outcome-supported';
+/**
+ * Evidence strength levels (from weakest to strongest) — mirrors the 7
+ * EvidenceState values of the Agent Work Loop harness
+ * (packages/agents/src/harness/types.ts:41-48).
+ */
+export type EvidenceLevel =
+  | 'missing'
+  | 'unobserved'
+  | 'not-applicable'
+  | 'present'
+  | 'wired'
+  | 'exercised'
+  | 'outcome-supported';
 
 export interface Evidence {
   dimension: EvalDimension;
-  /** Default: observed. */
+  /** Default: present. */
   level: EvidenceLevel;
   /** Short human label, e.g. "expected marker 'TODO removed' found". */
   label: string;

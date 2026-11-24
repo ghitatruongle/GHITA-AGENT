@@ -20,4 +20,4 @@ export { LayoutPresetManager, type LayoutPreset, type LayoutWindowEntry } from '
 export { DialogService, type DialogResult, type DialogOptions, type FileFilter } from './dialog.js';
 export { ClipboardService } from './clipboard.js';
 
-export const GUI_VERSION = '0.0.1';
+export const GUI_VERSION = '0.0.2-alpha';

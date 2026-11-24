@@ -85,7 +85,9 @@ export class GraphLibraryStore {
       const parsed = JSON.parse(raw) as Record<string, GraphLibraryRecord>;
       return new Map(Object.entries(parsed));
     } catch {
-      await fs.rename(this.graphsPath(), `${this.graphsPath()  }.corrupt-${  String(Date.now())}`).catch(() => undefined);
+      await fs
+        .rename(this.graphsPath(), `${this.graphsPath()}.corrupt-${String(Date.now())}`)
+        .catch(() => undefined);
       return new Map();
     }
   }
@@ -98,7 +100,28 @@ export class GraphLibraryStore {
     const tmp = `${this.graphsPath()}.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const payload = JSON.stringify(Object.fromEntries(map), null, 2);
     await fs.writeFile(tmp, payload, 'utf8');
-    await fs.rename(tmp, this.graphsPath());
+    // v0.0.2-alpha integration: trên Windows, 2 instance rename LÊN CÙNG đích
+    // graphs.json có thể dính EPERM/EBUSY thoáng qua (rename trước chưa nhả
+    // handle đích, AV/indexer giữ file) — bộc lộ khi chạy turbo test song
+    // song. Retry ngắn có giới hạn giữ nguyên semantics last-writer-wins;
+    // lỗi thật (ENOENT trên tmp, v.v.) vẫn ném như trước khi hết retry.
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      try {
+        await fs.rename(tmp, this.graphsPath());
+        return;
+      } catch (err) {
+        lastError = err;
+        const code = (err as NodeJS.ErrnoException | undefined)?.code;
+        if (code !== 'EPERM' && code !== 'EBUSY' && code !== 'EACCES') throw err;
+        await new Promise((resolve) => setTimeout(resolve, 25 * (attempt + 1)));
+      }
+    }
+    // Ghost-state guard: hết retry mà vẫn EPERM/EBUSY/EACCES → dọn tmp của
+    // chính lần ghi này trước khi ném, tránh tích tụ rác `.tmp-*` mỗi lần
+    // save thất bại (best-effort — lỗi rm không che lỗi rename gốc).
+    await fs.rm(tmp, { force: true }).catch(() => undefined);
+    throw lastError;
   }
 
   /**

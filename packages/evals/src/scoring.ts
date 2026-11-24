@@ -1,14 +1,23 @@
 // Computes a 0..100 score from evidence collected per task. Scoring is
-// evidence-bound: levels map to weights (outcome-supported > artifact >
-// observed), and the expected-marker check produces the strongest evidence.
+// evidence-bound over the 7 EvidenceState levels (parity with the harness):
+// outcome-supported > exercised > wired > present > unobserved/not-applicable
+// > missing, and the expected-marker check produces the strongest evidence.
 
 import type { EvalDimension, EvalStep, Evidence, EvidenceLevel, RunOutcome } from './types.js';
 import { EVAL_DIMENSIONS } from './types.js';
 
+/**
+ * Evidence weights over the 7 EvidenceState levels (parity with the harness).
+ * Monotonic: missing/unobserved/not-applicable carry no positive coverage,
+ * present < wired < exercised < outcome-supported.
+ */
 const LEVEL_WEIGHT: Record<EvidenceLevel, number> = {
   missing: 0,
-  observed: 0.4,
-  artifact: 0.7,
+  unobserved: 0,
+  'not-applicable': 0,
+  present: 0.4,
+  wired: 0.7,
+  exercised: 0.85,
   'outcome-supported': 1,
 };
 
@@ -18,24 +27,24 @@ export const DIMENSION_EXPECTATIONS: Record<
   ReadonlyArray<{ label: string; level: EvidenceLevel }>
 > = {
   'task-understanding': [
-    { label: 'agent produced a relevant final output', level: 'observed' },
-    { label: 'output references the task goal', level: 'artifact' },
+    { label: 'agent produced a relevant final output', level: 'present' },
+    { label: 'output references the task goal', level: 'wired' },
   ],
   'controlled-execution': [
-    { label: 'tool calls were executed', level: 'observed' },
-    { label: 'no destructive/unexpected tool misuse', level: 'observed' },
+    { label: 'tool calls were executed', level: 'exercised' },
+    { label: 'no destructive/unexpected tool misuse', level: 'present' },
   ],
   'change-validation': [
-    { label: 'artifacts / output produced', level: 'artifact' },
+    { label: 'artifacts / output produced', level: 'wired' },
     { label: 'expected markers matched', level: 'outcome-supported' },
   ],
   'reliable-delivery': [
-    { label: 'run completed within bounds', level: 'observed' },
-    { label: 'trajectory present', level: 'artifact' },
+    { label: 'run completed within bounds', level: 'present' },
+    { label: 'trajectory present', level: 'wired' },
   ],
   'learning-capture': [
-    { label: 'follow-up summary/learnings captured', level: 'observed' },
-    { label: 'output reflects structured summary', level: 'artifact' },
+    { label: 'follow-up summary/learnings captured', level: 'present' },
+    { label: 'output reflects structured summary', level: 'wired' },
   ],
 };
 
@@ -69,14 +78,14 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
 
   const markerHits = input.expected.filter((m) => input.output.includes(m));
 
-  // 1. Marker matching → outcome-supported evidence.
+  // 1. Marker matching → outcome-supported / wired evidence.
   const allMarkersMatched =
     input.expected.length > 0 && input.expected.every((m) => input.output.includes(m));
   if (input.expected.length > 0) {
     if (markerHits.length > 0) {
       evidence.push({
         dimension: 'change-validation',
-        level: allMarkersMatched ? 'outcome-supported' : 'artifact',
+        level: allMarkersMatched ? 'outcome-supported' : 'wired',
         label: `${markerHits.length}/${input.expected.length} expected markers matched`,
       });
       passReasons.push('expected markers matched in output');
@@ -85,18 +94,18 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
     }
   }
 
-  // 2. Artifacts produced → artifact evidence.
+  // 2. Artifacts produced → wired evidence.
   if (input.artifacts.length > 0) {
     evidence.push({
       dimension: 'change-validation',
-      level: 'artifact',
+      level: 'wired',
       label: `${input.artifacts.length} artifact(s) produced`,
     });
     passReasons.push('artifacts produced');
   } else {
     evidence.push({
       dimension: 'change-validation',
-      level: 'observed',
+      level: 'present',
       label: 'no artifacts produced — output only',
     });
   }
@@ -105,14 +114,14 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
   if (input.steps.length > 0) {
     evidence.push({
       dimension: 'controlled-execution',
-      level: 'artifact',
+      level: 'exercised',
       label: `${input.steps.length} tool steps executed`,
     });
     passReasons.push('steps executed');
   } else {
     evidence.push({
       dimension: 'controlled-execution',
-      level: 'observed',
+      level: 'present',
       label: 'no tool steps (direct answer)',
     });
   }
@@ -120,7 +129,7 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
   // 4. Overall pass signal → reliable-delivery evidence.
   evidence.push({
     dimension: 'reliable-delivery',
-    level: input.passed ? 'outcome-supported' : 'observed',
+    level: input.passed ? 'outcome-supported' : 'present',
     label: input.passed ? 'task completed' : 'task failed',
   });
   if (input.passed) passReasons.push('task completed (adapter verdict)');
@@ -132,7 +141,7 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
     input.output.split('\n').length >= 4;
   evidence.push({
     dimension: 'learning-capture',
-    level: allMarkersMatched ? 'outcome-supported' : looksStructured ? 'observed' : 'missing',
+    level: allMarkersMatched ? 'outcome-supported' : looksStructured ? 'present' : 'missing',
     label: allMarkersMatched
       ? 'expected markers evidence captured'
       : looksStructured
@@ -143,7 +152,7 @@ export function computeRunScore(input: ScoringInput): RunOutcome {
   // 6. Task understanding: non-empty output is the base signal.
   evidence.push({
     dimension: 'task-understanding',
-    level: allMarkersMatched ? 'artifact' : input.output.trim().length > 0 ? 'observed' : 'missing',
+    level: allMarkersMatched ? 'wired' : input.output.trim().length > 0 ? 'present' : 'missing',
     label: allMarkersMatched
       ? 'final output satisfies expected markers'
       : input.output.trim().length > 0

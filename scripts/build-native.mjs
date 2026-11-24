@@ -51,6 +51,7 @@ const ADDON_CRATES = [
   { name: 'docloader', dir: 'crates/docloader', args: ['--features', 'addon'] },
   { name: 'store', dir: 'crates/store', args: ['--features', 'addon,vec'] },
   { name: 'patch', dir: 'crates/patch', args: ['--features', 'addon'] },
+  { name: 'pty', dir: 'crates/pty', args: ['--features', 'addon'] },
   { name: 'engine', dir: 'crates/engine', args: ['--features', 'full'] },
   // memory addon lives in the package tree (its own Cargo.lock, no features)
   { name: 'memory-napi', dir: 'packages/memory/rust-napi', args: [] },

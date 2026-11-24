@@ -1,12 +1,8 @@
 import { AI_PROVIDERS, type AIProviderType, type AIStreamChunk } from '@ghita/shared';
 import type { ChatMessage, ChatOptions, ChatResponse, ProviderConfig } from '../types.js';
 import { BaseProvider } from './base.js';
-import {
-  extractOpenAIToolCalls,
-  OpenAIStreamToolAccumulator,
-  openAIToolFields,
-  toOpenAIChatMessages,
-} from './openai-tool-calling.js';
+import { extractOpenAIToolCalls, OpenAIStreamToolAccumulator } from './openai-tool-calling.js';
+import { renderOpenAIChatRequest } from '../standard-request.js';
 
 export class CustomProvider extends BaseProvider {
   readonly type: AIProviderType;
@@ -52,14 +48,11 @@ export class CustomProvider extends BaseProvider {
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        stream: false,
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+          stream: false,
+        }),
+      ),
       signal,
     });
 
@@ -140,15 +133,12 @@ export class CustomProvider extends BaseProvider {
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        model,
-        messages: toOpenAIChatMessages(messages),
-        ...openAIToolFields(options),
-        max_tokens: this.getMaxTokens(options),
-        temperature: this.getTemperature(options),
-        stream: true,
-        stream_options: { include_usage: true },
-      }),
+      body: JSON.stringify(
+        renderOpenAIChatRequest(this.buildStandardRequest(messages, options, model), {
+          stream: true,
+          streamOptions: { include_usage: true },
+        }),
+      ),
       signal,
     });
 

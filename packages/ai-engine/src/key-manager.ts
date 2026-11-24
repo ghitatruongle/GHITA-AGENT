@@ -56,25 +56,35 @@ export class KeyManager {
     }
   }
 
-  /** Get next healthy key based on rotation strategy */
-  getNextKey(): string | null {
+  /** Get next healthy key based on rotation strategy.
+   *
+   * Track S2 (switch-key ladder): when `exclude` is provided, only keys
+   * OUTSIDE the set are eligible and cooling-down keys outside the set are
+   * considered (earliest expiration first); the call returns null when no
+   * non-excluded key exists. Without `exclude` the behavior is unchanged. */
+  getNextKey(exclude?: ReadonlySet<string>): string | null {
     const now = Date.now();
     const healthy = this.keys.filter(
-      (k) => k.isActive && (k.cooldownUntil === 0 || k.cooldownUntil <= now),
+      (k) =>
+        k.isActive &&
+        (k.cooldownUntil === 0 || k.cooldownUntil <= now) &&
+        (!exclude || !exclude.has(k.key)),
     );
 
     if (healthy.length > 0) {
       return this.selectByStrategy(healthy);
     }
 
-    // All keys in cooldown — return the one with earliest expiration
-    const coolingDown = this.keys.filter((k) => k.isActive && k.cooldownUntil > now);
+    // All eligible keys in cooldown — return the one with earliest expiration
+    const coolingDown = this.keys.filter(
+      (k) => k.isActive && k.cooldownUntil > now && (!exclude || !exclude.has(k.key)),
+    );
     if (coolingDown.length > 0) {
       coolingDown.sort((a, b) => a.cooldownUntil - b.cooldownUntil);
       return coolingDown[0]?.key ?? null;
     }
 
-    // All keys deactivated — return null
+    // All keys deactivated (or excluded) — return null
     return null;
   }
 

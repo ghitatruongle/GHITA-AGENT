@@ -81,7 +81,7 @@ Trạng thái `checking | healthy | degraded | unknown`, có TTL, và **verdict 
 
 **Nguồn:** `claude-code` (**PROPRIETARY** — chỉ học ý tưởng, tự viết lại) — pattern từ `plugins/ralph-wiggum/hooks/stop-hook.sh`
 
-Agent muốn kết thúc vòng lặp phải xuất marker kèm bằng chứng; hook `Stop` chặn exit nếu chưa có. Thêm event `Stop` vào `docs/hooks.md`.
+Agent muốn kết thúc vòng lặp phải xuất marker kèm bằng chứng; hook `Stop` chặn exit nếu chưa có. Thêm event `Stop` vào `docs/design/hooks.md`.
 
 **Tính năng đích:** A3 — Chat streaming (`views/CodeView.tsx`)
 

@@ -453,6 +453,9 @@ importers:
       '@ghita/memory':
         specifier: workspace:*
         version: link:../memory
+      '@ghita/security':
+        specifier: workspace:*
+        version: link:../security
       '@ghita/shared':
         specifier: workspace:*
         version: link:../shared
