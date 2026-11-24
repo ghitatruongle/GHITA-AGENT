@@ -30,6 +30,9 @@ jobs:
       - name: Build packages
         run: pnpm build:packages
 
+      - name: Build web assets
+        run: pnpm --filter @ghita/desktop build
+
       - name: Build Desktop (Tauri)
         working-directory: apps/desktop
         run: pnpm tauri build
@@ -75,6 +78,9 @@ jobs:
       - name: Build packages
         run: pnpm build:packages
 
+      - name: Build web assets
+        run: pnpm --filter @ghita/desktop build
+
       - name: Build Desktop (Tauri)
         working-directory: apps/desktop
         run: pnpm tauri build
@@ -114,6 +120,9 @@ jobs:
 
       - name: Build packages
         run: pnpm build:packages
+
+      - name: Build web assets
+        run: pnpm --filter @ghita/desktop build
 
       - name: Build Desktop (Tauri)
         working-directory: apps/desktop

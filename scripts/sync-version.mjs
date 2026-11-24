@@ -54,7 +54,7 @@ function updateTextVersion(relativePath, replacements) {
 
   const source = readFileSync(full, 'utf8');
   let next = source;
-  for (const { pattern, replacement, label, all = false } of replacements) {
+  for (const { pattern, replacement, label, all = false, optional = false } of replacements) {
     const effectivePattern = all
       ? new RegExp(
           pattern.source,
@@ -65,7 +65,9 @@ function updateTextVersion(relativePath, replacements) {
       ? [...next.matchAll(effectivePattern)]
       : [next.match(effectivePattern)].filter(Boolean);
     if (matches.length === 0) {
-      drifts.push(`${relativePath}: missing ${label}`);
+      // `optional`: entry không có trong lockfile này (vd ghita-coding-agent
+      // không nằm trong crates/Cargo.lock) — không phải drift.
+      if (!optional) drifts.push(`${relativePath}: missing ${label}`);
       continue;
     }
 
@@ -140,28 +142,42 @@ updateTextVersion('apps/desktop/src-tauri/Cargo.toml', [
     label: 'package version',
   },
 ]);
-updateTextVersion('apps/desktop/src-tauri/Cargo.lock', [
-  {
-    pattern: /(?<=\[\[package\]\]\r?\nname = "ghita-coding-agent"\r?\nversion = ")([^"]+)/,
-    replacement: TARGET,
-    label: 'workspace package version',
-  },
-]);
-
 const cratesWorkspaceToml = join(root, 'crates', 'Cargo.toml');
+let workspaceMembers = [];
 if (existsSync(cratesWorkspaceToml)) {
-  const members = [
+  workspaceMembers = [
     ...readFileSync(cratesWorkspaceToml, 'utf8').matchAll(/members\s*=\s*\[([^\]]+)\]/g),
   ].flatMap((m) => [...m[1].matchAll(/"([^"]+)"/g)].map((n) => n[1]));
-  const cratesLockReplacements = members
-    .map((name) => ({
-      pattern: new RegExp(`(?<=\\[\\[package\\]\\]\\r?\\nname = "ghita-${name}"\\r?\\nversion = ")([^"]+)`),
+}
+
+// Cả hai lockfile đều phải khớp: crates/Cargo.lock (workspace) và
+// apps/desktop/src-tauri/Cargo.lock (binary gộp crate qua path dependency).
+// Thiếu ghita-<member> trong lock src-tauri làm `cargo --locked` fail trên CI
+// (v0.0.2-alpha: ghita-pty kẹt 0.0.1).
+const lockTargets = ['crates/Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock'];
+for (const lockPath of lockTargets) {
+  const inCratesLock = lockPath === 'crates/Cargo.lock';
+  const replacements = [
+    {
+      pattern: /(?<=\[\[package\]\]\r?\nname = "ghita-coding-agent"\r?\nversion = ")([^"]+)/,
+      replacement: TARGET,
+      label: 'coding-agent version',
+      // ghita-coding-agent là crate binary ở src-tauri, không có trong
+      // workspace crates.
+      optional: inCratesLock,
+    },
+    ...workspaceMembers.map((name) => ({
+      pattern: new RegExp(
+        `(?<=\\[\\[package\\]\\]\\r?\\nname = "ghita-${name}"\\r?\\nversion = ")([^"]+)`,
+      ),
       replacement: TARGET,
       label: `${name} version`,
-    }));
-  if (cratesLockReplacements.length > 0) {
-    updateTextVersion('crates/Cargo.lock', cratesLockReplacements);
-  }
+      // Một crate chỉ được src-tauri phụ thuộc nếu nó là dependency thật —
+      // ngược lại nó chỉ có mặt trong crates/Cargo.lock.
+      optional: !inCratesLock,
+    })),
+  ];
+  updateTextVersion(lockPath, replacements);
 }
 updateTextVersion('apps/mobile/android/app/build.gradle', [
   {
@@ -203,7 +219,6 @@ updateTextVersion('snap/snapcraft.yaml', [
 //   - hoặc chuỗi literal `v<VERSION>`/`v<VERSION>-<hậu tố>` (vd v0.0.1-beta).
 // Sync mode chỉ can thiệp khi nhãn LẠC HẬU (không bắt đầu bằng VERSION, như
 // v0.0.0) — không bao giờ cắt hậu tố chu kỳ của nhãn đúng.
-const DISPLAY_LABEL_NOTE = [];
 function checkDisplayLabel(relativePath, pattern, label) {
   const full = join(root, relativePath);
   if (!existsSync(full)) return;

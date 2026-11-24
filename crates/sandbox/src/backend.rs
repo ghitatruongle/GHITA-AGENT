@@ -17,8 +17,13 @@ use std::path::PathBuf;
 use crate::{Enforcement, SandboxOptions, SandboxViolation};
 
 /// Pre-exec enforcement hook (landlock `restrict_writes` trên linux).
+///
+/// `Sync` là bắt buộc: `std::os::unix::process::CommandExt::pre_exec` nhận
+/// `FnMut() -> io::Result<()> + Send + Sync` (closure chạy trong child sau
+/// fork, trước exec — an toàn khi chia sẻ giữa các thread). Thiếu `Sync` chỉ
+/// nổ trên unix, không hiện trên windows.
 #[cfg_attr(not(unix), allow(dead_code))]
-pub(crate) type PreExecHook = Box<dyn FnMut() -> std::io::Result<()> + Send>;
+pub(crate) type PreExecHook = Box<dyn FnMut() -> std::io::Result<()> + Send + Sync>;
 
 /// argv/env/cwd sau khi backend shape (seatbelt wrap trên macOS, env scrub).
 pub(crate) struct PreparedCommand {
