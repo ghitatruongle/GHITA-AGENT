@@ -128,9 +128,11 @@ jobs:
           $exe = Get-ChildItem -Path apps/desktop/src-tauri/target/release/bundle/nsis -Filter *-setup.exe | Select-Object -First 1
           if (-not $exe) { throw "NSIS installer not found" }
           if (-not (Test-Path "$($exe.FullName).sig")) {
+            $appVersion = node -p "require('./package.json').version"
             pnpm --filter @ghita/desktop tauri signer sign `
               --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" `
               --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" `
+              --app-version "$appVersion" `
               "$($exe.FullName)"
           }
       - name: Create Windows updater record
@@ -185,13 +187,18 @@ jobs:
         # `createUpdaterArtifacts: false` nên Tauri không tự sinh `.sig`;
         # updater-manifest bắt buộc phải có (thiếu → ENOENT). Ký thủ công,
         # cùng pattern với macOS.
+        #
+        # `pnpm --filter` đổi cwd sang apps/desktop → đường dẫn TƯƠNG ĐỐI sẽ
+        # bị nhân đôi (apps/desktop/apps/desktop/...), phải dùng $PWD tuyệt đối.
         run: |
           set -euo pipefail
-          APPIMAGE=$(ls apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage)
+          APPIMAGE=$(ls "$PWD"/apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage)
+          APP_VERSION=$(node -p "require('./package.json').version")
           if [ ! -f "${APPIMAGE}.sig" ]; then
             pnpm --filter @ghita/desktop tauri signer sign \
               --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" \
               --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
+              --app-version "${APP_VERSION}" \
               "${APPIMAGE}"
           fi
       - name: Create Linux updater record
@@ -260,16 +267,18 @@ jobs:
         # manually so the updater record always has one artifact.
         run: |
           set -euo pipefail
-          APP_DIR="apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          APP_DIR="$PWD/apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos"
           TARBALL="${APP_DIR}/Ghita Agent.app.tar.gz"
           if [ ! -f "${TARBALL}" ]; then
             mkdir -p "${APP_DIR}"
             tar -C "${APP_DIR}" -czf "${TARBALL}" "Ghita Agent.app"
           fi
           if [ ! -f "${TARBALL}.sig" ]; then
+            APP_VERSION=$(node -p "require('./package.json').version")
             pnpm --filter @ghita/desktop tauri signer sign \
               --private-key "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}" \
               --password "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" \
+              --app-version "${APP_VERSION}" \
               "${TARBALL}"
           fi
       - name: Create macOS updater record
