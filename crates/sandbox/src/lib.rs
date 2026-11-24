@@ -1243,13 +1243,21 @@ pub fn spawn_sandboxed(
         .stderr(std::process::Stdio::piped());
 
     // Pre-exec OS enforcement (landlock restrict_writes trên linux).
+    // Overlay cwd (`upper/`) truyền vào như root ghi được: child phải ghi
+    // trong vùng containment của chính nó thì overlay mới có gì để promote.
+    let writable_extra: Vec<std::path::PathBuf> = overlay
+        .as_ref()
+        .map(|session| vec![session.cwd().to_path_buf()])
+        .unwrap_or_default();
     #[cfg(unix)]
-    if let Some(mut hook) = backend.pre_exec_hook(opts, enforcement) {
+    if let Some(mut hook) = backend.pre_exec_hook(opts, enforcement, &writable_extra) {
         use std::os::unix::process::CommandExt;
         unsafe {
             command.pre_exec(move || hook());
         }
     }
+    #[cfg(not(unix))]
+    let _ = &writable_extra;
 
     // Creation flags (Windows: CREATE_SUSPENDED từ P3 — job gán trước resume).
     let extra_flags = backend.creation_flags();

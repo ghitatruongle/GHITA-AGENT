@@ -104,11 +104,18 @@ pub(crate) trait SandboxBackend {
     ) -> PreparedCommand;
 
     /// Enforcement chạy trong child trước `exec` (landlock). `None` khi N/A.
+    ///
+    /// `writable_extra`: root ghi được CỘNG THÊM vào profile default. Overlay
+    /// session truyền cwd của child (`upper/`) vào đây — trên linux child phải
+    /// ghi được vào `upper/` vì ĐÓ chính là vùng containment; thiếu nó thì
+    /// profile Strict chặn luôn cả write hợp lệ và `overlay_commit` promote
+    /// một thư mục rỗng (bug lộ ra khi unix compile được).
     #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
     fn pre_exec_hook(
         &self,
         _opts: &SandboxOptions,
         _enforcement: Enforcement,
+        _writable_extra: &[PathBuf],
     ) -> Option<PreExecHook> {
         None
     }
@@ -183,16 +190,20 @@ impl SandboxBackend for SupervisedBackend {
         &self,
         opts: &SandboxOptions,
         enforcement: Enforcement,
+        writable_extra: &[PathBuf],
     ) -> Option<PreExecHook> {
         if enforcement != Enforcement::Landlock {
             return None;
         }
-        let write_roots: Vec<PathBuf> = match opts.profile {
+        let mut write_roots: Vec<PathBuf> = match opts.profile {
             crate::SandboxProfile::Workspace => {
                 vec![opts.workspace.clone(), std::env::temp_dir()]
             }
             crate::SandboxProfile::ReadOnly | crate::SandboxProfile::Strict => vec![],
         };
+        // Overlay cwd (`upper/`) là vùng containment của child — phải ghi được,
+        // nếu không profile Strict vô hiệu hóa chính cơ chế cách ly của nó.
+        write_roots.extend(writable_extra.iter().cloned());
         Some(Box::new(move || {
             crate::landlock::restrict_writes(&write_roots)
         }))

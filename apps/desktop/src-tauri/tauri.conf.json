@@ -59,6 +59,9 @@
         "type": "downloadBootstrapper",
         "silent": true
       },
+      "wix": {
+        "version": "0.0.2"
+      },
       "nsis": {
         "installMode": "currentUser",
         "installerIcon": "icons/icon.ico",

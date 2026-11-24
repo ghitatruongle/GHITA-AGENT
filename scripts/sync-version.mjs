@@ -111,22 +111,35 @@ if (existsSync(manifestPath)) {
   }
 }
 
-const tauriConfigPath = join(root, 'apps', 'desktop', 'src-tauri', 'tauri.conf.json');
-if (existsSync(tauriConfigPath)) {
-  const tauriConfig = readJson(tauriConfigPath);
-  if (tauriConfig.version !== TARGET) {
-    drifts.push(`apps/desktop/src-tauri/tauri.conf.json: ${tauriConfig.version} != ${TARGET}`);
-    if (!checkOnly) {
-      tauriConfig.version = TARGET;
-      writeJson(tauriConfigPath, tauriConfig);
-    }
-  }
-}
-
 const [major, minor, patch] = TARGET.split(/[.-]/).slice(0, 3).map(Number);
 // Android versionCode / iOS CURRENT_PROJECT_VERSION must be >= 1 (0 is an
 // invalid build number), so 0.x.y-style versions still produce a valid one.
 const nativeBuildNumber = Math.max(1, major * 1_000_000 + minor * 1_000 + patch);
+// MSI (WiX) chỉ nhận version SỐ `major.minor.patch[.build]`; hậu tố chu kỳ
+// như `-alpha` bị từ chối: "optional pre-release identifier in app version
+// must be numeric-only". Vì vậy wix.version phải suy ra từ TARGET, không
+// được để Tauri tự lấy Config::version.
+const msiVersion = `${major}.${minor}.${patch}`;
+
+const tauriConfigPath = join(root, 'apps', 'desktop', 'src-tauri', 'tauri.conf.json');
+if (existsSync(tauriConfigPath)) {
+  const tauriConfig = readJson(tauriConfigPath);
+  let dirty = false;
+  if (tauriConfig.version !== TARGET) {
+    drifts.push(`apps/desktop/src-tauri/tauri.conf.json: ${tauriConfig.version} != ${TARGET}`);
+    tauriConfig.version = TARGET;
+    dirty = true;
+  }
+  const wix = tauriConfig.bundle?.windows?.wix;
+  if (wix && wix.version !== msiVersion) {
+    drifts.push(
+      `apps/desktop/src-tauri/tauri.conf.json wix.version: ${wix.version} != ${msiVersion}`,
+    );
+    wix.version = msiVersion;
+    dirty = true;
+  }
+  if (!checkOnly && dirty) writeJson(tauriConfigPath, tauriConfig);
+}
 
 updateTextVersion('crates/Cargo.toml', [
   {

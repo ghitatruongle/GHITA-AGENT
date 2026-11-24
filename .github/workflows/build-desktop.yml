@@ -123,6 +123,10 @@ jobs:
 
       - name: Build web assets
         run: pnpm --filter @ghita/desktop build
+        env:
+          # vite build (rollup) vượt heap mặc định trên macOS runner →
+          # "FATAL ERROR: Reached heap limit" exit 134.
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - name: Build Desktop (Tauri)
         working-directory: apps/desktop
