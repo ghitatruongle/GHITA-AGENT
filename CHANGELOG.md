@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.0.3-alpha](https://github.com/ghitatruongle/GHITA-AGENT/compare/ghita-coding-agent-v0.0.2-alpha...ghita-coding-agent-v0.0.3-alpha) (2026-11-25)
+
+
+### Bug Fixes
+
+* **ci:** green all workflows + dogfood 17/17 ([e615457](https://github.com/ghitatruongle/GHITA-AGENT/commit/e615457a3e9324e890ef0fec246c55fd9967585e))
+* **ci:** resolve all failing workflows ([fb82367](https://github.com/ghitatruongle/GHITA-AGENT/commit/fb823678a41c698c57cfd74dac599b7da2b845a5))
+
 ## [Unreleased] — v0.0.2-alpha (2026-11-24)
 
 > Chủ đề: **Hấp thụ kiến trúc từ 6 dự án ít sao nhất** (`refer_project/`) vào các thành phần sẵn có.
